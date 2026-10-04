@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#152f36"><meta name="description" content="Mapa intenzity spojů PID a plánování focení podle jízdních řádů, směru jízdy a slunce.">
+  <title>Šotofoto · PID v dobrém světle</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23152f36'/%3E%3Cpath d='M12 22h12l4-6h12l4 6h8v28H12z' fill='%23f2ba58'/%3E%3Ccircle cx='32' cy='35' r='10' fill='%23152f36'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css">
+  <script src="vendor/leaflet.js" defer></script><script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <header><a class="brand" href="./"><span class="brand-icon">◉</span><span>Šotofoto<small>PID v dobrém světle</small></span></a><span id="feed-label" class="feed-label">Načítám jízdní řády…</span><button id="toggle-filters" class="mobile-toggle" aria-expanded="false">Filtry</button></header>
+  <main>
+    <aside id="filters" aria-label="Filtry mapy">
+      <div class="section-heading"><h1>Najdi svůj záběr</h1><button id="reset" class="text-button">Reset</button></div>
+      <p class="intro">Kam vyrazit, co projede a odkud svítí slunce.</p>
+      <form id="filter-form">
+        <label for="date">Den focení</label><input id="date" type="date" required disabled>
+        <div class="time-heading"><label>Čas průjezdu</label><button type="button" id="whole-day" class="text-button">Celý den</button></div>
+        <div class="time-row"><div><label class="sr-only" for="from">Od</label><input id="from" type="time" value="00:00" required></div><span>—</span><div><label class="sr-only" for="to">Do</label><input id="to" type="time" value="00:00" required></div></div>
+        <div class="presets"><button type="button" data-range="06:00,10:00">Ráno</button><button type="button" data-range="10:00,14:00">Poledne</button><button type="button" data-range="14:00,19:00">Odpoledne</button></div>
+        <p id="range-label" class="hint">Celý den · 00:00–24:00</p>
+        <label>Druh dopravy <span class="hint">více možností</span></label><div id="modes" class="chips"></div>
+        <details open><summary>Linky <span id="route-summary" class="count-label">všechny</span></summary><input id="route-search" type="search" placeholder="Hledat linku nebo trasu" aria-label="Hledat linku"><div class="select-actions"><button type="button" id="route-all">Všechny</button><button type="button" id="route-visible">Vybrat nalezené</button></div><div id="routes" class="route-list"></div></details>
+        <details><summary>Dopravci <span id="agency-summary" class="count-label">všichni</span></summary><input id="agency-search" type="search" placeholder="Hledat dopravce" aria-label="Hledat dopravce"><div class="select-actions"><button type="button" id="agency-all">Všichni</button><button type="button" id="agency-visible">Vybrat nalezené</button></div><div id="agencies" class="agency-list"></div></details>
+        <details><summary>Směr jízdy a vzhled</summary><label>Směr v místě průjezdu</label><div id="directions" class="chips"></div><p class="hint">Bez výběru jsou zapnuté všechny směry. Výběr se vztahuje i na intenzitu mapy.</p><label for="color">Barvy tras</label><select id="color"><option value="mode">Druh dopravy</option><option value="route">Linka</option><option value="agency">Dopravce</option><option value="intensity">Intenzita</option><option value="single">Jedna barva</option></select><div class="style-row"><label for="accent">Vlastní barva</label><input id="accent" type="color" value="#16877d"></div><label for="opacity">Výraznost tras</label><input id="opacity" type="range" min="0.25" max="1" step="0.05" value="0.8"><label class="check"><input id="split" type="checkbox">Rozlišit protisměry vedle sebe</label></details>
+      </form>
+      <div class="data-notes"><strong>Jízdní řády, žádné živé polohy</strong><p id="data-note">Připravuji data…</p><p>První načtení stáhne komprimované trasy a jízdní řády. Pak se filtry počítají přímo u tebe.</p><a href="https://github.com/anlexcz/sotofoto" target="_blank" rel="noopener">Projekt na GitHubu ↗</a></div>
+    </aside>
+    <section class="map-area" aria-label="Mapa tras PID"><div id="map"></div><div id="map-status" role="status" class="map-status"><span class="spinner"></span>Načítám GTFS…</div><div class="map-help" id="map-help">Klikni do mapy poblíž trasy a prohlédni průjezdy.</div><div class="legend"><strong>Průjezdy ve vybraném čase</strong><div id="legend-scale"></div><small>Počet v polovině úseku · oba směry dohromady</small></div></section>
+    <aside id="point-panel" class="point-panel" hidden aria-label="Průjezdy ve vybraném místě"><div class="point-header"><div><small>VYBRANÉ MÍSTO</small><h2 id="point-title">Průjezdy</h2></div><button id="close-point" aria-label="Zavřít průjezdy">×</button></div><p id="point-coordinates" class="hint"></p><div class="point-controls"><label for="radius">Okolí bodu</label><select id="radius"><option value="20">20 m</option><option value="40" selected>40 m</option><option value="80">80 m</option><option value="150">150 m</option></select></div><div class="segmented"><button id="point-filtered" class="active">Vybraný čas</button><button id="point-day">Celý den</button></div><label for="photo-view">Co chceš nasvítit?</label><select id="photo-view"><option value="front">Čelo</option><option value="right">Čelo + pravý bok vozu</option><option value="left">Čelo + levý bok vozu</option></select><p class="hint">Bok je určen z pohledu směru jízdy vozu.</p><section id="recommendation"></section><div id="hour-chart" class="hour-chart"></div><div class="passage-heading"><h3 id="passage-count">Průjezdy</h3><button id="export" class="text-button">CSV ↓</button></div><div id="passages" aria-live="polite"></div><p class="point-footnote">≈ čas je odhad po trase mezi odjezdem z předchozí a příjezdem do další zastávky. Směr je místní směr jízdy. Světlo platí pro přímé slunce; nezohledňuje oblačnost, terén, budovy ani stromy. Kliknutí může zahrnout souběžnou ulici v nastaveném okolí.</p></aside>
+  </main>
+  <noscript>Pro mapu je potřeba zapnout JavaScript.</noscript>
+</body>
+</html>

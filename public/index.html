@@ -5,8 +5,8 @@
   <meta name="theme-color" content="#152f36"><meta name="description" content="Mapa intenzity spojů PID a plánování focení podle jízdních řádů, směru jízdy a slunce.">
   <title>Šotofoto · PID v dobrém světle</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23152f36'/%3E%3Cpath d='M12 22h12l4-6h12l4 6h8v28H12z' fill='%23f2ba58'/%3E%3Ccircle cx='32' cy='35' r='10' fill='%23152f36'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=weather-terrain-1">
-  <script src="vendor/leaflet.js" defer></script><script type="module" src="src/app.js?v=weather-terrain-1"></script>
+  <link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css?v=weather-overlay-1">
+  <script src="vendor/leaflet.js" defer></script><script type="module" src="src/app.js?v=weather-overlay-1"></script>
 </head>
 <body>
   <header><a class="brand" href="./"><span class="brand-icon">◉</span><span>Šotofoto<small>PID v dobrém světle</small></span></a><span id="feed-label" class="feed-label">Načítám jízdní řády…</span><button id="toggle-filters" class="mobile-toggle" aria-expanded="false">Filtry</button></header>
@@ -28,7 +28,7 @@
       <div class="data-notes"><strong>Jízdní řády, žádné živé polohy</strong><p id="data-note">Připravuji data…</p><p>První načtení stáhne komprimované trasy a jízdní řády. Pak se filtry počítají přímo u tebe.</p><a href="https://github.com/anlexcz/sotofoto" target="_blank" rel="noopener">Projekt na GitHubu ↗</a></div>
     </aside>
     <section class="map-area" aria-label="Mapa tras PID"><div id="map"></div><button id="photo-mode" class="photo-mode-toggle" aria-pressed="false" disabled>☀ Režim focení</button><div id="map-status" role="status" class="map-status"><span class="spinner"></span>Načítám GTFS…</div><div class="map-help" id="map-help">Klikni do mapy poblíž trasy a prohlédni průjezdy.</div><div class="legend" id="traffic-legend"><strong>Průjezdy ve vybraném čase</strong><div id="legend-scale"></div><small>Počet v polovině úseku · oba směry dohromady</small></div>
-      <section id="photo-timeline" class="photo-timeline" hidden aria-label="Čas pro nasvícení tras">
+      <section id="weather-map-legend" class="weather-map-legend" hidden aria-label="Vrstva počasí"><label class="check"><input id="weather-overlay-toggle" type="checkbox" checked>☁ Počasí na mapě</label><div class="weather-swatches"><span><i class="fog-swatch"></i>Mlha / horší dohlednost</span><span><i class="cloud-swatch"></i>Slabší slunce</span><span><i class="missing-swatch"></i>Neověřeno</span></div><p id="weather-layer-status" role="status">Načítám počasí pro mapu…</p><small>ALADIN / Open-Meteo · modelová předpověď</small></section><section id="photo-timeline" class="photo-timeline" hidden aria-label="Čas pro nasvícení tras">
         <div class="photo-time-heading"><strong>☀ Světlo v <span id="photo-time-label">12:00</span></strong><label class="sr-only" for="photo-time">Nastavit čas nasvícení</label><input id="photo-time" type="time" value="12:00" required></div>
         <div class="photo-scale"><span><i style="background:#23a455"></i>Čelo</span><span><i style="background:#f4841f"></i>Bok</span><span><i style="background:#db3d31"></i>Zezadu</span><span><i style="background:#8c959d"></i>Noc / stín</span></div>
         <div class="sun-slider"><label class="sr-only" for="photo-slider">Posouvat čas nasvícení</label><input id="photo-slider" type="range" min="21600" max="72000" step="300" value="43200"><div id="sun-events" class="sun-events"></div></div>

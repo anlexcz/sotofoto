@@ -45,6 +45,8 @@ function fixture(){
 const f={date:'2026-10-05',start:0,end:86400,routes:[],agencies:[],modes:[],directions:[]};
 test('Intensity aggregates operators on common edges and includes yesterday after midnight',()=>{
   const e=fixture();assert.deepEqual([...e.counts(f).counts],[3,3]);
+  assert.deepEqual([...e.counts(f).edgeAgencies[0]].sort(),[0,1]);
+  assert.deepEqual(e.counts({...f,agencies:[1]}).edgeAgencies[0],[1]);
   assert.deepEqual([...e.counts({...f,agencies:[1]}).counts],[1,1]);
   assert.deepEqual([...e.counts({...f,directions:['S']}).counts],[2,2]);
 });

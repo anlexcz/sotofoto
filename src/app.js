@@ -22,7 +22,7 @@ function edgeColor(i) {
   const r=meta.routes[result.colors[i]],mode=$('color').value;
   if(mode==='single')return $('accent').value;
   if(mode==='route')return palette(result.colors[i]);
-  if(mode==='agency')return palette(result.agencyColors[i]);
+  if(mode==='agency')return palette(highlightAgency!==null&&(result.edgeAgencies?.[i]||[]).includes(highlightAgency)?highlightAgency:result.agencyColors[i]);
   if(mode==='intensity')return `hsl(${Math.max(0,160-Math.log2(1+result.counts[i])*20)} 70% 42%)`;
   return MODE_COLORS[r?.[3]]||'#586f78';
 }
@@ -156,7 +156,7 @@ $('toggle-filters').onclick=()=>{const open=$('filters').classList.toggle('open'
 $('filter-form').onsubmit=e=>e.preventDefault();
 for(const id of ['date','from','to'])$(id).onchange=()=>{if(id==='date'&&pointMode==='now')pointMode='from';if(!$('date').value||$('date').value<$('date').min||$('date').value>$('date').max){$('date').reportValidity();return;}updateDaylight();renderEnvironment();weatherLayer.draw();requestWeather();recalc();};
 function setMapTime(all){mapAllDay=all;$('map-time-editor').hidden=all;$('whole-day').classList.toggle('active',all);$('time-interval').classList.toggle('active',!all);recalc();}
-$('whole-day').onclick=()=>setMapTime(true);$('time-interval').onclick=()=>setMapTime(false);$('range-now').onclick=()=>{const n=useToday();if(!n)return;$('from').value=civilClock(n.seconds);$('to').value=civilClock(n.seconds+7200);setMapTime(false);refreshDate();};document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{[$('from').value,$('to').value]=b.dataset.range.split(',');setMapTime(false);});
+$('whole-day').onclick=()=>setMapTime(true);$('time-interval').onclick=()=>{if($('from').value==='00:00'&&$('to').value==='00:00'){$('from').value='06:00';$('to').value='19:00';}setMapTime(false);};$('range-now').onclick=()=>{const n=useToday();if(!n)return;$('from').value=civilClock(n.seconds);$('to').value=civilClock(n.seconds+7200);setMapTime(false);refreshDate();};document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{[$('from').value,$('to').value]=b.dataset.range.split(',');setMapTime(false);});
 $('route-search').oninput=()=>ready&&renderRoutes();$('agency-search').oninput=()=>ready&&renderAgencies();
 $('routes').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=+b.dataset.id;selected.routes.has(id)?selected.routes.delete(id):selected.routes.add(id);renderRoutes();recalc();};
 $('agencies').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=+b.dataset.id;selected.agencies.has(id)?selected.agencies.delete(id):selected.agencies.add(id);renderAgencies();renderRoutes();recalc();};

@@ -58,14 +58,14 @@ const RoutesLayer=L.Layer.extend({
     const labelMode=$('color').value==='route',minZoom=selected.routes.size===1?12:14;
     if(labelMode&&m.getZoom()>=minZoom){ctx.globalAlpha=1;ctx.font='600 11px system-ui';const boxes=[];
       const candidates=[];
-      for(const chain of this.chains||[]){const points=chain.nodes.map(n=>m.latLngToContainerPoint(geometry.points[n]));for(const sample of chainSamples(points)){const {x,y,segment,f}=sample;if(x<35||y<75||x>size.x-65||y>size.y-40)continue;const i=chain.edges[segment],rows=mainRoutes(result.routeCounts?.[i],meta,selected.routes.size>0),names=[...new Set(rows.map(r=>meta.routes[r.id][1]))];if(!names.length)continue;const text=names.slice(0,3).join(' · ')+(names.length>3?` · +${names.length-3}`:''),p=geometry.points[chain.nodes[segment]],q=geometry.points[chain.nodes[segment+1]];candidates.push({x,y,i,text,priority:rows[0].count,lat:p[0]+(q[0]-p[0])*f,lon:p[1]+(q[1]-p[1])*f});}}
+      for(const chain of this.chains||[]){const [south,west,north,east]=chain.bounds;if(north<bounds.getSouth()||south>bounds.getNorth()||east<bounds.getWest()||west>bounds.getEast())continue;const points=chain.nodes.map(n=>m.latLngToContainerPoint(geometry.points[n]));for(const sample of chainSamples(points)){const {x,y,segment,f}=sample;if(x<35||y<75||x>size.x-65||y>size.y-40)continue;const i=chain.edges[segment],rows=mainRoutes(result.routeCounts?.[i],meta,selected.routes.size>0),names=[...new Set(rows.map(r=>meta.routes[r.id][1]))];if(!names.length)continue;const text=names.slice(0,3).join(' · ')+(names.length>3?` · +${names.length-3}`:''),p=geometry.points[chain.nodes[segment]],q=geometry.points[chain.nodes[segment+1]];candidates.push({x,y,i,text,priority:rows[0].count,lat:p[0]+(q[0]-p[0])*f,lon:p[1]+(q[1]-p[1])*f});}}
       candidates.sort((a,b)=>b.priority-a.priority||a.i-b.i);
       for(const label of candidates){const {x,y,i,text}=label,w=ctx.measureText(text).width+14,h=22;if(boxes.some(b=>Math.abs(x-b.x)<(w+b.w)/2+18&&Math.abs(y-b.y)<38))continue;
        ctx.fillStyle='#fffffff2';ctx.strokeStyle=photoMode?'#637b7f':edgeColor(i);ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(x-w/2,y-h/2,w,h,4);ctx.fill();ctx.stroke();ctx.fillStyle='#152f36';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);boxes.push({x,y,w});this.labels.push({...label,w,h});if(boxes.length>=45)break;
       }
     }
   },
-  update(){this.chains=labelChains(geometry.edges,result.routeCounts,meta,selected.routes.size>0);this.visibleEdges=Array.from(result.counts,(_,i)=>i).filter(i=>result.counts[i]).sort((a,b)=>result.counts[a]-result.counts[b]);this.draw();}
+  update(){this.chains=labelChains(geometry.edges,result.routeCounts,meta,selected.routes.size>0).map(chain=>{const bounds=[Infinity,Infinity,-Infinity,-Infinity];for(const n of chain.nodes){const p=geometry.points[n];bounds[0]=Math.min(bounds[0],p[0]);bounds[1]=Math.min(bounds[1],p[1]);bounds[2]=Math.max(bounds[2],p[0]);bounds[3]=Math.max(bounds[3],p[1]);}return {...chain,bounds};});this.visibleEdges=Array.from(result.counts,(_,i)=>i).filter(i=>result.counts[i]).sort((a,b)=>result.counts[a]-result.counts[b]);this.draw();}
 });
 const routesLayer=new RoutesLayer().addTo(map);
 function updateLightControls(){

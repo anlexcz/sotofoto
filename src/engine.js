@@ -59,7 +59,7 @@ export class Engine {
   }
   counts(filter) {
     const n=this.g.edges.length,counts=new Uint32Array(n),forward=new Uint32Array(n),backward=new Uint32Array(n),colors=new Int32Array(n).fill(-1),agencyColors=new Int32Array(n).fill(-1);
-    let journeys=0;
+    const edgeRoutes={},edgeAgencies={};let journeys=0;
     for(const {t,offset} of this.instances(filter)) {
       let contributed=false;
       const p=this.s.patterns[t[3]],refs=this.g.shapes[p[0]][0],s=this.patternSegments[t[3]];
@@ -70,12 +70,12 @@ export class Engine {
         if(filter.directions.length&&!filter.directions.includes(compass(direction)))continue;
         const time=(s.atStop[k]?t[5][index*2+1]:t[5][index*2+1]+(t[5][(index+1)*2]-t[5][index*2+1])*s.fractions[k])+offset;
         if(time<filter.start||time>=filter.end)continue;
-        counts[e]++;if(ref>0)forward[e]++;else backward[e]++;
+        (edgeRoutes[e]??=new Set()).add(t[0]);(edgeAgencies[e]??=new Set()).add(t[1]);counts[e]++;if(ref>0)forward[e]++;else backward[e]++;
         if(colors[e]<0){colors[e]=t[0];agencyColors[e]=t[1];}contributed=true;
       }
       if(contributed)journeys++;
     }
-    return {counts,forward,backward,colors,agencyColors,journeys};
+    return {counts,forward,backward,colors,agencyColors,journeys,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
   }
   near(point,radius) {
     const degrees=radius/111195,lonDegrees=degrees/Math.cos(point[0]*Math.PI/180),ids=new Set();

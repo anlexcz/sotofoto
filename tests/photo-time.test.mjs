@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {timeFilterKey,roundedNow,filterLightTime} from '../src/photo-time.js';
+const now={date:'2026-10-05',seconds:13*3600+42*60},f={date:now.date,start:50400,end:61200};
+test('Photo default takes exact interval start, including midnight and overnight windows',()=>{assert.equal(filterLightTime(f,now),50400);assert.equal(filterLightTime({...f,start:0,end:3600},now),0);assert.equal(filterLightTime({...f,start:82800,end:93600},now),82800);});
+test('Whole-day default is current rounded clock today and noon on another day',()=>{assert.equal(filterLightTime({...f,start:0,end:86400},now),49200);assert.equal(filterLightTime({...f,date:'2026-10-06',start:0,end:86400},now),43200);assert.equal(roundedNow(86390),86100);});
+test('Only date or effective time interval changes the temporal filter key',()=>{assert.equal(timeFilterKey(f),timeFilterKey({...f,routes:[1],agencies:[2],modes:[0]}));for(const change of [{date:'2026-10-06'},{start:54000},{end:64800}])assert.notEqual(timeFilterKey(f),timeFilterKey({...f,...change}));});

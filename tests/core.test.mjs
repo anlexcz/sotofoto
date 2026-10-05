@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activeServices,timeRange,dayContexts,interpolation,passageTime,bearing,compass,project,sunPosition,pragueInstant,photoLight} from '../src/core.js';
+import {activeServices,timeRange,dayContexts,interpolation,passageTime,bearing,compass,project,sunPosition,pragueInstant,photoLight,photographyLight,daylightTimes} from '../src/core.js';
 import {Engine} from '../src/engine.js';
 test('Calendar additions and removals override weekday flags',()=>{
   const meta={services:[['20261001','20261017',1,1,1,1,1,0,0],['20261001','20261017',0,0,0,0,0,1,1]],exceptions:{'20261005':[[0,2],[1,1]]}};
@@ -52,4 +52,24 @@ test('Point query deduplicates consecutive edges, preserves reverse directions a
   const e=fixture(),r=e.passages([50.01,14],40,f,true).passages;
   assert.equal(r.length,3);assert.equal(r[0].time,4200);assert.equal(r[0].direction,'S');assert.equal(r[1].direction,'J');assert.ok(r[0].estimated);
   assert.equal(e.passages([50.01,14],40,{...f,start:4500,end:4600}).passages.length,0);
+});
+test('Photography spectrum keeps lateral light orange and turns red just behind the vehicle',()=>{
+  const sun={altitude:20,azimuth:0};
+  assert.equal(photographyLight(sun,0).color,'#23a455');
+  assert.equal(photographyLight(sun,90).level,'okay');
+  assert.equal(photographyLight(sun,98).color,'#db3d31');
+  assert.equal(photographyLight(sun,180).level,'bad');
+  assert.equal(photographyLight({altitude:-1,azimuth:0},0).color,'#8c959d');
+  assert.equal(photographyLight(sun,350).color,photographyLight(sun,10).color);
+});
+test('Timeline includes sunrise and sunset with a one-hour margin and seasonal changes',()=>{
+  const autumn=daylightTimes('20261005',50.08,14.43);
+  assert.ok(autumn.sunrise>7*3600&&autumn.sunrise<7.5*3600);
+  assert.ok(autumn.sunset>18*3600&&autumn.sunset<19*3600);
+  assert.ok(autumn.min<=autumn.sunrise-3600);
+  assert.ok(autumn.max>=autumn.sunset+3600);
+  const summer=daylightTimes('20260621',50.08,14.43),winter=daylightTimes('20261221',50.08,14.43);
+  assert.ok(summer.sunset-summer.sunrise>winter.sunset-winter.sunrise);
+  const polar=daylightTimes('20260621',80,14);
+  assert.equal(polar.sunrise,null);assert.equal(polar.sunset,null);
 });

@@ -8,9 +8,11 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 - Konkrétní datum v platnosti balíčku a libovolný časový rozsah, včetně přechodu přes půlnoc. Stejný čas od/do znamená 24 hodin.
 - Tloušťka společných úseků podle počtu průjezdů ve vybraném čase. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
 - Kliknutí kdekoliv poblíž trasy: průjezdy v okolí 20–150 m, linka, cílová zastávka, dopravce, místní směr a azimut, odhad času a odjezd z předchozí zastávky. Celý den nebo vybraný čas.
-- Poloha slunce v době průjezdu, přepínač čelo / čelo + pravý či levý bok. Počty průjezdů s příznivým nasvícením po hodinách i ráno/poledne/odpoledne. Kliknutí na sloupec nastaví danou hodinu.
+- Režim focení: celé vyfiltrované trasy se obarví podle slunce ve zvoleném okamžiku. Zelená = čelo, přes žlutou k oranžové = boční světlo, několik stupňů za bokem přechod do červené = světlo zezadu / protislunce. Pod obzorem šedá. Posuvník po 5 minutách od hodiny před východem do hodiny po západu, s označeným východem a západem. Lze zadat libovolný přesný čas; rozsah se v případě potřeby rozšíří. Posuvník nemění filtry ani počty spojů.
+- Poloha slunce v době skutečného průjezdu, počty průjezdů s příznivým nasvícením po hodinách i ráno/poledne/odpoledne. Kliknutí na sloupec nastaví danou hodinu pro filtr provozu.
+- Tloušťka tras se přizpůsobuje přiblížení, aby při oddálení nezakrývaly mapový podklad.
 - Barvy podle druhu dopravy, linky, dopravce, intenzity nebo jedna vlastní barva; průhlednost.
-- CSV export průjezdů a sdílení odkazu: URL uchovává datum, čas, filtry, pohled mapy, vybrané místo, stranu focení a režim barev.
+- CSV export průjezdů a sdílení odkazu: URL uchovává datum, čas, filtry, pohled mapy, vybrané místo, režim focení, jeho nastavený čas a režim barev.
 - Responzivní ovládání pro mobil; výpočty ve Web Workeru.
 
 ## Data a pravidla výpočtu
@@ -27,7 +29,11 @@ Společný úsek je shodná dvojice po sobě jdoucích bodů trasy po zaokrouhle
 
 Kliknutí zahrnuje nejbližší body tras uvnitř zvoleného poloměru. Navazující segmenty stejného průjezdu se spojí; smyčka může vytvořit více průjezdů stejného spoje. Může se započítat i souběžná ulice či kolej, zejména při velkém poloměru. Směr je azimut nejbližšího segmentu, proto na ostrém oblouku doporučujeme kliknout přímo do zamýšleného místa záběru.
 
-Výpočet slunce používá astronomickou aproximaci a časovou zónu `Europe/Prague`. Příznivé světlo vyžaduje nasvícení vybraných ploch; velmi nízké a vysoké slunce má nižší hodnocení. Jde o geometrické doporučení pro přímé slunce. Nezohledňuje počasí, stíny budov, terén, vegetaci ani fyzickou dostupnost místa. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
+Výpočet slunce používá astronomickou aproximaci a časovou zónu `Europe/Prague`. Režim focení hodnotí úhel mezi směrem jízdy a azimutem slunce, bez volby strany vozu. Spektrum: 0° zelená, 45° žlutá, 85–90° sytě oranžová, 98° červená, světlo zezadu tmavě červené. Slunce se středem pod geometrickým obzorem je šedé. Společná čára v obou směrech ukazuje **lepší z přítomných směrů** podle aktivního filtru provozu, nikoliv zaručené nasvícení pro oba. Automatické rozdělení směrů není zapnuto; již existující ruční rozdělení protisměrů lze použít a pak má každý vlastní barvu.
+
+Rozsah časové osy a značky východu/západu se počítají podle středu aktuálního výřezu mapy. Astronomický východ/západ používá výšku středu slunce −0,833° (běžná aproximace refrakce a horního okraje slunečního disku), takže šedá pro geometrický střed může přetrvat několik minut po značce východu. Jednotlivé úseky se barví podle své skutečné polohy. Posuvník jen překresluje nasvícení, nepřepočítává provozní filtr, intenzitu ani seznam průjezdů. Ruční zadání času mimo výchozí rozsah rozšíří osu, aby byl zvolený čas dosažitelný. Kliknutý seznam a jeho doporučení stále hodnotí **skutečný plánovaný čas každého spoje**, nikoliv okamžik z posuvníku.
+
+Jde o geometrické doporučení pro přímé slunce. Nezohledňuje počasí, stíny budov, terén, vegetaci, tunely ani fyzickou dostupnost místa. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
 
 ## Spuštění a ruční aktualizace
 

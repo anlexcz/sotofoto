@@ -80,3 +80,31 @@ export function photoLight(sun,travel,view='front') {
   if(sun.altitude>55)score*=0.75;
   return {score,label:score>=0.65?'Příznivý směr světla':score>=0.3?'Boční / šikmé světlo':'Protislunce nebo neosvětlená strana',level:score>=0.65?'good':score>=0.3?'okay':'bad'};
 }
+
+// Fixed photographic scale: front-lit → side-lit → back-lit. No side selector.
+export function photographyLight(sun,travel) {
+  if(sun.altitude<=0)return {score:0,color:'#8c959d',level:'night',label:'Slunce pod obzorem',difference:null};
+  const difference=angle(sun.azimuth,travel);
+  const stops=[[0,[35,164,85]],[45,[206,181,37]],[85,[244,132,31]],[90,[240,117,31]],[98,[219,61,49]],[180,[190,43,48]]];
+  let i=1;while(i<stops.length-1&&difference>stops[i][0])i++;
+  const [a,ca]=stops[i-1],[b,cb]=stops[i],f=(difference-a)/(b-a);
+  const color='#'+ca.map((v,j)=>Math.round(v+(cb[j]-v)*f).toString(16).padStart(2,'0')).join('');
+  return {score:Math.max(0,1-difference/100),color,difference,level:difference<=50?'good':difference<=90?'okay':'bad',label:difference<=50?'Světlo na čelo':difference<=90?'Šikmé / boční světlo':'Světlo zezadu / protislunce'};
+}
+
+// Apparent sunrise/sunset (centre altitude -0.833°), in Prague wall-clock seconds.
+export function daylightTimes(key,lat,lon) {
+  const threshold=-.833;
+  const altitude=s=>sunPosition(pragueInstant(key,s),lat,lon).altitude-threshold;
+  let sunrise=null,sunset=null,previous=altitude(0);
+  for(let seconds=600;seconds<=86400;seconds+=600){
+    const current=altitude(seconds);
+    if((previous<0&&current>=0)||(previous>=0&&current<0)){
+      const rising=current>previous;let a=seconds-600,b=seconds;
+      for(let i=0;i<18;i++){const mid=(a+b)/2;if((altitude(mid)>=0)===rising)b=mid;else a=mid;}
+      if(rising)sunrise=(a+b)/2;else sunset=(a+b)/2;
+    }
+    previous=current;
+  }
+  return {sunrise,sunset,min:sunrise===null?0:Math.max(0,Math.floor((sunrise-3600)/300)*300),max:sunset===null?86400:Math.min(86400,Math.ceil((sunset+3600)/300)*300)};
+}

@@ -8,7 +8,7 @@ export function createWeatherLayer(map,getState,onStatus){
   hide(){if(this.canvas)this.canvas.style.display='none';},
   draw(){
    const c=this.canvas;if(!c)return;const size=map.getSize();L.DomUtil.setPosition(c,map.containerPointToLayerPoint([0,0]));c.style.width=size.x+'px';c.style.height=size.y+'px';c.width=Math.ceil(size.x/6);c.height=Math.ceil(size.y/6);c.style.display=enabled?'block':'none';
-   if(!enabled)return;
+   if(!enabled){status(0,0);return;}
    const state=getState(),ctx=c.getContext('2d');if(!grid){status(0,0);return;}
    const values=data.map((d,i)=>weatherTint(weatherAt(d,state.instant),state.dayAt(...grid.sites[i]))),image=ctx.createImageData(c.width,c.height);let painted=0,total=0;
    for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){

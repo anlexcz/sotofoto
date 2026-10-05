@@ -1,4 +1,4 @@
-import {createWeatherLayer} from './weather-layer.js?v=overlay-1';
+import {createWeatherLayer} from './weather-layer.js?v=overlay-2';
 import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js?v=overlay-1';
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass} from './core.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

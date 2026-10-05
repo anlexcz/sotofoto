@@ -109,9 +109,11 @@ export class Engine {
         const time=passageTime(t[5],c.pos)+offset,from=allDay?0:filter.start,to=allDay?86400:filter.end;
         if(time<from||time>=to)continue;
         const p=this.s.patterns[t[3]],previousTime=t[5][c.pos.i*2+1]+offset;
-        result.push({time,previousTime,previousStop:p[2][c.pos.i],route:t[0],agency:t[1],headsign:this.meta.headsigns[t[4]],bearing:c.seg.bearing,direction,estimated:!c.pos.atStop,fallback:!!p[3],distance:c.distance,lat:c.lat,lon:c.lon,trip:t[7],shortName:t[6],serviceDay:day,key:`${index}:${day}:${c.seg.k}`});
+        result.push({time,previousTime,previousStop:p[2][c.pos.i],route:t[0],agency:t[1],headsign:this.meta.headsigns[t[4]],bearing:c.seg.bearing,direction,estimated:!c.pos.atStop,fallback:!!p[3],distance:c.distance,lat:c.lat,lon:c.lon,edge:c.seg.edge,trip:t[7],shortName:t[6],serviceDay:day,key:`${index}:${day}:${c.seg.k}`});
       }
     }
-    return {passages:result.sort((a,b)=>a.time-b.time),nearest:near[0]||null};
+    const surface=result.some(r=>this.meta.routes[r.route][3]!==1),explicitMetro=filter.modes.length===1&&filter.modes[0]===1;
+    const passages=(surface&&!explicitMetro?result.filter(r=>this.meta.routes[r.route][3]!==1):result).sort((a,b)=>a.time-b.time);
+    return {passages,metroOmitted:surface&&!explicitMetro&&result.length!==passages.length,edges:[...new Set(passages.map(r=>r.edge))],nearest:near[0]||null};
   }
 }

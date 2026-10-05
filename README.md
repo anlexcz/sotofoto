@@ -67,5 +67,16 @@ Režim focení automaticky zapíná překryv přes celý výřez mapy. Modrošed
 
 Chybějící předpověď, nepokrytá oblast a chyba API jsou šrafované, nikoli prezentované jako dobré podmínky. Legenda ukazuje načítání, neúplné pokrytí nebo chybějící čas. Detail místa ponechává přesné číselné hodnoty. API nevyžaduje klíč ani server. Testy pokrývají rozsah sítě, omezení počtu vzorků, průhlednost, noční chování a interpolaci chybějících dat.
 
-### Rychlé ovládání v terénu
-GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti. Poloha se neposílá do projektu. „Teď“ nastaví dnešek a nejbližších pět minut; „Průjezdy teď ±10 min“ filtruje detail kolem aktuálního času podle jízdního řádu, bez živých zpoždění. Kliknutí se přichytí k nejbližší zobrazené trase do 250 m. Souběžné trasy lze přepnout; pokročilý výběr umožňuje původní vyhledávání v okruhu. Hodinový graf dohlednosti v detailu mění čas nasvícení kliknutím. Mlha a slunce jsou modelové odhady, místní stav se může lišit.
+### Detail místa a ovládání v terénu
+
+Kliknutí vybírá okolí bodu bez přepínání segmentů. Do 25 m od trasy zachovává původní kliknutí (důležité u křižovatek), dál se přichytí k nejbližší zobrazené trase do 150 m. Okolí je 40 m, v členité geometrii 55 m, nezávisle na zoomu. Kruhem a zvýrazněním jsou vyznačené zahrnuté části tras. Sousední segmenty stejného průjezdu se deduplikují; pozdější návrat do oblasti je samostatný průjezd. Povrchová doprava má při souběhu přednost před metrem; samostatný filtr metra vrátí metro v obou směrech.
+
+Mobilní panel začíná v dolní třetině (s minimální výškou pro dva průjezdy), zvětšuje se přes celou obrazovku tlačítkem nebo tažením za hlavičku. Rozbalení počasí či statistik jej zvětší, sbalení nemění zvolenou výšku. Souřadnice lze zkopírovat klepnutím. Jednotlivé průjezdy mají čas, linku, cíl a značku světla v prvním řádku, předchozí zastávku s časem ve druhém; dopravce a azimuty jsou po rozbalení.
+
+„Teď“ zachytí dnešek a začátek pět minut zpátky; opětovným stisknutím čas obnoví. „Od času“ mění den celé aplikace a začátek seznamu, „Celý den“ zobrazí vybraný civilní den. Budoucí seznam je dostupný do konce následujícího dne v rozsahu platnosti GTFS. Po půlnoci používá 00:00 a oddělovače dnů. Nejde o živá zpoždění. První dávka cílí na dvě hodiny / maximálně 50 řádků; u řídkého provozu rozšíří okno nejvýše na šest hodin. Další dávky načítá u konce seznamu nebo tlačítkem. Výpočet denní statistiky není omezen dávkou seznamu.
+
+„Kdy fotit“ počítá celý vybraný den podle filtrů. Spojuje obsazené pětiminutové intervaly vhodných průjezdů s mezerou nejvýše 15 minut; řadí je podle počtu vhodných spojů, poté podílu vhodných a kratší délky. Ukazuje počet vhodných / všech průjezdů. Hodnotí pouze slunce a dostupný terén, bez počasí. Tlačítko doporučení nastaví začátek seznamu i světlo mapy.
+
+Počasí je sbalený přehled dohlednosti, oblačnosti, teploty a času. Rozbalený graf má dohlednost v km, hranici 1 km, vybraný čas a samostatný pás slunce/noci/chybějících dat. Hodinová tlačítka mění čas světla a počasí, nikoli seznam. Technické zdroje jsou pod „O datech“. GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti.
+
+Počty spojů a legenda tloušťky nejsou trvale na mapě. Stavový banner se zobrazuje pouze při načítání či chybě. Posuvník tloušťky je ve vzhledu; škála zůstává logaritmická a závislá na zoomu.

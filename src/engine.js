@@ -86,8 +86,8 @@ export class Engine {
     for(const e of ids){const [a,b]=this.g.edges[e],p=project(point,this.g.points[a],this.g.points[b]);if(p.distance<=radius)near.push({edge:e,...p});}
     return near.sort((a,b)=>a.distance-b.distance);
   }
-  passages(point,radius,filter,allDay=false) {
-    const near=this.near(point,radius),candidates=new Map();
+  passages(point,radius,filter,allDay=false,edge=null) {
+    const near=this.near(point,radius).filter(p=>edge===null||p.edge===edge),candidates=new Map();
     for(const p of near)for(let j=this.edgeStarts[p.edge];j<this.edgeStarts[p.edge+1];j++){
       const pi=this.edgePatternIds[j],si=this.edgeSegmentIds[j];
       if(!candidates.has(pi))candidates.set(pi,[]);

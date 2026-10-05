@@ -73,3 +73,5 @@ test('Timeline includes sunrise and sunset with a one-hour margin and seasonal c
   const polar=daylightTimes('20260621',80,14);
   assert.equal(polar.sunrise,null);assert.equal(polar.sunset,null);
 });
+
+test('Selected route edge excludes other nearby geometry',()=>{const e=fixture();assert.equal(e.passages([50.005,14],1000,f,true,0).passages.length,3);assert.equal(e.passages([50.005,14],40,f,true,1).passages.length,0);});

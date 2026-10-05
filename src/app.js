@@ -1,7 +1,10 @@
+import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js';
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass} from './core.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let meta,geometry,result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,allDay=false,timer,ready=false;
 let photoMode=false,photoSeconds=43200,solarDay=null,edgeBearings,lightFrame=null;
+let terrain=null,terrainIndex=new Map(),edgeTerrain,weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
+const weatherCache=new Map();
 const selected={routes:new Set(),agencies:new Set(),modes:new Set(),directions:new Set()};
 const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([50.075,14.44],11);
 L.control.zoom({position:'topright'}).addTo(map);
@@ -38,6 +41,8 @@ const RoutesLayer=L.Layer.extend({
       if(photoMode){
         const sun=sunPosition(instant,(p[0]+q[0])/2,(p[1]+q[1])/2),forward=photographyLight(sun,edgeBearings[i]),backward=photographyLight(sun,(edgeBearings[i]+180)%360);
         forwardColor=forward.color;backwardColor=backward.color;
+        const profile=terrain?.horizons[edgeTerrain?.[i]];
+        if(terrainLight(sun,profile)){forwardColor=backwardColor='#8c959d';forward.color=backward.color='#8c959d';}
         const hasForward=result.forward[i]>0,hasBackward=result.backward[i]>0;
         combinedColor=hasForward&&hasBackward?(forward.score>=backward.score?forward.color:backward.color):hasForward?forward.color:backward.color;
       }
@@ -57,13 +62,13 @@ function updateLightControls(){
   $('photo-mode-note').textContent=$('split').checked?'Každý směr má vlastní barvu. Filtry a počty spojů se nemění.':'Barva ukazuje lepší z přítomných směrů. Filtry a počty spojů se nemění.';
 }
 function updateDaylight(){if(!ready)return;const c=map.getCenter();solarDay=daylightTimes(dateKey($('date').value),c.lat,c.lng);updateLightControls();}
-function setPhotoMode(value){photoMode=value;document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('traffic-legend').hidden=value;updateDaylight();routesLayer.draw();saveHash();}
-function setLightTime(seconds){photoSeconds=Math.max(0,Math.min(86399,seconds));updateLightControls();if(lightFrame!==null)cancelAnimationFrame(lightFrame);lightFrame=requestAnimationFrame(()=>{lightFrame=null;routesLayer.draw();});}
+function setPhotoMode(value){photoMode=value;document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('traffic-legend').hidden=value;updateDaylight();routesLayer.draw();if(value)requestWeather();saveHash();}
+function setLightTime(seconds){photoSeconds=Math.max(0,Math.min(86399,seconds));updateLightControls();renderEnvironment();if(lightFrame!==null)cancelAnimationFrame(lightFrame);lightFrame=requestAnimationFrame(()=>{lightFrame=null;routesLayer.draw();});}
 $('photo-mode').onclick=()=>setPhotoMode(!photoMode);
 $('photo-slider').oninput=()=>setLightTime(Number($('photo-slider').value));
 $('photo-slider').onchange=saveHash;
 $('photo-time').onchange=()=>{if(!$('photo-time').value)return;const [h,m]=$('photo-time').value.split(':').map(Number);setLightTime(h*3600+m*60);saveHash();};
-map.on('moveend zoomend',()=>{if(ready){if(photoMode)updateDaylight();drawLegend();}});
+map.on('moveend zoomend',()=>{if(ready){if(photoMode){updateDaylight();requestWeather();}drawLegend();}});
 function showStatus(text,busy=false,error=false){$('map-status').innerHTML=(busy?'<span class="spinner"></span>':'')+escape(text);$('map-status').classList.toggle('error',error);}
 function filter(){const [start,end]=timeRange($('from').value||'00:00',$('to').value||'00:00');return {date:$('date').value,start,end,...Object.fromEntries(Object.entries(selected).map(([k,v])=>[k,[...v]]))};}
 function recalc(){if(!ready)return;clearTimeout(timer);timer=setTimeout(()=>{const f=filter();$('range-label').textContent=f.start===0&&f.end===86400?'Celý den · 00:00–24:00':`${clock(f.start)}–${clock(f.end)}${f.end>86400?' (+1 den)':''}`;let note=`Platnost ${meta.startDate.slice(6)}. ${meta.startDate.slice(4,6)}. – ${meta.endDate.slice(6)}. ${meta.endDate.slice(4,6)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Bez pravidelné aktualizace.`;if(dateKey(f.date)===meta.startDate)note+=' Na prvním dni chybí případné dojezdy z předchozího dne.';if(dateKey(f.date)===meta.endDate&&f.end>86400)note+=' Část po půlnoci je mimo platnost: nové služby dalšího dne nejsou dostupné.';$('data-note').textContent=note;showStatus('Počítám intenzitu…',true);worker.postMessage({type:'counts',id:++countsRequest,filter:f});requestPoint();},120);}
@@ -74,11 +79,11 @@ function renderRoutes(){const list=visibleRoutes();$('routes').innerHTML=list.ma
 function visibleAgencies(){const q=$('agency-search').value.toLocaleLowerCase('cs').trim();return meta.agencies.map((a,i)=>({a,i})).filter(({a})=>a[1].toLocaleLowerCase('cs').includes(q));}
 function renderAgencies(){$('agencies').innerHTML=visibleAgencies().map(({a,i})=>`<button type="button" data-id="${i}" aria-pressed="${selected.agencies.has(i)}" class="${selected.agencies.has(i)?'active':''}">${escape(a[1])}</button>`).join('');$('agency-summary').textContent=selected.agencies.size?`${selected.agencies.size} vybráno`:'všichni';}
 function requestPoint(){if(!point||!ready)return;const id=++pointRequest;$('passages').innerHTML='<p class="empty">Počítám průjezdy…</p>';worker.postMessage({type:'point',id,point,radius:Number($('radius').value),filter:filter(),allDay});}
-function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').innerHTML=`${lat.toFixed(5)}, ${lon.toFixed(5)} · <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=18/${lat}/${lon}" target="_blank" rel="noopener">Otevřít místo ↗</a>`;if(marker)marker.remove();if(halo)halo.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:Number($('radius').value),color:'#16877d',weight:1,fillOpacity:.08,interactive:false}).addTo(map);map.invalidateSize();requestPoint();saveHash();}
+function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').innerHTML=`${lat.toFixed(5)}, ${lon.toFixed(5)} · <a href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=18/${lat}/${lon}" target="_blank" rel="noopener">Otevřít místo ↗</a>`;if(marker)marker.remove();if(halo)halo.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:Number($('radius').value),color:'#16877d',weight:1,fillOpacity:.08,interactive:false}).addTo(map);map.invalidateSize();requestPoint();requestWeather();renderEnvironment();saveHash();}
 map.on('click',e=>{if(ready)choosePoint(e.latlng.lat,e.latlng.lng);});
 function sunFor(row){return sunPosition(pragueInstant(dateKey($('date').value),row.time),row.lat,row.lon);}
 function renderPoint(){
-  for(const row of pointRows){row.sun=sunFor(row);row.light=photographyLight(row.sun,row.bearing);}
+  for(const row of pointRows){row.sun=sunFor(row);row.light=photographyLight(row.sun,row.bearing);const profile=profileAt(row.lat,row.lon);if(terrainLight(row.sun,profile))row.light={...row.light,score:0,color:'#8c959d',level:'night',label:'Stín terénu'};}
   $('point-title').textContent=pointRows.length?'Tady to projede':'Žádné průjezdy';
   $('passage-count').textContent=`${pointRows.length.toLocaleString('cs')} průjezdů`;
   $('export').disabled=!pointRows.length;
@@ -104,10 +109,10 @@ $('hour-chart').onclick=e=>{const b=e.target.closest('[data-hour]');if(!b)return
 function setPointMode(){$('point-filtered').classList.toggle('active',!allDay);$('point-day').classList.toggle('active',allDay);}
 $('point-filtered').onclick=()=>{allDay=false;setPointMode();requestPoint();};$('point-day').onclick=()=>{allDay=true;setPointMode();requestPoint();};
 $('radius').onchange=()=>{halo?.setRadius(Number($('radius').value));requestPoint();};
-$('close-point').onclick=()=>{point=null;pointRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();map.invalidateSize();++pointRequest;saveHash();};
+$('close-point').onclick=()=>{point=null;pointRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();map.invalidateSize();++pointRequest;if(photoMode)requestWeather();saveHash();};
 $('toggle-filters').onclick=()=>{const open=$('filters').classList.toggle('open');$('toggle-filters').setAttribute('aria-expanded',open);};
 $('filter-form').onsubmit=e=>e.preventDefault();
-for(const id of ['date','from','to'])$(id).onchange=()=>{if(!$('date').value||$('date').value<$('date').min||$('date').value>$('date').max){$('date').reportValidity();return;}updateDaylight();recalc();};
+for(const id of ['date','from','to'])$(id).onchange=()=>{if(!$('date').value||$('date').value<$('date').min||$('date').value>$('date').max){$('date').reportValidity();return;}updateDaylight();renderEnvironment();requestWeather();recalc();};
 $('whole-day').onclick=()=>{$('from').value='00:00';$('to').value='00:00';recalc();};document.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{[$('from').value,$('to').value]=b.dataset.range.split(',');recalc();});
 $('route-search').oninput=()=>ready&&renderRoutes();$('agency-search').oninput=()=>ready&&renderAgencies();
 $('routes').onclick=e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=+b.dataset.id;selected.routes.has(id)?selected.routes.delete(id):selected.routes.add(id);renderRoutes();recalc();};
@@ -126,10 +131,43 @@ function renderFilters(){renderChips('modes',Object.entries(MODES).filter(([id])
 function saveHash(){if(!ready)return;const f=filter(),c=map.getCenter();const state={...f,routes:f.routes.map(i=>meta.routes[i][0]),agencies:f.agencies.map(i=>meta.agencies[i][0]),from:$('from').value,to:$('to').value,center:[+c.lat.toFixed(5),+c.lng.toFixed(5)],zoom:map.getZoom(),point,photoMode,photoSeconds,color:$('color').value};history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(state)));}
 function loadHash(){try{const s=JSON.parse(decodeURIComponent(location.hash.slice(1)));if(s.date>=$('date').min&&s.date<=$('date').max)$('date').value=s.date;if(/^\d\d:\d\d$/.test(s.from))$('from').value=s.from;if(/^\d\d:\d\d$/.test(s.to))$('to').value=s.to;for(const id of s.routes||[]){const i=meta.routes.findIndex(r=>r[0]===id);if(i>=0)selected.routes.add(i);}for(const id of s.agencies||[]){const i=meta.agencies.findIndex(a=>a[0]===id);if(i>=0)selected.agencies.add(i);}for(const m of s.modes||[])if(m in MODES)selected.modes.add(m);for(const d of s.directions||[])if(DIRECTIONS.includes(d))selected.directions.add(d);if(Number.isFinite(s.photoSeconds))photoSeconds=Math.max(0,Math.min(86399,s.photoSeconds));photoMode=s.photoMode===true;if(['mode','route','agency','intensity','single'].includes(s.color))$('color').value=s.color;if(s.center?.every(Number.isFinite))map.setView(s.center,Math.max(5,Math.min(19,s.zoom||11)));return s.point?.length===2&&s.point.every(Number.isFinite)?s.point:null;}catch{return null;}}
 map.on('moveend',saveHash);
-function readyData(data){meta=data.meta;geometry=data.geometry;edgeBearings=Float32Array.from(geometry.edges,([a,b])=>bearing(geometry.points[a],geometry.points[b]));const iso=d=>`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;$('date').min=iso(meta.startDate);$('date').max=iso(meta.endDate);const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Prague',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());$('date').value=today>=$('date').min&&today<=$('date').max?today:$('date').min;$('date').disabled=false;$('feed-label').textContent=`GTFS ${iso(meta.startDate)} – ${iso(meta.endDate)}`;$('data-note').textContent=`Platnost ${iso(meta.startDate)} až ${iso(meta.endDate)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Připraveno ${new Date(meta.builtAt).toLocaleDateString('cs')}. Bez pravidelné aktualizace.`;const restored=loadHash();renderFilters();ready=true;$('photo-mode').disabled=false;setPhotoMode(photoMode);recalc();if(restored)choosePoint(...restored);}
+function readyData(data){meta=data.meta;geometry=data.geometry;edgeBearings=Float32Array.from(geometry.edges,([a,b])=>bearing(geometry.points[a],geometry.points[b]));const iso=d=>`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;$('date').min=iso(meta.startDate);$('date').max=iso(meta.endDate);const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Prague',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());$('date').value=today>=$('date').min&&today<=$('date').max?today:$('date').min;$('date').disabled=false;$('feed-label').textContent=`GTFS ${iso(meta.startDate)} – ${iso(meta.endDate)}`;$('data-note').textContent=`Platnost ${iso(meta.startDate)} až ${iso(meta.endDate)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Připraveno ${new Date(meta.builtAt).toLocaleDateString('cs')}. Bez pravidelné aktualizace.`;const restored=loadHash();renderFilters();ready=true;$('photo-mode').disabled=false;loadTerrain();setPhotoMode(photoMode);recalc();if(restored)choosePoint(...restored);}
 try{worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});worker.onmessage=({data})=>{
   if(data.type==='ready')readyData(data);
   else if(data.type==='counts'&&data.id===countsRequest){result=data;routesLayer.update();drawLegend();showStatus(`${data.journeys.toLocaleString('cs')} spojů · ${routesLayer.visibleEdges.length.toLocaleString('cs')} úseků`);saveHash();}
   else if(data.type==='point'&&data.id===pointRequest){pointRows=data.passages;renderPoint();}
   else if(data.type==='error')showStatus(data.message,false,true);
 };worker.onerror=e=>showStatus(`Chyba aplikace: ${e.message}`,false,true);worker.postMessage({type:'init'});}catch(e){showStatus(e.message,false,true);}
+
+function profileAt(lat,lon){
+  if(!terrain)return null;
+  const a=Math.round(lat/terrain.cell[0]),b=Math.round(lon/terrain.cell[1]),i=terrainIndex.get(`${a},${b}`);
+  return i!==undefined&&terrain.valid[i]?terrain.horizons[i]:null;
+}
+async function loadTerrain(){
+  try{const r=await fetch('data/terrain.json.gz');if(!r.ok)throw Error();terrain=JSON.parse(await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text());terrain.keys.forEach((k,i)=>terrainIndex.set(k.join(','),i));edgeTerrain=Int32Array.from(geometry.edges,([a,b])=>{const p=geometry.points[a],q=geometry.points[b],i=terrainIndex.get(`${Math.round((p[0]+q[0])/2/terrain.cell[0])},${Math.round((p[1]+q[1])/2/terrain.cell[1])}`);return i!==undefined&&terrain.valid[i]?i:-1;});routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();}
+  catch{$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}
+}
+function requestWeather(){
+  clearTimeout(weatherTimer);weatherTimer=setTimeout(async()=>{
+    if(!point&&!photoMode)return;
+    const c=point||[map.getCenter().lat,map.getCenter().lng],key=`${c[0].toFixed(2)},${c[1].toFixed(2)}`,id=++weatherGeneration;
+    if(key===weatherKey&&weatherData&&Date.now()-(weatherCache.get(key)?.loaded||0)<1800000){renderEnvironment();return;}
+    weatherKey=key;weatherData=null;weatherError='';renderEnvironment();
+    try{let cached=weatherCache.get(key);if(!cached||Date.now()-cached.loaded>1800000){cached={data:await fetchWeather(...c),loaded:Date.now()};weatherCache.set(key,cached);if(weatherCache.size>30)weatherCache.delete(weatherCache.keys().next().value);}if(id!==weatherGeneration)return;weatherData=cached.data;renderEnvironment();}
+    catch{if(id!==weatherGeneration)return;weatherError='Počasí není dostupné. Nasvícení tras funguje dál.';renderEnvironment();}
+  },400);
+}
+function renderEnvironment(){
+  if(!ready)return;
+  const loc=point||[map.getCenter().lat,map.getCenter().lng],sun=sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),...loc),profile=profileAt(...loc),shadow=terrainLight(sun,profile);
+  $('point-light-time').value=clock(photoSeconds);
+  $('terrain-status').textContent=!terrain?'Načítám terénní obzory…':!profile?'Terén v tomto bodě není ověřený.':sun.altitude<=0?'Slunce pod obzorem.':shadow?`Stín terénu · slunce ${sun.altitude.toFixed(1)}°, obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`:`Slunce nad terénem · obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`;
+  $('map-terrain').textContent=terrain?'Šedá = noc nebo odhad stínu kopců. Přesné stíny domů a stromů nejsou zahrnuté.':'Terén není načtený — stíny kopců nejsou ověřené.';
+  const w=weatherAt(weatherData,pragueInstant(dateKey($('date').value),photoSeconds));
+  const summary=weatherError||(!weatherData?'Načítám počasí…':!w?'Pro tento den / čas není předpověď dostupná.':`${w.visibility===null?'Dohlednost neznámá':`Dohlednost ${(w.visibility/1000).toLocaleString('cs',{maximumFractionDigits:1})} km`} · oblačnost ${w.cloud??'—'} %${w.visibility!==null&&w.visibility<1000?' · ⚠ Možná mlha':''}`);
+  $('weather-summary').textContent=summary;$('map-weather').textContent=summary;
+  $('weather-detail').textContent=w?`Nízká oblačnost ${w.lowCloud??'—'} % · srážky ${w.rain??'—'} mm/h · přímé záření ${w.direct===null?'—':Math.round(w.direct)} W/m². Čas ${clock(photoSeconds)}, ${$('date').value}.`:'';
+  $('weather-source-note').textContent=weatherData?`Modelová předpověď ALADIN přes Open-Meteo. Místní mlhu může minout. Bod modelu ${weatherData.latitude.toFixed(3)}, ${weatherData.longitude.toFixed(3)}. Počasí nemění barvy tras.`:'Modelová předpověď, nikoli měření na místě. Počasí nemění barvy tras.';
+}
+$('point-light-time').onchange=()=>{const [h,m]=$('point-light-time').value.split(':').map(Number);if(Number.isFinite(h+m)){setLightTime(h*3600+m*60);saveHash();}};

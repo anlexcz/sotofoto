@@ -22,7 +22,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
+      - run: pip install numpy==2.3.5 rasterio==1.5.2
       - run: python scripts/build_data.py
+      - run: python scripts/build_terrain.py
       - uses: actions/configure-pages@v5
         with:
           enablement: true

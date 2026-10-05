@@ -1,4 +1,4 @@
-import {Engine} from './engine.js?v=ui-4';
+import {Engine} from './engine.js?v=labels-1';
 let engine;
 async function zipped(url){const response=await fetch(url);if(!response.ok)throw Error(`Data: HTTP ${response.status}`);if(!globalThis.DecompressionStream)throw Error('Tento prohlížeč neumí rozbalit data. Použij aktuální Chrome, Firefox nebo Safari.');return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();}
 self.onmessage=async ({data})=>{

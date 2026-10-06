@@ -1,6 +1,6 @@
 # P3 – zástavba: měření a ověření
 
-Implementace je připravená v samostatné větvi; tento dokument odděluje výsledky testů od měření na konkrétním zařízení a od skutečného nasazení. Závěrečné metriky a stav publikace se doplní po produkčním buildu.
+Měřeno 6. 10. 2026 na produkčním PID datasetu a OSM snapshotu 2026-10-04T20:20:21Z. Surové výsledky a 24 referenčních vyhodnocení osmi charakteristických míst jsou v [P3-data-metrics.json](P3-data-metrics.json). Nejde o ověření fyzických stínů v terénu.
 
 ## Výběr zdroje (6. 10. 2026)
 
@@ -48,3 +48,37 @@ python scripts/building_resolution.py
 node scripts/benchmark_buildings.mjs
 python scripts/finalize_data.py
 ```
+
+## Produkční data a build
+
+- PBF SHA256: `6acf8e569216faa75526c4f7a834cf667c1eab732cba8605b49fed98cf3ebaf7`.
+- Prostorově relevantních komponent včetně lokálních struktur: 1 583 024; explicitní výška 5 215, odhad 722 691, neznámá 855 118. To nejsou počty unikátních domů.
+- 972 902 mapových profilů (~28×29 m) a 1 187 979 jemných profilů (~11×11 m); jemná vrstva pouze husté/vysoké zástavby. 3 272 prázdných oblastí jsou jen v manifestu.
+- 14 833 chunků, dohromady 51 938 756 B gzip; medián 1 357 B, p95 16 132 B, maximum 98 691 B. Komprimovaný manifest 481 680 B.
+- První výpočet profilů 262,039 s, 2 160 881 nových profilů, peak RSS Python buildu 1 525 808 KiB. Samostatná studená extrakce půdorysů trvala 1 029 s (cca 4,82 GB peak RSS); download není zahrnut. Přechod vývojové cache v3→v4 znovu načetl pouze strukturální ways.
+- Node referenční viewport 50,06–50,10 / 14,39–14,49: 29 lokálních chunků, 153 392 B gzip + manifest; aktivní dekódované buffery 4 180 200 B, načtení 56,81 ms, dekódování 32,46 ms. 100 000 vyhodnocení 18,79 ms. Jde o Node a lokální disk, nikoli mobilní síť.
+- Mapová cache 2 MiB + nejvýše 4 MiB aktivních bufferů; detailní cache 1 MiB + 4 MiB aktivních bufferů. Při překročení limitu se oblast označí neověřená.
+
+Referenční body zahrnují Belárii, městskou ulici, vysoký dům, bloky, most, terén, svah s městem a autobus v Liblicích. Každý má souřadnice přichycené k aktuální trase, čas Europe/Prague, astronomickou polohu, oba horizonty a výsledný stav. Neznámé výšky jsou v této sadě časté; to je vlastnost zdroje, nikoli automaticky potvrzené světlo. Ortofoto/3D sanity check nebyl proveden.
+
+Opakovaný build: 55,292 s, **0 nových výpočtů**, všech 2 160 881 profilů z cache, identických 51 938 756 B gzip.
+
+Testy: 66/66 Node testů a Python building suite; GTFS regrese sedmi oblastí × šesti filtrů prošla. Cache, hranice, poškozené chunky/retry, chybějící data, lokální struktury a nativní/NumPy shoda jsou testované.
+
+## Prohlížeč / mobil
+
+Chrome headless 151.0.7922.34, viewport 390×844 a 1440×900, CPU throttling 4×, lokální HTTP bez síťového throttlingu. [Surové výsledky](P3-browser-metrics.json). Historická reference P2 používala Chrome 153 a jiný testovací průběh; absolutní časy se nesmějí porovnávat jako identická síť/zařízení.
+
+Mobil P3: worker ready 0,390 s, první četnost 1,596 s; počáteční data 5 394 455 B, **0 building requestů**. Zapnutí focení: 31 building requestů, 627 492 B (včetně 481 680 B manifestu). Detail bodu přidal 45 930 B. Desktop: 627 685 B při focení, 23 612 B detail.
+
+30 pohybů slideru: **0 building, DEM, GTFS a weather requestů**, žádná nová counts zpráva workeru. CSV 18 570 B na mobilu; share URL obnovila režim focení; žádná JS pageerror. Úzký mobilní detail byl vizuálně zkontrolován, nasvícení a podrobnosti jsou sbalené, průjezdy zůstávají dostupné. Weather v této lokální automatizaci nebylo dostupné; jeho API funkčnost není tímto měřením potvrzena.
+
+UI JavaScript heap: mobil před focením 12,01 MB, po detailu 29,60 MB, nejvyšší vzorek během scénáře 35,86 MB (vzorkování 250 ms). Nejde o fyzickou peak RAM telefonu ani heap GTFS workeru. Node měření celého procesu mělo RSS 93,01 MB; to také není mobilní RAM. Změny heapu zahrnují detail, DOM, mapu a GC, nikoli pouze building buffery. Jejich velikosti a limity jsou uvedené samostatně výše.
+
+Stejným skriptem byl znovu změřen původní P2 commit `8e05d74` ([výsledky](P2-browser-P3-comparison.json)): mobil worker 0,520 s / první četnost 1,887 s proti P3 0,390 / 1,596 s, identický počáteční payload 5 394 455 B. Jedna opakovaná studená relace není statistický benchmark; neukazuje regresi startu. UI heap před focením P2 11,98 MB / P3 12,01 MB. Nejvyšší UI heap scénáře P2 31,01 MB / P3 35,86 MB.
+
+Slider mobil: medián P2 125,35 ms / P3 134,75 ms, p95 P2 163,40 / P3 164,70 ms. Desktop medián P2 307,10 / P3 297,05 ms. Čas zahrnuje dvě requestAnimationFrame a kompletní vykreslení mapy při CPU 4×; není to čistý čas matematického stínění. Samotných 100 000 porovnání v Node trvalo 18,79 ms.
+
+## Publikace
+
+Implementace a benchmark jsou v [PR #2](https://github.com/anlexcz/sotofoto/pull/2). PR Actions ověřují testy a GTFS regresi. Produkční Actions na main sestavují skutečný statický zdroj/profily před Pages deployem; konečný stav běhu a živé stránky se ověřuje při nasazení. Tento dokument nedeklaruje fyzickou přesnost modelu ani dokončený deploy před úspěšným produkčním během.

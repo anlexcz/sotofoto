@@ -13,6 +13,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
   const context=await browser.newContext({viewport}),page=await context.newPage(),cdp=await context.newCDPSession(page),responses=[],requests=[],errors=[];
   await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+  let peakUiHeap=0;const heapSampler=setInterval(()=>cdp.send('Runtime.getHeapUsage').then(h=>{peakUiHeap=Math.max(peakUiHeap,h.usedSize);}).catch(()=>{}),250);
   context.on('request',r=>requests.push(r.url()));context.on('response',async r=>{if(r.url().includes('/data/'))responses.push({url:r.url(),bytes:Number((await r.allHeaders())['content-length']||0),status:r.status()});});page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.__messages=[];const Base=window.Worker;window.Worker=class extends Base{constructor(...a){super(...a);this.addEventListener('message',e=>window.__messages.push({type:e.data.type,at:performance.now()}));}}});
   await page.goto('http://127.0.0.1:8002/');await page.waitForFunction(()=>window.__messages.some(x=>x.type==='counts'));await page.waitForTimeout(500);
@@ -26,6 +27,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
   if(sliderRequests.length||countBefore!==countAfter)throw Error('Slider fetched data / recounted GTFS');
   await page.mouse.click(Math.floor(viewport.width*.55),Math.floor(viewport.height*.45));await page.waitForTimeout(5000);
   const detail=await page.locator('#direct-sun-status').count()?await page.locator('#direct-sun-status').textContent():'P2 reference',detailBuilding=responses.filter(x=>x.url.includes('building')).slice(photo.length),heapAfter=await cdp.send('Runtime.getHeapUsage');
+  await page.screenshot({path:(process.argv[3]||'/tmp/p3-browser-metrics.json').replace(/\.json$/,`-${viewport.width}.png`)});
   const share=page.url(),passages=await page.locator('#passage-count').textContent();
   let csvBytes=0;
   if(await page.locator('#export').isEnabled()){
@@ -33,8 +35,8 @@ const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
   }
   await page.goto(share);await page.waitForFunction(()=>window.__messages.some(x=>x.type==='counts'));await page.waitForTimeout(5000);
   const restored=await page.locator('#photo-mode').getAttribute('aria-pressed');
-  results.push({viewport,cpuThrottle:4,start,initial,photo,detailBuilding,detail,passages,csvBytes,shareRestored:restored,sliderRequests,sliderMs,heapBefore,heapAfter,errors});
-  await context.close();
+  results.push({viewport,cpuThrottle:4,start,initial,photo,detailBuilding,detail,passages,csvBytes,shareRestored:restored,sliderRequests,sliderMs,heapBefore,heapAfter,peakUiHeap,errors});
+  clearInterval(heapSampler);await context.close();
  }
  fs.writeFileSync(process.argv[3]||'/tmp/p3-browser-metrics.json',JSON.stringify({browser:browser.version(),date:new Date().toISOString(),results},null,2));
  console.log(JSON.stringify(results.map(x=>({viewport:x.viewport,start:x.start,buildingBytes:x.photo.reduce((n,r)=>n+r.bytes,0),detail:x.detail,sliderRequests:x.sliderRequests.length,errors:x.errors})),null,2));

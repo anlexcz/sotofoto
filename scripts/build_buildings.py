@@ -98,10 +98,10 @@ def extract(pbf,tiles,directory):
     minlon=min(int(t.split(':')[1])*TILE for t in tiles)-.015
     maxlon=max((int(t.split(':')[1])+1)*TILE for t in tiles)+.015
     factory=osmium.geom.GeoJSONFactory()
-    def distribute(record,bounds):
+    def distribute(record,bounds,halo=RANGE):
         minx,miny,maxx,maxy=bounds
-        for y in range(math.floor((miny-RANGE-20)/Y/TILE),math.floor((maxy+RANGE+20)/Y/TILE)+1):
-            for x in range(math.floor((minx-RANGE-20)/X/TILE),math.floor((maxx+RANGE+20)/X/TILE)+1):
+        for y in range(math.floor((miny-halo-20)/Y/TILE),math.floor((maxy+halo+20)/Y/TILE)+1):
+            for x in range(math.floor((minx-halo-20)/X/TILE),math.floor((maxx+halo+20)/X/TILE)+1):
                 t=f'{y}:{x}'
                 if t in records:records[t].append(record)
     def mark_failure(bounds):
@@ -152,7 +152,7 @@ def extract(pbf,tiles,directory):
                 ww,ss,ee,nn=bounds
                 if nn<minlat or ss>maxlat or ee<minlon or ww>maxlon:return
                 for record in structure_records(w.id,list(line.coords)):
-                    cx,cy,r=record[1];distribute(record,(cx-r,cy-r,cx+r,cy+r))
+                    cx,cy,r=record[1];distribute(record,(cx-r,cy-r,cx+r,cy+r),halo=0)
             except Exception:
                 failed+=1;mark_failure(bounds)
     Handler().apply_file(str(pbf),locations=True,idx='sparse_file_array')

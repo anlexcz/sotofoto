@@ -40,3 +40,15 @@ Podstatný přínos je dřívější náhled, méně kreslených hran a rychlej�
 ## Nasazení a živé ověření
 
 Publikace používá nezměněné standardní `.github/workflows/pages.yml` s unit testy a produkční regresí. Skutečný výsledek nasazení a živé kontroly bude při předání uveden v závěrečné zprávě; offline výsledky výše samy o sobě nejsou ověřením produkce.
+
+## Závěrečná acceptance kontrola a cache
+
+Výchozí `main` `4aad4702051e41366d53de8566ffb303011c3720`: standardní Pages workflow 37525999713 úspěšný. Produkční HTML, app, worker, chunks a chunk-engine byly bajtově porovnány s touto revizí a souhlasily. Původní report nedoložil závěrečnou živou kontrolu; tento dodatek ji doplňuje po nasazení opravy.
+
+Oprava: `force-cache` pouze pro 16znakové obsahové hashe, revalidace všech nehashovaných vstupů, verzované vstupní moduly a potlačení částečného preview nad plně cachovaným výsledkem. RAM limity zůstávají 4 MiB / 8 data, 4 MiB / 16 render, 8 MiB / 24 výsledky, 4 MiB / 16 terén. Velikosti jsou účetní limity, nikoli celkový heap.
+
+Lokálně: 80/80 unit testů; plná produkční regrese 56 kombinací + 63 LOD kombinací. Browser HTTP test s `max-age=0` doložil jeden serverový přenos A i B při A → B → A a souběžném A; manifesty po simulaci nové verze načetl dvakrát a následoval nový hash. Lokální Chromium prošlo desktopem 1440 × 900 i mobilním viewportem 390 × 844, všemi LOD, den/noc, intenzitou, světlem, bodem a rychlým pan/zoom. Světlo a intenzita nevytvořily GTFS request ani counts message.
+
+Reprodukce nad instalovaným Playwright/Chromium: `node scripts/acceptance-http-cache.cjs` a `node scripts/acceptance-browser.cjs https://anlexcz.github.io/sotofoto/ /tmp/block2-live.json`. Runtime lze zadat přes `CODEX_PRIMARY_RUNTIME_NODE_MODULES`, cestu Chromium přes `CHROME_PATH`. Druhý runner zaznamenává skutečné worker Resource Timing (transferSize/encodedBodySize); neinterceptuje síť a nemění produkční soubory. Mobilní viewport/touch nejsou fyzický telefon. Počasí může být v testovacím prostředí nedostupné, zůstává explicitně neověřené a neblokuje provoz.
+
+Stav nové publikace: čeká na standardní workflow a následnou živou acceptance kontrolu. Blok 2 tímto mezivýsledkem ještě není označen DONE.

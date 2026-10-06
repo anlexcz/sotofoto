@@ -55,3 +55,20 @@ test('Render preview arrives while exact schedule is blocked; stale and missing 
  let cancelled=false;const stale=new ViewportEngine(fixture.meta,index,async id=>read(id),async id=>{cancelled=true;return load(index.chunks[id].render[level].path);});let published=false;assert.equal(await stale.counts(bounds,f,()=>cancelled,()=>published=true,10),null);assert.equal(published,false);
  const missing=new ViewportEngine(fixture.meta,index,async id=>read(id),async()=>{throw Error('offline render');});assert.ok((await missing.counts(bounds,f)).counts.some(Boolean));
 });
+
+test('A → B → A, repeated viewport, zoom and filter reuse precise chunks; warm views skip partial previews',async()=>{
+ let reads=0,previews=0;const view=new ViewportEngine(fixture.meta,index,async id=>{reads++;return read(id);},async(id,zoom)=>load(index.chunks[id].render[zoom<=11?'overview':zoom<=14?'medium':'detail'].path));
+ const a=[50.024,14.439,50.026,14.449],b=[50.024,14.461,50.026,14.471];
+ await view.counts(a,f,()=>false,()=>previews++,10);assert.ok(previews);previews=0;
+ await view.counts(a,f,()=>false,()=>previews++,10);assert.equal(previews,0);
+ await view.counts(b,f);const before=reads;
+ const original=await view.counts(a,f,()=>false,()=>previews++,15);
+ const zoomed=await view.counts(a,f,()=>false,()=>previews++,10);assert.deepEqual(original.counts,zoomed.counts);assert.equal(reads,before);assert.equal(previews,0);
+ await view.counts(a,{...f,operation:'night'});assert.equal(reads,before);
+});
+
+test('Cancelled viewport keeps successfully downloaded chunks for next generation',async()=>{
+ let cancelled=false,reads=0;const view=new ViewportEngine(fixture.meta,index,async id=>{reads++;cancelled=true;return read(id);});
+ assert.equal(await view.counts(bounds,f,()=>cancelled),null);const downloaded=[...view.cache.items.keys()];assert.ok(downloaded.length);
+ cancelled=false;await view.counts(bounds,f);assert.equal(reads,selectChunks(index,bounds).length);
+});

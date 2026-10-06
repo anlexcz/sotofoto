@@ -49,7 +49,9 @@ Detail bodu vybírá všechny balíčky dotýkající se poloměru, nezávisle n
 - LRU výsledků: nejvýše 24 položek / 8 MiB odhadu, včetně identit jízd a příspěvků linek.
 - Terénní LRU: nejvýše 16 balíčků / 4 MiB dekomprimovaných bajtů.
 - Stejný rozpracovaný požadavek sdílí Promise; chyba se necachuje a umožňuje opakování.
-- Browser HTTP cache poskytuje další úroveň po vyhození z RAM.
+- Browser HTTP cache poskytuje další úroveň po vyhození z RAM. Hashované geometry/schedule/render/terrain gzip soubory používají `force-cache`, takže i po vypršení Pages `max-age=600` mohou využít uloženou odpověď bez revalidace. Nehashované soubory používají `no-cache`. `meta.json`, `chunks.json.gz` (i fallback JSON) a `terrain-index.json` se revalidují při inicializaci, nikoli při každém pohybu. HTTP cache spravuje browser a může ji vyprázdnit; nejde o garantované offline úložiště.
+- Zrušení viewportu invaliduje výsledek, ne síťový přenos ani úspěšně uložený chunk. LRU a pending Promise jsou oddělené. Změna zoomu vybírá jiný render hash; geometrie a schedule nemají zoom v klíči. Čas světla nevolá workerový provoz.
+- Je-li celý výřez v cache výsledků, neposílají se částečné statické náhledy. Potvrzený canvas zůstává do přijetí výsledku. Při překročení LRU může stejný viewport znovu vyvolat fetch/dekompresi; samo o sobě to není nový síťový přenos.
 
 Limity nejsou tvrdý strop skutečné JS RAM: objekty, právě zpracovávaný balíček, aktuální výsledek a dočasné dekódování potřebují paměť navíc. Široký výřez vyžaduje více přenosu a více viditelné geometrie, ale jízdní řád se i tehdy zpracovává postupně. Není přednačítání sousedních oblastí mimo 8% okraj. Stav načítání a chyby jsou explicitní; chybějící balíček se nevydává za nulový provoz. CSV je při načítání detailu zakázané. Neúspěšný požadavek nepublikuje částečnou mapovou agregaci.
 

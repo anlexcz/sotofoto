@@ -1,11 +1,14 @@
 import {Engine} from './engine.js?v=block1';
-import {selectChunks,mergeChunks,ChunkCache} from './chunks.js';
+import {selectChunks,mergeChunks,ChunkCache} from './chunks.js?v=http-cache-1';
 const fields=['surfaceForward','surfaceBackward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
 export class ViewportEngine {
   constructor(meta,index,load,renderLoad=null){this.renderLoad=renderLoad;this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:24});}
   async counts(bounds,filter,cancelled=()=>false,onPreview=null,zoom=19){
   const {meta,index,cache,countCache}=this;
   const ids=selectChunks(index,bounds,filter),edges=new Map(),journeys=new Set(),display=[];
+  // Keep the confirmed canvas during a warm pan/zoom/filter result.
+  // Replacing it by partial static previews would briefly erase known routes.
+  const warm=ids.every(id=>countCache.items.has(id+'|'+JSON.stringify(filter)));
   for(const id of ids){
     if(cancelled())return null;
     const c=index.chunks[id],key=id+'|'+JSON.stringify(filter);
@@ -13,7 +16,7 @@ export class ViewportEngine {
     const renderPromise=this.renderLoad?this.renderLoad(id,zoom):null;
     let loadPromise=countCache.items.has(key)?null:cache.get(id,c.geometryDecodedBytes+c.scheduleDecodedBytes);
     loadPromise?.catch(()=>{});
-    if(renderPromise){const render=await renderPromise.catch(()=>null);if(cancelled())return null;if(render){for(const segment of render.segments)display.push(segment);onPreview?.(render,id);}}
+    if(renderPromise){const render=await renderPromise.catch(()=>null);if(cancelled())return null;if(render){for(const segment of render.segments)display.push(segment);if(!warm)onPreview?.(render,id);}}
     let entry=countCache.items.get(key)?.value;
     if(entry){await countCache.get(key);}
     else {

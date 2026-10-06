@@ -8,8 +8,13 @@ export function selectChunks(index,bounds,filter=null){
     return true;
   }).map(([id])=>id).sort();
 }
+// Pages sets max-age=600; immutable content hashes can reuse even stale HTTP entries.
+// Unversioned URLs must still revalidate, including compatibility manifests.
+export function dataCacheMode(url){
+  return /\.[a-f0-9]{16}\.(?:(?:geometry|schedule|overview|medium|detail)\.)?(?:json|bin)\.gz$/.test(new URL(url,'https://data.invalid/').pathname)?'force-cache':'no-cache';
+}
 export async function zipped(url){
-  const r=await fetch(url);if(!r.ok)throw Error(`Data: HTTP ${r.status}`);
+  const r=await fetch(url,{cache:dataCacheMode(url)});if(!r.ok)throw Error(`Data: HTTP ${r.status}`);
   if(!globalThis.DecompressionStream)throw Error('Použij aktuální Chrome, Firefox nebo Safari.');
   return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();
 }
@@ -21,7 +26,7 @@ export function decodeSchedule(buffer){
   for(const [,t] of data.trips){const [offset,length]=t[5];if(offset+length>times.length)throw Error('Poškozené časy');t[5]=times.subarray(offset,offset+length);}
   return data;
 }
-export async function scheduleFile(url){const r=await fetch(url);if(!r.ok)throw Error(`Data: HTTP ${r.status}`);return decodeSchedule(await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());}
+export async function scheduleFile(url){const r=await fetch(url,{cache:dataCacheMode(url)});if(!r.ok)throw Error(`Data: HTTP ${r.status}`);return decodeSchedule(await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());}
 export class ChunkCache {
   constructor(load,{maxBytes=24*1024*1024,maxEntries=24}={}){this.load=load;this.maxBytes=maxBytes;this.maxEntries=maxEntries;this.items=new Map();this.pending=new Map();this.bytes=0;}
   async get(id,bytes=1){

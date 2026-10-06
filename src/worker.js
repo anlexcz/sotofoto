@@ -1,8 +1,8 @@
 import {renderView,previewView,geometryLevel} from './render-view.js';
 import {project} from './core.js';
-import {ViewportEngine} from './chunk-engine.js?v=block2';
+import {ViewportEngine} from './chunk-engine.js?v=block2-acceptance-1';
 import {Engine} from './engine.js?v=block1';
-import {selectChunks,mergeChunks,ChunkCache,zipped,scheduleFile} from './chunks.js';
+import {selectChunks,mergeChunks,ChunkCache,zipped,scheduleFile} from './chunks.js?v=http-cache-1';
 let meta,index,cache,renderCache,view,exactView,generation=0;
 const buffers=r=>[...new Set([...Object.values(r),...Object.values(r.geometry||{})].filter(v=>ArrayBuffer.isView(v)).map(v=>v.buffer))];
 const root=new URL('../data/',import.meta.url);

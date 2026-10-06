@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {frequency,FREQUENCY_WIDTHS} from '../src/intensity.js';
-import {matchesOperation,operationValue} from '../src/filter-utils.js';
+import {matchesOperation,operationValue,toggleOperation} from '../src/filter-utils.js';
 import {Engine} from '../src/engine.js';
 const base={date:'2026-10-05',start:0,end:86400,allDay:true,operation:'all',routes:[],agencies:[],modes:[],directions:[]};
 function fixture(rows){
@@ -50,7 +50,7 @@ test('Merged directions, split directions and compass selection retain separate 
 });
 test('PID classification drives counts, detail and statistics, even for daily routes after midnight',()=>{
   const engine=fixture([[0,90000],[1,1800],[0,12*3600],[1,12*3600+60]]);
-  for(const [operation,count] of [['all',4],['day',2],['night',2]]){
+  for(const [operation,count] of [['all',4],['day',2],['night',2],['none',0]]){
     const filter={...base,operation},result=engine.counts(filter),detail=engine.passages([50.005,14],40,filter,true).passages;
     assert.equal(result.counts[0],count);assert.equal(result.journeys,count);assert.equal(detail.length,count);
     assert.ok(detail.every(row=>matchesOperation(engine.meta.routes[row.route],operation)));
@@ -59,11 +59,16 @@ test('PID classification drives counts, detail and statistics, even for daily ro
   assert.equal(engine.counts({...base,operation:'night',allDay:false,start:0,end:3600}).counts[0],1);
 });
 test('Operation survives the JSON URL format and old or invalid state defaults to all',()=>{
-  for(const operation of ['all','day','night'])assert.equal(operationValue(JSON.parse(decodeURIComponent(encodeURIComponent(JSON.stringify({operation})))).operation),operation);
+  for(const operation of ['all','day','night','none'])assert.equal(operationValue(JSON.parse(decodeURIComponent(encodeURIComponent(JSON.stringify({operation})))).operation),operation);
   assert.equal(operationValue(undefined),'all');assert.equal(operationValue('bogus'),'all');
 });
 test('Manual period crossing midnight includes next civil day without folding passage times',()=>{
   const engine=fixture([[0,1800],[0,23*3600]]),filter={...base,allDay:false,start:23*3600,end:25*3600};
   assert.equal(engine.counts(filter).counts[0],2);assert.equal(engine.counts(filter).categories[0],3);
   assert.equal(frequency(2,23*3600,86400+1800,filter).interval,60);
+});
+
+test('Day and night toggle independently through all four selections',()=>{
+  const transitions={all:{day:'night',night:'day'},day:{day:'none',night:'all'},night:{day:'all',night:'none'},none:{day:'day',night:'night'}};
+  for(const [state,types] of Object.entries(transitions))for(const [type,expected] of Object.entries(types))assert.equal(toggleOperation(state,type),expected);
 });

@@ -1,5 +1,5 @@
 import {frequency} from './intensity.js';
-import {matchesOperation} from './filter-utils.js';
+import {matchesOperation} from './filter-utils.js?v=operation-2';
 import {dayContexts,dateKey,interpolation,passageTime,bearing,compass,project,addDays} from './core.js';
 
 export class Engine {

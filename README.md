@@ -13,7 +13,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 - Tloušťka tras se přizpůsobuje přiblížení, aby při oddálení nezakrývaly mapový podklad.
 - Barvy podle druhu dopravy, linky, dopravce, intenzity nebo jedna vlastní barva; průhlednost. Tlačítko ⓘ vedle režimu focení otevírá legendu četnosti a aktuálních barev; v režimu focení vysvětluje nasvícení. Zavření tlačítkem, křížkem, klepnutím mimo nebo Escape.
 - CSV export všech vybraných průjezdů včetně metra; u metra jsou sluneční údaje prázdné a světlo výslovně nehodnocené. Krátký odkaz na místo zachovává polohu, zoom a provozní filtry a otevře výchozí datum / celý den. Samostatný odkaz na plán zachovává i datum, provozní čas a nezávislý čas světla. Nové odkazy neukládají vzhled; staré serializované odkazy se dál načítají.
-- Detail bodu nabízí obyčejný odkaz „Otevřít v Mapy.com“ na přesné souřadnice se značkou, bez API klíče. Jemné bílé zastření podkladu zlepšuje čitelnost tras.
+- Detail bodu nabízí ikonu mapy napravo od souřadnic v hlavičce („Otevřít v Mapy.com“) jako obyčejný odkaz na přesné souřadnice se značkou, bez API klíče. Jemné bílé zastření podkladu zlepšuje čitelnost tras.
 - Responzivní ovládání pro mobil; data podle výřezu mapy, omezené cache a výpočty ve Web Workeru. Při startu se nestahuje celý PID.
 
 ## Data a pravidla výpočtu

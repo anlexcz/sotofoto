@@ -65,6 +65,12 @@ Optimalizace nemění občanský den Praha, předchozí/následující GTFS serv
 
 `npm test` zahrnuje encoder/decoder, hranice, dlouhou hranu, společné úseky, překryv bez duplicit, smyčku, lazy cache, cache hit/eviction/retry, zrušení požadavku, půlnoc, noční a speciální provoz i geografickou terénní cache bez DEM požadavků. Produkční `regression.mjs` ověřuje sedm oblastí ve více filtrech proti úplnému datasetu: počty, směry, kategorie, pravidelné počty, barvy a všechny atributy detailu kromě interních ID.
 
+## Stav P2
+
+Výkonová a datová část P2 je dokončená a nasazená. Závěrečné ověření zahrnuje úspěšné načtení počasí v detailu i mapové vrstvě na produkci. Uživatel předal jeden případ mobilu, kde původní verze padala a nová funguje; nejde o plošný benchmark telefonů. Podrobnosti a limity ověření jsou v [měření P2](P2-MERENI.md).
+
+Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou po dohodě odložené samostatné úpravy UI, nikoli zbývající podmínky P2.
+
 ## Další práce
 
 P3 může přidat budovy a místní stínění jako samostatné geografické balíčky s vlastním manifestem, verzí a limitem cache. Rozhraní `profileAt` a oddělení provozního filtru od času světla nevyžadují přestavbu GTFS. Budovy nejsou v P2 implementované. P4/P5 zůstávají odložené.

@@ -35,7 +35,7 @@ Prohlížeč: Chromium 153, místní HTTP server, studené kontexty. Mobilní vi
 | Mobil: geometrické hrany v UI po P2 | celá síť | 6,930 |
 | Nové datové / weather požadavky při pohybu světelného slideru | — | 0 / 0 |
 
-UI používá jeden Canvas tras, nikoliv jednotlivé Leaflet vrstvy všech hran. Z uvedených hran kreslí pouze průnik s viewportem. Baseline prohlížečového testu neměla skutečný původní terénní soubor; jeho další přenos ani RAM nejsou v předchozích číslech zahrnuté. OSM dlaždice a Open-Meteo měly v testovacím prostředí síťové výpadky. Ověřeno bylo korektní hlášení nedostupnosti; úspěšný živý forecast nelze z těchto testů tvrdit.
+UI používá jeden Canvas tras, nikoliv jednotlivé Leaflet vrstvy všech hran. Z uvedených hran kreslí pouze průnik s viewportem. Baseline prohlížečového testu neměla skutečný původní terénní soubor; jeho další přenos ani RAM nejsou v předchozích číslech zahrnuté. OSM dlaždice a Open-Meteo měly v testovacím prostředí síťové výpadky. Ověřeno bylo korektní hlášení nedostupnosti; tyto původní testy samy nedokládaly úspěšnou předpověď. Úspěšné načtení bylo následně ověřeno přímo na produkci, viz závěrečná kontrola níže.
 
 ## Balíčky a serverový dataset
 
@@ -88,3 +88,32 @@ Surová měření jsou ve `p2-*-metrics.json` a `p2-browser-before.json`. Prohl�
 ## Stav publikace
 
 P2 je začleněné do `main` přes pull request #1 po úspěšných unit testech, produkčním buildu a regresním porovnání. Push do `main` spouští nasazení GitHub Pages. Kontrolní běhy pull requestů provádějí build bez publikování; jejich souběh je oddělený od produkčního workflow. Aktuální výsledek nasazení je v GitHub Actions.
+
+## Závěrečná kontrola a uzavření P2 — 6. 10. 2026
+
+P2 je dokončené v rozsahu výkonové a datové optimalizace a nasazené na GitHub Pages. Produkční build, 54 unit/integration testů, regresní porovnání a deploy prošly (Actions běh `37454360754`).
+
+### Počasí na produkci
+
+Kontrola proběhla v živé aplikaci v cloudovém Chrome pro datum 6. 10. 2026, centrum Prahy, zoom 13 a bod přibližně 50,08149 / 14,41080:
+
+- Režim focení úspěšně načetl předpověď ze skutečného API; nebyla použita testovací náhrada.
+- Mapová vrstva počasí vykázala 100% pokrytí aktuálního výřezu, vzorkování přibližně 3 km.
+- Detail bodu zobrazil počasí i hodinový graf: v 13:55 dohlednost 7,5 km, oblačnost 0 % a teplotu přibližně 19 °C.
+- Výběr 10:00 změnil detail na dohlednost 580 m, oblačnost 0 % a přibližně 11 °C; zobrazilo se upozornění na možnou mlhu. Čas mapové vrstvy se změnil také na 10:00.
+- Počet průjezdů zůstal 888 za den a provozní filtr zůstal celý den. Počasí a světelný čas tedy nezměnily provozní výběr.
+
+Jde o ověření načítání a zobrazení modelové předpovědi, nikoli o ověření její meteorologické přesnosti. Dřívější instrumentovaný test doložil 0 nových datových a weather požadavků při pohybu slideru; závěrečná kontrola přes UI tento počet znovu neměřila.
+
+### Zpětná vazba ze skutečných mobilů
+
+Uživatel potvrdil funkční aplikaci na svém telefonu; stejný telefon zvládal i původní verzi. Zároveň předal zprávu jednoho dalšího uživatele: původní verze na jeho mobilu padala, po P2 funguje. Jde o jeden hlášený případ odstranění pádů, bez znalosti modelu zařízení a bez instrumentovaného měření. Není to garance pro všechny slabší telefony.
+
+### Odložené úpravy UI
+
+Po dohodě s uživatelem nejsou podmínkou uzavření P2:
+
+- tlačítka −5 / +5 minut a další úpravy nativního časového pickeru (existující HTML krok 300 sekund zůstává),
+- odkaz na bod v Mapy.com; případná Panorama vyžaduje samostatné ověření.
+
+Samostatné zobrazení základní dopravní sítě před dokončením místní intenzity a adaptivní vizuální degradace nebyly povinné požadavky. Další optimalizace mají vycházet z nových měření nebo hlášených problémů. Budovy a lokální stínění patří do P3.

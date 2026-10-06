@@ -87,4 +87,4 @@ Surová měření jsou ve `p2-*-metrics.json` a `p2-browser-before.json`. Prohl�
 
 ## Stav publikace
 
-Implementace a místní validace jsou připravené pro review. Automatická kontrola odmítla přímou aktualizaci `main`; produkce zatím zůstává na původní verzi. Pull request spouští build a regresní kontrolu bez deploye; publikace je vyhrazena větvi `main`.
+P2 je začleněné do `main` přes pull request #1 po úspěšných unit testech, produkčním buildu a regresním porovnání. Push do `main` spouští nasazení GitHub Pages. Kontrolní běhy pull requestů provádějí build bez publikování; jejich souběh je oddělený od produkčního workflow. Aktuální výsledek nasazení je v GitHub Actions.

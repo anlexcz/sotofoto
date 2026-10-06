@@ -74,3 +74,32 @@ Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou po dohodě odložené 
 ## Další práce
 
 P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stavu P2 (commit `8e05d74`). Neověřená zástavba a limity načítání potlačovaly barvy směru světla, takže mapový přehled nebyl prakticky použitelný. Kód, build, testy a reporty P3 jsou odstraněné; historie zůstává v Gitu. Slunce, terén, počasí a optimalizace P1/P2 zůstávají. P3 nyní není implementované; případný nový návrh vyžaduje samostatné zadání. P4/P5 zůstávají odložené.
+
+## Dohodnuté úkoly – 6. 10. 2026 (dosud neimplementované)
+
+### U1: Metro ve focení a v detailu bodu
+
+- V režimu focení zobrazovat metro neutrálně šedé, bez výpočtu/skórování nasvícení a bez zahrnutí mezi vhodné průjezdy v doporučení „Kdy fotit“. V legendě uvést „Metro — nasvícení se nehodnotí“; šedá u metra neznamená ověřený stín. Část metra vede nad zemí; jde o dohodnuté zjednodušení.
+- Zrušit automatické potlačení metra při souběhu s povrchovou dopravou v okolí vybraného bodu. O zahrnutí rozhoduje výhradně aktivní filtr druhu dopravy a prostorový/časový výběr.
+- Zachovat průjezdy metra v detailu, počtech a exportu při zapnutém filtru; neodstraňovat data. Jiné režimy barev zůstávají beze změny.
+- Při realizaci ověřit smíšený úsek metro/povrch, pouze metro, vypnuté metro, doporučení a CSV. Sdílená kreslená hrana nesmí kvůli metru zešednout i pro povrchovou dopravu.
+
+### O1: Více úrovní podrobnosti geometrie podle zoomu
+
+- Navrhnout a změřit alespoň tři úrovně: hrubý oddálený přehled, střední detail a nejpřesnější blízký pohled. Jde o linie tras, nikoli plošné polygony.
+- Prahy zoomu a toleranci v metrech/pixelech stanovit podle měření, ne libovolnými čísly. Zahrnout mobil, široký výřez, pan/zoom a změnu času světla; porovnat počet kreslených segmentů, přenos, čas vykreslení a paměť.
+- Zjednodušení pokud možno předpočítat při buildu a publikovat prostorově po chunkech. Zvolit, zda více úrovní geometrie skutečně ušetří i přenos, místo stažení všech variant najednou.
+- Oddělit vykreslovací geometrii od přesné geometrie detailu a interpolace průjezdů. Zachovat křižovatky, společné úseky, hranice klasifikace provozu, směry a správné četnosti; nevytvářet spojení oddělených tras.
+- Směr světla a terénní hodnocení nesmějí být odvozené pouze z hrubé spojnice zatáčky tak, že změní skutečný místní azimut. Navrhnout agregaci barev pro přehled a ověřit hranice přepnutí úrovní.
+- Samotná menší geometrie nemusí zrychlit výpočet jízdních řádů; odděleně doložit přínos kreslení, slunečních výpočtů a provozní agregace. Zachovat výjezdy, zátahy a vzácné průjezdy.
+
+### O2: Trvalé předpočítané terénní podklady nezávislé na GTFS
+
+- Již funguje v P2: geografická cache profilu bez ID GTFS; známé buňky se přebírají, počítají se pouze chybějící. Pokud nejsou nové buňky, build jen publikuje uložené profily. Klient načítá hotové horizonty a porovnává je s aktuální výškou Slunce; DEM nepočítá.
+- Slabina: výsledky jsou uchované v dočasné GitHub Actions cache, která může zmizet. Pak se musí terén znovu vypočítat. Každý deploy navíc znovu sestavuje publikované balíčky pro oblast aktuálního feedu.
+- Navrhnout trvale uložený, verzovaný geografický dataset terénních horizontů s manifestem a hashi, samostatný od denních GTFS aktualizací. Běžný GTFS build jej převezme bez DEM výpočtu; klient dál načítá jen místní chunky.
+- Zvolit pokrytí PID s rezervou a postup pro nové trasy mimo pokrytí: explicitně doplnit chybějící geografické buňky samostatným krokem, nebo přiznat neověřený terén. Nepovažovat chybějící profil za nulový horizont.
+- Přepočet vyvolat jen změnou DEM, algoritmu, rozlišení, dosahu, výšky cíle nebo explicitním rozšířením pokrytí. Terén je relativně stálý, nikoli navždy neměnný; zachovat verzi zdroje.
+- Při návrhu vybrat trvalé úložiště a distribuční cestu bez zbytečného backendu; určit velikost a licenci. Při realizaci ověřit dvě různé GTFS aktualizace, ztrátu Actions cache a novou oblast. Výpočet polohy Slunce pro vybraný čas samozřejmě zůstává.
+
+Tyto položky jsou zadání pro pozdější práci; zápis nemění aplikaci ani znovu nezavádí P3.

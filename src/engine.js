@@ -1,4 +1,4 @@
-import {frequency,circularPeriod} from './intensity.js?v=p11-1';
+import {frequency,DAYTIME_REFERENCE_SECONDS} from './intensity.js?v=p12-1';
 import {passageOperation} from './operation-types.js';
 import {matchesOperation} from './filter-utils.js?v=operation-2';
 import {dayContexts,dateKey,interpolation,passageTime,bearing,compass,project,addDays} from './core.js';
@@ -64,8 +64,11 @@ export class Engine {
     const n=this.g.edges.length,counts=new Uint32Array(n),forward=new Uint32Array(n),backward=new Uint32Array(n),colors=new Int32Array(n).fill(-1),agencyColors=new Int32Array(n).fill(-1);
     const routeCounts={},edgeRoutes={},edgeAgencies={};let journeys=0;
     const regularCounts=new Uint32Array(n),regularForward=new Uint32Array(n),regularBackward=new Uint32Array(n);
-    // Sort each direction once per whole-day filter result; redraws reuse categories.
-    const times=filter.allDay?[new Array(n),new Array(n)]:null;
+    // Preserve all regular counts for statistics; whole-day intensity uses only
+    // daily routes. Manual windows include both daily and night regular service.
+    const intensityCounts=filter.allDay?new Uint32Array(n):regularCounts;
+    const intensityForward=filter.allDay?new Uint32Array(n):regularForward;
+    const intensityBackward=filter.allDay?new Uint32Array(n):regularBackward;
     for(const {t,offset} of this.instances(filter)) {
       let contributed=false;
       const p=this.s.patterns[t[3]],refs=this.g.shapes[p[0]][0],s=this.patternSegments[t[3]];
@@ -79,24 +82,20 @@ export class Engine {
         const frequencies=routeCounts[e]??={};frequencies[t[0]]=(frequencies[t[0]]||0)+1;(edgeRoutes[e]??=new Set()).add(t[0]);(edgeAgencies[e]??=new Set()).add(t[1]);counts[e]++;if(ref>0)forward[e]++;else backward[e]++;
         if(!s.regular||s.regular[k]){
           regularCounts[e]++;if(ref>0)regularForward[e]++;else regularBackward[e]++;
-          if(times)(times[ref>0?0:1][e]??=[]).push(((time%86400)+86400)%86400);
+          if(filter.allDay&&this.meta.routes[t[0]][5]===0){
+            intensityCounts[e]++;if(ref>0)intensityForward[e]++;else intensityBackward[e]++;
+          }
         }
         if(colors[e]<0){colors[e]=t[0];agencyColors[e]=t[1];}contributed=true;
       }
       if(contributed)journeys++;
     }
     const categories=new Uint8Array(n).fill(6),forwardCategories=new Uint8Array(n).fill(6),backwardCategories=new Uint8Array(n).fill(6);
+    const period=filter.allDay?DAYTIME_REFERENCE_SECONDS:filter.end-filter.start;
     for(let e=0;e<n;e++){
-      if(regularCounts[e]<2)continue;
-      let period=filter.end-filter.start,forwardPeriod=period,backwardPeriod=period;
-      if(times){
-        const a=times[0][e]?Float64Array.from(times[0][e]).sort():[],b=times[1][e]?Float64Array.from(times[1][e]).sort():[];
-        times[0][e]=null;times[1][e]=null;
-        period=circularPeriod(a,b);forwardPeriod=circularPeriod(a);backwardPeriod=circularPeriod(b);
-      }
-      categories[e]=frequency(regularCounts[e],period).category;
-      forwardCategories[e]=frequency(regularForward[e],forwardPeriod).category;
-      backwardCategories[e]=frequency(regularBackward[e],backwardPeriod).category;
+      categories[e]=frequency(intensityCounts[e],period).category;
+      forwardCategories[e]=frequency(intensityForward[e],period).category;
+      backwardCategories[e]=frequency(intensityBackward[e],period).category;
     }
     return {categories,forwardCategories,backwardCategories,regularCounts,regularForward,regularBackward,counts,forward,backward,colors,agencyColors,journeys,routeCounts,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
   }

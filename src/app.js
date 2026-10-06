@@ -1,4 +1,4 @@
-import {BuildingLoader,buildingAt,fetchBuildingIndex} from './buildings.js';
+import {BuildingLoader,buildingAt,fetchBuildingIndex} from './buildings.js?v=p3-2';
 import {selectChunks,ChunkCache,zipped} from './chunks.js';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=p12-1';

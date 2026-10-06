@@ -40,7 +40,7 @@ export class BuildingLoader{
     if(token!==this.generation)return false;const c=this.index.chunks[id];
     if(c.status==='empty'){next.set(id,EMPTY);continue;}
     if(c.status!=='profiles'||!Number.isFinite(c.bytes)||c.bytes<=0||bytes+c.bytes>this.maxActiveBytes){this.omitted++;continue;}
-    try{const value=await this.cache.get(id,c.bytes);next.set(id,value);bytes+=c.bytes;}
+    try{const value=this.active.get(id)||await this.cache.get(id,c.bytes);next.set(id,value);bytes+=c.bytes;}
     catch{this.error=true;}
    }
    if(token!==this.generation)return false;this.active=next;return true;
@@ -59,9 +59,10 @@ export function buildingAt(sun,profile){
  if(!profile)return {state:'unknown',quality:'unknown',reason:'missing'};
  if(profile.empty)return {state:'clear',quality:'exact',horizon:0,upper:0};
  const k=Math.floor(((sun.azimuth%360)+360)%360/5),exact=profile.exact[k]/10,estimated=profile.estimated[k]/10,upper=profile.upper[k]/10,flags=profile.flags[k];
+ // Local 3D uncertainty invalidates the flat-ground building bounds.
+ if(flags&4)return {state:'unknown',quality:'unknown',horizon:Math.max(exact,estimated),upper,reason:'structure'};
  if(sun.altitude<=exact&&exact>0)return {state:'blocked',quality:'exact',horizon:exact,upper};
  if(sun.altitude<=estimated&&estimated>0)return {state:'blocked',quality:'estimated',horizon:estimated,upper};
- if(flags&4)return {state:'unknown',quality:'unknown',horizon:Math.max(exact,estimated),upper,reason:'structure'};
  if(flags&1)return {state:'unknown',quality:'unknown',horizon:Math.max(exact,estimated),upper,reason:'height'};
  if(sun.altitude<=upper)return {state:'unknown',quality:flags&2?'estimated':'exact',horizon:Math.max(exact,estimated),upper,reason:'position'};
  return {state:'clear',quality:flags&2?'estimated':'exact',horizon:Math.max(exact,estimated),upper};

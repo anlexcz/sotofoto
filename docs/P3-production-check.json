@@ -1,0 +1,53 @@
+{
+  "checkedAt": "2026-10-06",
+  "actions": "https://github.com/anlexcz/sotofoto/actions/runs/37503086155",
+  "commit": "8e74cf442f383919f5d61b49a11fb3379cfd4b13",
+  "source": {
+    "url": "https://download.geofabrik.de/europe/czech-republic-261005.osm.pbf",
+    "lastModified": "Tue, 06 Oct 2026 15:47:30 GMT",
+    "downloadedAt": "2026-10-06T17:24:59Z",
+    "sha256": "0f780e03688d023730dc7a7a8917cafc2c2922d4631d5032b222eb86362e4537"
+  },
+  "build": {
+    "seconds": 171.69,
+    "computed": 2160881,
+    "cached": 0,
+    "empty": 3272,
+    "gzipBytes": 51938604,
+    "peakRssKiB": 1444020,
+    "mapProfiles": 972902,
+    "detailProfiles": 1187979
+  },
+  "stats": {
+    "objects": 2792448,
+    "components": 1583035,
+    "failed": 0,
+    "fatal": false,
+    "failedTiles": [],
+    "heights": {
+      "exact": 5214,
+      "estimated": 722702,
+      "unknown": 855119
+    }
+  },
+  "chunks": 14833,
+  "gzipManifestBytes": 481666,
+  "chunkMedianBytes": 1357,
+  "chunkP95Bytes": 16132,
+  "chunkMaxBytes": 98691,
+  "liveSurfacePoint": {
+    "lat": 50.094567,
+    "lon": 14.453766,
+    "date": "2026-10-07",
+    "time": "09:00 Europe/Prague",
+    "directSun": "blocked by building, estimated height",
+    "passages": 944
+  },
+  "liveChecks": [
+    "share date/time/point restored",
+    "weather forecast available",
+    "CSV download completed",
+    "map/detail binary length and content hashes validated"
+  ],
+  "followup": "local structure priority validated by unit/browser tests; following commit publishes it with unchanged geographic profiles"
+}

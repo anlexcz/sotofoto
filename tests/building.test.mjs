@@ -16,3 +16,7 @@ test('stale viewport response cannot replace current or disabled state',async()=
 test('Python footprint, height model, geographical cache and source halo tests',()=>{const r=spawnSync('python',['tests/buildings_test.py'],{encoding:'utf8'});assert.equal(r.status,0,r.stdout+r.stderr);});
 
 test('detail layer stays lazy until a point is selected and is separate from map cache',async()=>{let requests=0;const root={...index,detail:{...index,cell:[.0001,.00015]}};const l=new BuildingLoader({layer:'detail',manifest:async()=>root,load:async()=>{requests++;return {rows:new Map()};}});await l.update([50,15,50,15]);assert.equal(requests,0);await l.update([50,15,50,15],{point:[50,15]});assert.ok(requests>0);});
+
+test('local bridge or covered geometry overrides flat-ground building bounds',()=>{const p=profile(30,90,4),b=buildingAt(sun(15),p);assert.equal(b.state,'unknown');assert.equal(b.reason,'structure');assert.equal(directSun(sun(15),Array(72).fill(0),b).state,'unknown');p.flags.fill(1);assert.equal(buildingAt(sun(15),p).state,'blocked');});
+
+test('overlapping viewport reuses active buffers larger than the LRU without fetching again',async()=>{let n=0;const l=new BuildingLoader({manifest:async()=>index,maxBytes:100,maxEntries:1,maxActiveBytes:200,load:async()=>{n++;return {rows:new Map()};}});await l.update([50,15,50.01,15.02],{enabled:true});assert.equal(n,2);await l.update([50,15,50.01,15.02],{enabled:true,point:[50,15]});assert.equal(n,2);});

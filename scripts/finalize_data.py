@@ -7,7 +7,6 @@ def finalize(directory=Path('dist/data')):
         raise ValueError('Chunked data is required before finalization')
     json.loads((directory/'chunks.json').read_text())
     json.loads((directory/'terrain-index.json').read_text())
-    json.loads((directory/'building-index.json').read_text())
     for name in ['geometry.json.gz','schedule.json.gz','terrain.json.gz']:
         (directory/name).unlink(missing_ok=True)
 if __name__=='__main__':finalize()

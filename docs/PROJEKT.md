@@ -73,36 +73,4 @@ Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou po dohodě odložené 
 
 ## Další práce
 
-P3 implementuje samostatné geografické balíčky zástavby, popsané níže. Stav funkčního ověření a publikace je v `P3-MERENI.md`. P4/P5 zůstávají odložené.
-
-## P3: samostatná geografická zástavba
-
-Zdroj je OSM PBF celé ČR z Geofabrik; klient nemá API klíč, backend ani polygony. Licence odvozené databáze je ODbL 1.0. PBF a polygon pokrytí, URL snapshotu a SHA-256 se uchovávají v Actions cache `.cache/buildings`; aktualizace snapshotu je explicitní ruční volba workflow. GTFS určuje pouze požadované geografické klíče v okolí tras. Změna jeho ID nikdy není součástí klíče profilu.
-
-`build_buildings.py` skládá OSM areas včetně multipolygonů/děr pomocí libosmium. Budovy, části a kryté/tunelové dopravní cesty a mosty přiřazuje do příslušných geografických oblastí. Budovy mají **500m halo + rezervu geografické buňky**, takže překážka za hranicí chunku zůstává zahrnuta. ID objektu deduplikuje kopie uvnitř dlaždice. Obálky se kombinují maximem, nikoli součtem výšek. Nepopsaný outline s popsanými částmi zůstává konzervativně nejistý: nelze předpokládat, že části popisují celou budovu.
-
-Každému půdorysu přiřadí vnější obsahující kruh a vnitřní vepsaný kruh, respektující díry. Z nich build-only C++ kernel přes ctypes/NumPy buffery počítá horní/dolní obálku. Stejné výsledky ověřuje nezávislá NumPy implementace; kernel není součástí klienta. Jeho SHA-256 je součástí verze profilové cache. Překlad `g++` je pouze build závislost. Vnější kruh se rozšiřuje, vnitřní zmenšuje o poloměr geografické buňky. V obálce se hodnotí celý 5° azimutový sektor; ne pouze tenký paprsek v jeho středu. Proto se zástavba na klientu **lineárně neinterpoluje**: interpolace bodových vzorků může úzký dům úplně vynechat. Terén nadále používá dosavadní kruhovou lineární interpolaci. Jemnější sektor 2,5°/1° byl porovnán samostatným skriptem `building_resolution.py`; výsledky v měření P3.
-
-Výškový model: `height` obsahuje střechu (nepřičítá se znovu); interní `exact` znamená výslovně popsanou hodnotu, nikoliv ověřené měření. `source:height` obsahující odhad snižuje kvalitu. Podlaží × 3 m + známá výška/podlaží střechy je `estimated`. Neznámá výška je azimutová maska `unknown`, bez libovolného modelového domu. Vyvýšené části `min_height`, roof-only přístřešky, covered/tunnel/bridge jsou nejisté, protože horní obzor neumí světlo pod převisem ani výšku mostu. Dopravní struktury jsou rozdělené do maximálně 10m dílků s místním 6m koridorem; jejich dotyk s buňkou nastaví místní 3D nejistotu, nikoli stín v okolních azimutech. Tunel tedy nezastiňuje okolní ulice jako vysoká budova.
-
-Výpočet používá společnou horizontální místní rovinu, pozorovací výšku 1,5 m a LoD1 hranoly. Nezískává geodetické nadmořské výšky základů domů; mosty, náspy a svahy nemají přesný vertikální model. Souřadnice jsou pro tyto lokální kruhy škálované metricky při 50° s. š.; nejde o přesný 3D model. Zdroje DEM a budov se neslučují do jedné databáze. Copernicus je DSM, takže sám může obsahovat vliv některých velkých staveb. P3 nepřidává vegetaci. Budoucí možnost: DMP 1G + DMR a footprinty ČÚZK, případně pražský 3D model; nejprve ověřit strojovou distribuci, datum a oddělení stromů.
-
-### Cache a publikace
-
-Zdrojové dlaždice jsou cacheované podle SHA-256 PBF a verze parseru (v4). Každá má lokální obsahový fingerprint. Profilová cache je oddělená podle hashe modelu (algoritmus, zdroj, buňka, dosah, výška bodu, podlaží, azimut, metrická projekce). Uvnitř jsou stabilní celočíselné geografické klíče. Již známé profily daného fingerprintu se znovu nepočítají; doplní se pouze chybějící. Změna snapshotu nezneplatní profily oblastí se shodným zdrojovým obsahem.
-
-Publikace: `building-index.json` (klient načítá komprimovaný `building-index.json.gz`) s hlavním přehledem, podindexem `detail`, datovou/verzovací/licenční informací, bounds a stavy `profiles` / `empty` / `unknown`; `building-horizon/map_y_x.hash.bin.gz` / `detail_y_x.hash.bin.gz`. Prázdná oblast má pouze záznam manifestu, žádný nulový chunk. Mimo polygon zdrojového extraktu včetně halo je výsledek neověřený. Selhání geometrie zneplatní příslušné oblasti, neodstraní problémové objekty bez upozornění.
-
-Binární formát `SFB1`: čtyři ASCII bajty magic + little-endian uint32 počet. Záznam má 512 bajtů: int32 geografické y/x, 72×uint16 dolní obzor popsaných výšek, 72×uint16 dolní obzor odhadů, 72×uint16 horní obzor, 72×uint8 maska nejisté výšky (bit 1), odhadnuté výšky (bit 2) a místní 3D struktury (bit 4). Úhly jsou v desetinách stupně. Decoder ověří délku, duplicity a rozsah; typed-array pohledy drží společný buffer, nikoli tisíce JS číselných polí.
-
-`BuildingLoader` načítá společný manifest až při focení/detailu. Přehledová buňka je 0,00025° × 0,0004° (~28 × 29 m); městský detail 0,0001° × 0,00015° (~11 × 11 m). Jemný profil se publikuje jen při alespoň 800 komponentách budov v halo dlaždice nebo známém/odhadnutém domě alespoň 25 m. Mapová LRU má 16 položek / 2 MiB; detailní 4 položky / 1 MiB. Aktivní přehled a detail mají každý limit 4 MiB. Jemné chunky se načítají pouze kolem vybraného bodu, nikoli pro celý viewport. Detail při absenci jemné vrstvy použije platný konzervativnější přehledový profil a uvede jeho rozlišení. V příliš širokém výřezu se vynechané oblasti označují neověřeně; chybějící chunk není nulové stínění. Chyba se necachuje, další aktualizace může požadavek zopakovat. Generation token brání přepsání novější oblasti starší odpovědí. Slider nemění výběr chunků, nevolá loader ani worker.
-
-### Evidence přímého Slunce
-
-`directSun` zachová astronomický, terénní a building stav zvlášť. Astronomická noc má přednost. Prokázaná modelová překážka stačí pro NE i při chybějícím druhém zdroji; jinak je bez obou ověřených zdrojů výsledek NEOVĚŘENO. Průjezdy zůstávají dostupné a exportovatelné; jen nemají skóre dobrého nasvícení. Nejde o nový provozní filtr. Neověřené nasvícení má modrošedou barvu a vysvětlení v legendě, prokázaný modelový stín šedou. Čelo/bok/zezadu zachovávají původní azimutovou logiku. Počasí je stále samostatná předpověď.
-
-### Actions a cena prvního buildu
-
-PR spouští kompletní unit/integration suite a produkční GTFS regresi. Reálné sestavení statického prostředí je ověřeno lokálně a produkčním jobem na `main`; PR nepřepočítává celostátní OSM při každém review commitu. Produkce nejprve připraví geografickou source cache (`--extract-only`) a ihned ji uloží pod fingerprintem snapshotu/pokrytí. Teprve potom počítá profily. Výpadek pozdějšího kroku proto neztratí drahý průchod zdrojem. Obyčejná změna README se známým snapshotem/buňkami přebírá zdroj i profily z cache. Actions cache může po době neaktivity či překročení úložného limitu zmizet; pak je nutný nový cold build, nikoli falešná data.
-
-Lokální příznak víceúrovňové/kryté trati má v building vrstvě přednost před dolními rovinnými obálkami: při neznámé výšce pozorovatele nejsou platným důkazem stínu domu. Pro DEM nadále platí samostatný povrchový model a jeho dokumentovaná omezení.
+P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stavu P2 (commit `8e05d74`). Neověřená zástavba a limity načítání potlačovaly barvy směru světla, takže mapový přehled nebyl prakticky použitelný. Kód, build, testy a reporty P3 jsou odstraněné; historie zůstává v Gitu. Slunce, terén, počasí a optimalizace P1/P2 zůstávají. P3 nyní není implementované; případný nový návrh vyžaduje samostatné zadání. P4/P5 zůstávají odložené.

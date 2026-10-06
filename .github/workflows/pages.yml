@@ -3,11 +3,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      refresh_buildings:
-        description: Refresh static OSM source (otherwise reuse cached snapshot)
-        type: boolean
-        default: false
   pull_request:
 permissions:
   contents: read
@@ -27,61 +22,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: pip install numpy==2.3.5 rasterio==1.5.2 shapely==2.1.2 osmium==4.3.1
       - run: npm test
+      - run: pip install numpy==2.3.5 rasterio==1.5.2
       - run: python scripts/build_data.py
       - run: node --expose-gc --max-old-space-size=6144 scripts/regression.mjs
       - uses: actions/cache@v4
-        if: github.event_name != 'pull_request'
         with:
           path: .cache/terrain-v1.json
           key: terrain-v1-${{ github.run_id }}
           restore-keys: terrain-v1-
       - run: python scripts/build_terrain.py
-        if: github.event_name != 'pull_request'
-      - uses: actions/cache/restore@v4
-        id: building-source
-        if: github.event_name != 'pull_request'
-        with:
-          path: |
-            .cache/buildings/czech.osm.pbf
-            .cache/buildings/source.json
-            .cache/buildings/coverage.poly
-            .cache/buildings/source-v4-*
-          key: buildings-source-v4-restore-${{ github.run_id }}
-          restore-keys: buildings-source-v4-
-      - uses: actions/cache@v4
-        if: github.event_name != 'pull_request'
-        with:
-          path: .cache/buildings/profiles-*
-          key: buildings-profiles-v7-${{ github.run_id }}
-          restore-keys: buildings-profiles-v7-
-      - name: Refresh building source when requested
-        if: inputs.refresh_buildings == true
-        run: rm -f .cache/buildings/czech.osm.pbf .cache/buildings/source.json
-      - name: Prepare static building source
-        id: building-prepare
-        if: github.event_name != 'pull_request'
-        run: python scripts/build_buildings.py --extract-only
-      - uses: actions/cache/save@v4
-        if: github.event_name != 'pull_request'
-        with:
-          path: |
-            .cache/buildings/czech.osm.pbf
-            .cache/buildings/source.json
-            .cache/buildings/coverage.poly
-            .cache/buildings/source-v4-*
-          key: ${{ steps.building-prepare.outputs.source_cache_key }}
-      - run: python scripts/build_buildings.py
-        if: github.event_name != 'pull_request'
       - run: python scripts/finalize_data.py
-        if: github.event_name != 'pull_request'
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request'
         with:
           path: dist
   deploy:

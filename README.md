@@ -33,18 +33,16 @@ Výpočet slunce používá astronomickou aproximaci a časovou zónu `Europe/Pr
 
 Rozsah časové osy a značky východu/západu se počítají podle středu aktuálního výřezu mapy. Astronomický východ/západ používá výšku středu slunce −0,833° (běžná aproximace refrakce a horního okraje slunečního disku), takže šedá pro geometrický střed může přetrvat několik minut po značce východu. Jednotlivé úseky se barví podle své skutečné polohy. Posuvník jen překresluje nasvícení, nepřepočítává provozní filtr, intenzitu ani seznam průjezdů. Ruční zadání času mimo výchozí rozsah rozšíří osu, aby byl zvolený čas dosažitelný. Kliknutý seznam a jeho doporučení stále hodnotí **skutečný plánovaný čas každého spoje**, nikoliv okamžik z posuvníku.
 
-Jde o geometrické doporučení pro přímé slunce. Počasí ukazuje samostatná předpovědní vrstva; dostupný terénní obzor může označit stín. Zástavbu hodnotí samostatný předpočítaný model s nejistotou. Vegetaci ani fyzickou dostupnost místa neověřuje. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
+Jde o geometrické doporučení pro přímé slunce. Počasí ukazuje samostatná předpovědní vrstva; dostupný terénní obzor může označit stín. Přesné stíny budov, vegetaci, tunely ani fyzickou dostupnost místa neověřuje. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
 
 ## Spuštění a ruční aktualizace
 
-Python 3.12+, Node 22+ a `g++` (jen build/test geografických profilů). Pro geografický build a jeho testy: `pip install numpy==2.3.5 rasterio==1.5.2 shapely==2.1.2 osmium==4.3.1`. Klient nepřidává runtime knihovnu.
+Stačí Python 3.12+ a Node 22+ pro testy, žádné balíčky se neinstalují.
 
 ```bash
 npm test
 python scripts/build_data.py
-python scripts/build_terrain.py
-python scripts/build_buildings.py
-python scripts/finalize_data.py
+# Volitelný terén: pip install numpy rasterio; python scripts/build_terrain.py
 python -m http.server 8000 --directory dist
 ```
 
@@ -78,7 +76,7 @@ Mobilní panel začíná v dolní třetině (s minimální výškou pro dva prů
 
 „Teď“ zachytí dnešek a začátek pět minut zpátky; opětovným stisknutím čas obnoví. „Od času“ mění den celé aplikace a začátek seznamu, „Celý den“ zobrazí vybraný civilní den. Budoucí seznam je dostupný do konce následujícího dne v rozsahu platnosti GTFS. Po půlnoci používá 00:00 a oddělovače dnů. Nejde o živá zpoždění. První dávka cílí na dvě hodiny / maximálně 50 řádků; u řídkého provozu rozšíří okno nejvýše na šest hodin. Další dávky načítá u konce seznamu nebo tlačítkem. Výpočet denní statistiky není omezen dávkou seznamu.
 
-„Kdy fotit“ počítá celý vybraný den podle filtrů. Spojuje obsazené pětiminutové intervaly vhodných průjezdů s mezerou nejvýše 15 minut; řadí je podle počtu vhodných spojů, poté podílu vhodných a kratší délky. Ukazuje počet vhodných / všech průjezdů. Hodnotí slunce, terén a zástavbu, bez počasí. Neověřené průjezdy zůstávají v seznamu, ale nejsou doporučené jako dobré světlo. Tlačítko doporučení nastaví začátek seznamu i světlo mapy.
+„Kdy fotit“ počítá celý vybraný den podle filtrů. Spojuje obsazené pětiminutové intervaly vhodných průjezdů s mezerou nejvýše 15 minut; řadí je podle počtu vhodných spojů, poté podílu vhodných a kratší délky. Ukazuje počet vhodných / všech průjezdů. Hodnotí pouze slunce a dostupný terén, bez počasí. Tlačítko doporučení nastaví začátek seznamu i světlo mapy.
 
 Počasí je sbalený přehled dohlednosti, oblačnosti, teploty a času. Rozbalený graf má dohlednost v km, hranici 1 km, vybraný čas a samostatný pás slunce/noci/chybějících dat. Hodinová tlačítka mění čas světla a počasí, nikoli seznam. Technické zdroje jsou pod „O datech“. GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti.
 
@@ -114,16 +112,6 @@ Pravidelné průjezdy linek a dopravců na společném úseku se sčítají po v
 
 P2 je dokončené a nasazené: data se načítají podle oblasti, cache jsou omezené a terén má samostatnou geografickou cache. Na produkci bylo ověřeno i úspěšné načtení předpovědi v detailu a mapové vrstvě. Výsledky měření, mobilní zpětná vazba a limity ověření jsou v [reportu P2](docs/P2-MERENI.md#závěrečná-kontrola-a-uzavření-p2--6-10-2026). Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou odložené samostatné úpravy UI.
 
-### P3 – zástavba a přímé Slunce
+## Návrat před P3 – 6. 10. 2026
 
-Budovy pocházejí z [OpenStreetMap / Geofabrik, ČR](https://download.geofabrik.de/europe/czech-republic.html), © přispěvatelé OpenStreetMap, [ODbL 1.0](https://www.openstreetmap.org/copyright). Odvozené profily jsou samostatná databáze pod ODbL 1.0; zdrojový extrakt je veřejně ke stažení u Geofabrik, transformace v `scripts/build_buildings.py`. Datum/URL snapshotu, SHA-256 zdroje a verze modelu jsou v `data/building-index.json`. Snapshot se udržuje v cache nezávisle na GTFS; ruční Actions volba `refresh_buildings` jej aktualizuje.
-
-`height` je **popsaná výška v OSM**, nikoli důkaz geodetického měření. Obsahuje střechu. `building:levels × 3 m` plus známá `roof:height` / `roof:levels × 3 m` je označený odhad. Chybějící výška nemá univerzální fallback; směr s takovou budovou je neověřený. `min_height` a zvýšené části zůstávají neověřené, protože jeden obzor neumí spodní otvor. Kryté/tunelové dopravní cesty a mosty nastaví neověřený výsledek jen v místním koridoru s nejistou 3D geometrií; tunel se nevydává za stínící dům v okolních ulicích. Půdorysy i části se kombinují maximem, výšky se nesčítají.
-
-Build ukládá obálky místního stínění po 5°: mapový přehled v buňkách 0,00025° × 0,0004° (v Praze přibližně 28 × 29 m), jemnější detail v zastavěných oblastech 0,0001° × 0,00015° (asi 11 × 11 m). Profily vznikají v úzkém okolí dopravní sítě; detailní chunky se načítají pouze pro vybraný bod. Geografické klíče neobsahují GTFS ID. Dolní obálka prokazuje překážku v modelu, horní možnou překážku; mezi nimi se ukazuje **NEOVĚŘENO**. Nevznikají chunky pro prokazatelně prázdné oblasti zdroje; jejich stav je v manifestu. Mimo pokrytí není výsledek automaticky dobrý.
-
-Bod má výšku 1,5 m nad společnou místní rovinou modelu. Zástavba je lokální model do 500 m, bez skutečných nadmořských výšek základů domů, sklonu střech a geometrie mostů/estakád. DEM zůstává oddělený hrubší model povrchu. Výsledek „ANO podle modelu“ není záruka skutečného slunce: OSM nemusí obsahovat všechny budovy a popsané výšky mohou být chybné. Stromy se nemodelují.
-
-Běžná mapa zástavbu nestahuje. Focení/detail načte manifest a místní hashované binární chunky; bez polygonů a výškového API. Posuvník pouze porovná uložený profil se Sluncem. Barvy čelo/bok/zezadu zůstávají; noc či modelovaný stín jsou šedé, nejisté přímé slunce modrošedé. Detail rozlišuje astronomický obzor, terén, zástavbu a odhad výšky. Chyba chunku neblokuje provoz; dotčená oblast zůstane neověřená. Velmi široké výřezy mají paměťový limit a zástavba nemusí být vyhodnocena celá.
-
-Podrobnosti, měření a limity ověření: [P3](docs/P3-MERENI.md).
+Zástavba a lokální stínění P3 byly na žádost uživatele odstraněné kvůli potlačení barev nasvícení při neověřených datech. Aplikace opět používá původní výpočet Slunce a terénu z dokončeného P2. P1/P2, počasí i provozní filtry zůstávají zachované.

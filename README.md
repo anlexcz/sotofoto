@@ -6,7 +6,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 
 - Všechny druhy dopravy obsažené v PID GTFS; kombinovatelné filtry linek, dopravců a druhů dopravy.
 - Konkrétní datum v platnosti balíčku a libovolný časový rozsah, včetně přechodu přes půlnoc. Stejný čas od/do znamená 24 hodin.
-- Tloušťka společných úseků podle počtu průjezdů ve vybraném čase. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
+- Tloušťka společných úseků podle četnosti provozu po aplikaci všech filtrů. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
 - Kliknutí kdekoliv poblíž trasy: průjezdy v okolí 20–150 m, linka, cílová zastávka, dopravce, místní směr a azimut, odhad času a odjezd z předchozí zastávky. Celý den nebo vybraný čas.
 - Režim focení: celé vyfiltrované trasy se obarví podle slunce ve zvoleném okamžiku. Zelená = čelo, přes žlutou k oranžové = boční světlo, několik stupňů za bokem přechod do červené = světlo zezadu / protislunce. Pod obzorem šedá. Posuvník po 5 minutách od hodiny před východem do hodiny po západu, s označeným východem a západem. Lze zadat libovolný přesný čas; rozsah se v případě potřeby rozšíří. Posuvník nemění filtry ani počty spojů.
 - Poloha slunce v době skutečného průjezdu, počty průjezdů s příznivým nasvícením po hodinách i ráno/poledne/odpoledne. Kliknutí na sloupec nastaví danou hodinu pro filtr provozu.
@@ -23,7 +23,7 @@ Dopravce se bere z `trips.sub_agency_id`, název z rozšíření PID `route_sub_
 
 Datum je **občanský den v Praze**, nikoliv pouze GTFS provozní den. Spoje předchozího dne s časy nad 24:00 se započtou do časů po půlnoci. U rozsahu přes půlnoc se načítají i služby následujícího dne. Na začátku platnosti feedu nelze rekonstruovat předchozí den; na konci následující den. Tyto hranice aplikace zobrazuje. Na dni změny letního času samotné GTFS wall-clock časy nerozlišují opakovanou hodinu.
 
-Společný úsek je shodná dvojice po sobě jdoucích bodů trasy po zaokrouhlení. Jsou-li dvě téměř shodné trasy v GTFS digitalizovány odlišně, mohou zůstat samostatné. Intenzita úseku je počet průjezdů **v jeho středu** v intervalu `[od, do)`; u dlouhých úseků se přesný čas ve vybraném bodě může lišit. Překrývající se úsek má v režimu linka/dopravce barvu prvního přispívajícího spoje, nikoliv směs barev; podrobnosti poskytne seznam průjezdů.
+Společný úsek je shodná dvojice po sobě jdoucích bodů trasy po zaokrouhlení. Jsou-li dvě téměř shodné trasy v GTFS digitalizovány odlišně, mohou zůstat samostatné. Průjezdy pro intenzitu úseku se počítají **v jeho středu** v intervalu `[od, do)`; u dlouhých úseků se přesný čas ve vybraném bodě může lišit. Překrývající se úsek má v režimu linka/dopravce barvu prvního přispívajícího spoje, nikoliv směs barev; podrobnosti poskytne seznam průjezdů.
 
 Čas mezi zastávkami se odhaduje podle `shape_dist_traveled`: odjezd z předchozí zastávky → příjezd do další. Nezahrnuje stání v předchozí zastávce. Zastávkový čas je čas odjezdu. Příznak `≈` označuje odhad; vždy je k dispozici předchozí zastávka a její odjezd. Nezobrazuje se neobsloužený začátek/konec shape. Při chybějící shape se použijí označené přímé spojnice zastávek, při chybějících vzdálenostech monotónní projekce zastávek na trasu.
 
@@ -79,4 +79,14 @@ Mobilní panel začíná v dolní třetině (s minimální výškou pro dva prů
 
 Počasí je sbalený přehled dohlednosti, oblačnosti, teploty a času. Rozbalený graf má dohlednost v km, hranici 1 km, vybraný čas a samostatný pás slunce/noci/chybějících dat. Hodinová tlačítka mění čas světla a počasí, nikoli seznam. Technické zdroje jsou pod „O datech“. GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti.
 
-Počty spojů a legenda tloušťky nejsou trvale na mapě. Stavový banner se zobrazuje pouze při načítání či chybě. Posuvník tloušťky je ve vzhledu; škála zůstává logaritmická a závislá na zoomu.
+Počty spojů a legenda tloušťky nejsou trvale na mapě. Stavový banner se zobrazuje pouze při načítání či chybě. Posuvník tloušťky je ve vzhledu; škála má šest pevných kategorií četnosti a přizpůsobuje se zoomu. Legenda četnosti je ve vzhledu.
+
+### Četnost provozu a denní/noční linky (P1)
+
+Tloušťka i barevný režim intenzity používají šest kategorií efektivního intervalu: **≤ 5 min**, **> 5 až 10 min**, **> 10 až 30 min**, **> 30 až 60 min**, **> 60 až 120 min**, **> 120 min**. Efektivní interval je délka hodnoceného období v minutách / počet relevantních průjezdů. Nejde o medián rozestupů ani příslib pravidelného taktu. Nulový počet se nekreslí; jeden průjezd má nejtenčí čáru a interval `null`.
+
+V ručním časovém úseku se používá přesná délka `[od, do)`, včetně přechodu přes půlnoc. Stejné od/do je ručně zvolených 24 hodin. V režimu **Celý den** se nadále vybírá občanský den 00:00–24:00 v Praze (včetně dojezdů služeb předchozího dne), ale hodnocené období každého úseku je **poslední − první relevantní průjezd**. Mezery uvnitř se započítají; okraje bez provozu nikoli. Například rozsah 04:35–00:42 následujícího dne je ruční rozsah přes půlnoc, nikoli automatické rozšíření občanského dne. Časy se před výpočtem neskládají modulo 24 hodin.
+
+Filtr **Vše / Denní / Noční** (výchozí Vše) používá explicitní PID `routes.txt.is_night`: 0 = denní, 1 = noční. Předzpracování jej uchovává v `meta.routes[i][5]`. [Dokumentace PID](https://pid.cz/o-systemu/opendata/) tento příznak popisuje jako klasifikaci nočních linek. Hodina ani číslo linky nerozhodují; denní linka po půlnoci zůstává denní. Filtr je součástí výběru spojů v enginu pro mapu, detail, CSV i denní statistiky/doporučení a ukládá se do URL jako `operation`; staré odkazy mají Vše. Detail si zachovává vlastní dosavadní časové ovládání a denní statistiky nadále hodnotí celý den.
+
+Linky a dopravci na společném úseku se sčítají po všech filtrech. Sloučené směry mají společný počet a rozsah; rozdělené protisměry každý svůj. Místní směrový filtr omezuje i rozsah období. Worker sbírá počty a minima/maxima v jednom průchodu, pak jednou určí tři pole kategorií (společné a oba směry). Zoom, vzhled a posuvník světla používají uložené kategorie bez další agregace jízdních řádů.

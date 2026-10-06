@@ -1,3 +1,5 @@
+import {frequency} from './intensity.js';
+import {matchesOperation} from './filter-utils.js';
 import {dayContexts,dateKey,interpolation,passageTime,bearing,compass,project,addDays} from './core.js';
 
 export class Engine {
@@ -42,7 +44,7 @@ export class Engine {
     return {edge,ref,k,start,end,pos:{i:s.indices[k],f:s.fractions[k],atStop:!!s.atStop[k]},bearing:(this.edgeBearings[edge]+(ref<0?180:0))%360};
   }
   matching(t,filter) {
-    return (!filter.routes.length||filter.routes.includes(t[0]))&&(!filter.agencies.length||filter.agencies.includes(t[1]))&&(!filter.modes.length||filter.modes.includes(this.meta.routes[t[0]][3]));
+    return matchesOperation(this.meta.routes[t[0]],filter.operation)&&(!filter.routes.length||filter.routes.includes(t[0]))&&(!filter.agencies.length||filter.agencies.includes(t[1]))&&(!filter.modes.length||filter.modes.includes(this.meta.routes[t[0]][3]));
   }
   instances(filter,allDay=false) {
     const key=dateKey(filter.date),end=allDay?86400:filter.end;
@@ -60,6 +62,7 @@ export class Engine {
   counts(filter) {
     const n=this.g.edges.length,counts=new Uint32Array(n),forward=new Uint32Array(n),backward=new Uint32Array(n),colors=new Int32Array(n).fill(-1),agencyColors=new Int32Array(n).fill(-1);
     const routeCounts={},edgeRoutes={},edgeAgencies={};let journeys=0;
+    const ranges=Array.from({length:3},()=>({first:new Float64Array(n).fill(Infinity),last:new Float64Array(n).fill(-Infinity)}));
     for(const {t,offset} of this.instances(filter)) {
       let contributed=false;
       const p=this.s.patterns[t[3]],refs=this.g.shapes[p[0]][0],s=this.patternSegments[t[3]];
@@ -71,11 +74,13 @@ export class Engine {
         const time=(s.atStop[k]?t[5][index*2+1]:t[5][index*2+1]+(t[5][(index+1)*2]-t[5][index*2+1])*s.fractions[k])+offset;
         if(time<filter.start||time>=filter.end)continue;
         const frequencies=routeCounts[e]??={};frequencies[t[0]]=(frequencies[t[0]]||0)+1;(edgeRoutes[e]??=new Set()).add(t[0]);(edgeAgencies[e]??=new Set()).add(t[1]);counts[e]++;if(ref>0)forward[e]++;else backward[e]++;
+        for(let j=0;j<2;j++){const range=ranges[j===0?0:ref>0?1:2];range.first[e]=Math.min(range.first[e],time);range.last[e]=Math.max(range.last[e],time);}
         if(colors[e]<0){colors[e]=t[0];agencyColors[e]=t[1];}contributed=true;
       }
       if(contributed)journeys++;
     }
-    return {counts,forward,backward,colors,agencyColors,journeys,routeCounts,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
+    const categories=[counts,forward,backward].map((values,j)=>Uint8Array.from(values,(count,e)=>frequency(count,ranges[j].first[e],ranges[j].last[e],filter).category));
+    return {categories:categories[0],forwardCategories:categories[1],backwardCategories:categories[2],counts,forward,backward,colors,agencyColors,journeys,routeCounts,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
   }
   near(point,radius) {
     const degrees=radius/111195,lonDegrees=degrees/Math.cos(point[0]*Math.PI/180),ids=new Set();

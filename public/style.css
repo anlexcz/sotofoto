@@ -24,3 +24,5 @@
 #filters-close{display:none;border:0;font-size:24px;padding:0 6px}@media(max-width:700px){#filters-close{display:block}.section-heading h1{margin-right:auto}.section-heading{gap:10px}}
 
 .photo-time-heading{flex-wrap:wrap}.photo-time-heading button{white-space:nowrap}@media(max-width:420px){.photo-time-heading strong{flex-basis:100%}.photo-time-heading input{margin-left:auto}}
+
+.frequency-legend{margin:12px 0;font-size:12px}.frequency-legend #legend-scale{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;margin-top:10px}.frequency-legend .legend-step{display:flex;align-items:center;gap:8px}.frequency-legend .legend-stroke{display:inline-block;width:25px;background:var(--accent);border-radius:4px;flex-shrink:0}

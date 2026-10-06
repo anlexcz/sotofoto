@@ -21,12 +21,12 @@ Mediány; časy ms, přenos komprimovaných lokálních souborů MB. Poslední s
 
 | Scénář | Kreslené hrany před → po | První render chunk po | Přesný provoz před → po | Posun světla CPU před → po | Vstup před → po MB |
 |---|---:|---:|---:|---:|---:|
-| desktop-start | 10285 → 7380 | 21 | 1066 → 1078 | 28.8 → 45.2 | 6.02 → 6.16 |
-| mobile-start | 2801 → 1901 | 22 | 436 → 406 | 6.9 → 11.5 | 2.54 → 2.58 |
-| wide-PID | 139964 → 61777 | 5 | 5602 → 5389 | 615.9 → 641.7 | 26.92 → 28.08 |
-| dense-close | 2157 → 1855 | 23 | 348 → 358 | 1.7 → 2.6 | 1.90 → 1.93 |
+| desktop-start | 10285 → 7380 | 25 | 1066 → 1103 | 28.8 → 47.8 | 6.02 → 6.16 |
+| mobile-start | 2801 → 1901 | 23 | 436 → 430 | 6.9 → 12.3 | 2.54 → 2.58 |
+| wide-PID | 139964 → 61777 | 4 | 5602 → 5965 | 615.9 → 635.4 | 26.92 → 28.08 |
+| dense-close | 2157 → 1855 | 26 | 348 → 383 | 1.7 → 2.6 | 1.90 → 1.93 |
 
-Podstatný přínos je dřívější náhled a menší práce kreslení, nikoli zrychlený výpočet jízdních řádů. Přenos vzrostl o malé render soubory: přesnou provozní geometrii nelze touto změnou vynechat. Samostatné úrovně přesto neposílají všechny tři kreslicí varianty najednou. Zjednodušování je buildové, výběr/dynamické hranice ve workeru. Main thread dostává pouze aktivní kreslicí hrany a jejich nezbytné původní sluneční vzorky; přesné shapes, GTFS vzdálenosti a zastávkové časy zůstávají ve workeru.
+Podstatný přínos je dřívější náhled, méně kreslených hran a rychlejší sestavení canvas vrstvy (např. široký výřez přibližně 1,54 → 0,76 s), nikoli zrychlený výpočet jízdních řádů. Posuny světla **nemají doložené snížení celkového CPU času**; zachování všech místních azimutů a dávkování přidává režii. Report to neoznačuje za zrychlení slideru. Samostatně změřený startovní přenos metadata + index je 0.69 → 0.48 MB díky explicitnímu gzip indexu (fallback na starý JSON zůstává). Přenos oblasti vzrostl o malé render soubory: přesnou provozní geometrii nelze touto změnou vynechat. Samostatné úrovně přesto neposílají všechny tři kreslicí varianty najednou. Zjednodušování je buildové, výběr/dynamické hranice ve workeru. Main thread dostává pouze aktivní kreslicí hrany a jejich nezbytné původní sluneční vzorky; přesné shapes, GTFS vzdálenosti a zastávkové časy zůstávají ve workeru.
 
 Široký přehled překračuje rozumný čas jedné hlavní úlohy i po snížení hran. Proto focení nad 20 000 kreslených hran rozděluje výpočet/kreslení mezi requestAnimationFrame s cílem 12 ms (kontrola každých 128 hran). Změna času/výřezu ruší rozpracované staré snímky. Nesnižuje věrnost dat nebo počet průjezdů. Celkový CPU čas stále může být vysoký; není to měření skutečné FPS telefonu.
 
@@ -39,4 +39,4 @@ Podstatný přínos je dřívější náhled a menší práce kreslení, nikoli 
 
 ## Nasazení a živé ověření
 
-Zatím připraveno k publikaci. Tento oddíl bude doplněn skutečným výsledkem standardního Pages workflow a kontrolou produkce.
+Publikace používá nezměněné standardní `.github/workflows/pages.yml` s unit testy a produkční regresí. Skutečný výsledek nasazení a živé kontroly bude při předání uveden v závěrečné zprávě; offline výsledky výše samy o sobě nejsou ověřením produkce.

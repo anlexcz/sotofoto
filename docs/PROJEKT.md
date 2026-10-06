@@ -15,8 +15,9 @@ Statická aplikace na GitHub Pages. Leaflet 1.9.4, vlastní Canvas tras, ES modu
 | Soubor | Obsah | Kdy se načítá |
 | --- | --- | --- |
 | `meta.json` | Platnost, linky, módy, dopravci, denní/noční klasifikace, kalendář, cíle, asociace linek a dopravců | Start |
-| `chunks.json` | Bounds, cesty, velikosti a malý linkový/dopravcovský index | Start |
+| `chunks.json.gz` (fallback `chunks.json`) | Bounds, cesty, velikosti a malý linkový/dopravcovský index | Start |
 | `chunks/*.geometry.json.gz` | Pouze místní hrany a části shapes | Výřez mapy nebo okolí bodu |
+| `chunks/*.{overview,medium,detail}.json.gz` | Kreslicí LODy, statické identity a původní ID hran | Výřez mapy, pouze právě zvolená úroveň |
 | `chunks/*.schedule.bin.gz` | Místní patterny, identita spojů a binární zastávkové časy | Stejná oblast, ve workeru |
 | `terrain-index.json` | Bounds a cesty terénních balíčků | Focení nebo detail bodu |
 | `terrain/*.json.gz` | Geografické klíče, profily obzoru a platnost | Potřebná oblast |
@@ -37,12 +38,13 @@ HTML a mapový podklad se zobrazují bez čekání na GTFS. Po malých metadatec
 
 Výsledky každého balíčku se cachují podle balíčku a kompletního filtru. Pan/zoom v již vypočtených balíčcích nepočítá jízdní řád znovu. Změna filtru přepočítá potřebné balíčky. Čas světla, vzhled a zoomová tloušťka výpočet provozu nemění. Novější požadavek zruší starší mezi balíčky; opozděná odpověď se nezobrazí.
 
-Do UI jdou jen koncové body/hrany aktuální oblasti, četnosti a malé seznamy pro barvy/popisky. Číselné výsledky používají Transferable ArrayBuffer. UI nedrží shapes ani trips. Canvas kreslí pouze hrany protínající viewport; nejsou vytvářeny Leaflet polylines pro celou síť. Popisky zůstávají omezené na 45. Detail/highlight má samostatné malé Leaflet objekty.
+Do UI jdou aktivní kreslicí body/hrany aktuální oblasti, četnosti, identity pro barvy/popisky a kompaktní původní sluneční vzorky. Předběžný výsledek před potvrzením provozu je výslovně označený. Číselné výsledky používají Transferable ArrayBuffer. UI nedrží shapes ani trips. Canvas kreslí pouze hrany protínající viewport; nejsou vytvářeny Leaflet polylines pro celou síť. Popisky zůstávají omezené na 45. Detail/highlight má samostatné malé Leaflet objekty.
 
 Detail bodu vybírá všechny balíčky dotýkající se poloměru, nezávisle na výřezu mapy. Sloučení používá globální ID hran/patternů/tripů a původní pořadí segmentů. Sousední segmenty deduplikuje, pozdější návrat smyčkou zachovává. UI dostane přímo souřadnice zvýraznění; místní ID detailu se nezamění s ID mapy.
 
 ## Cache a paměť
 
+- Kreslicí LRU: nejvýše 16 balíčků / 4 MiB dekomprimovaných bajtů (blok 2).
 - Datová LRU: nejvýše 8 balíčků / 4 MiB podle dekomprimovaných bajtů.
 - LRU výsledků: nejvýše 24 položek / 8 MiB odhadu, včetně identit jízd a příspěvků linek.
 - Terénní LRU: nejvýše 16 balíčků / 4 MiB dekomprimovaných bajtů.
@@ -137,6 +139,6 @@ O1 je implementované v bloku 2; O2 zůstává pro pozdější práci. P3 se neo
 - [x] Nová změna výřezu/filtru okamžitě invaliduje staré odpovědi před debounce; worker kontroluje generaci mezi chunky. Změny času světla ponechávají jízdní řády, terén a načtené počasí beze změny.
 - [x] Cílené testy, skutečný worker s přenosem bufferů a rozšířená produkční regrese. Opakované stejné scénáře a omezení měření: [report](BLOK2-MERENI.md), [před](block2-before.json), [po](block2-after.json).
 
-Přesný provozní vstup se nezmenšuje; malé render soubory jsou dodatečný přenos pro dřívější náhled. Nejde o trvalé úložiště terénu, novou aktualizaci GTFS, P3 ani P4/P5. Měřený široký fotografický přehled nad 20 tisíc kreslených hran rozděluje práci do snímků s cílem 12 ms na dávku (kontrola po 128 hranách). Nové překreslení předchozí dávky zruší. Hodnoty ani geometrická kvalita se při tom nemění; celková práce na přesném nasvícení stále zůstává. Stav nasazení a skutečné UI ověření uvádí report.
+Index je explicitní gzip, s kompatibilním návratem k původnímu JSON. Přesný provozní vstup se nezmenšuje; malé render soubory jsou dodatečný přenos pro dřívější náhled. Nejde o trvalé úložiště terénu, novou aktualizaci GTFS, P3 ani P4/P5. Měřený široký fotografický přehled nad 20 tisíc kreslených hran rozděluje práci do snímků s cílem 12 ms na dávku (kontrola po 128 hranách). Nové překreslení předchozí dávky zruší. Hodnoty ani geometrická kvalita se při tom nemění; celková práce na přesném nasvícení stále zůstává. Stav nasazení a skutečné UI ověření uvádí report.
 
 Uživatel po nasazení `26fc388` potvrdil na vlastním telefonu funkční ikonku Mapy.com a otevření bodu v mobilní aplikaci. To doplňuje omezení přímého mobilního ověření bloku 1 výše; nové ovládání bloku 2 na telefonu tím ověřené není.

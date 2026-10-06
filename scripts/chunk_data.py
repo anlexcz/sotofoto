@@ -93,7 +93,9 @@ def write_chunks(directory, g=None, s=None, cell=.05):
         entry['routes']=sorted({t[1][0] for t in schedule['trips']})
         entry['agencies']=sorted({t[1][1] for t in schedule['trips']})
         manifest['chunks'][key]=entry
-    (directory/'chunks.json').write_text(json.dumps(manifest,separators=(',',':')))
+    manifest_raw=json.dumps(manifest,separators=(',',':')).encode()
+    (directory/'chunks.json').write_bytes(manifest_raw)
+    (directory/'chunks.json.gz').write_bytes(gzip.compress(manifest_raw,mtime=0))
     meta=json.loads((directory/'meta.json').read_text());associations=[set() for _ in meta['routes']]
     for t in s['trips']:associations[t[0]].add(t[1])
     meta['routeAgencies']=[sorted(v) for v in associations];meta['chunked']=1

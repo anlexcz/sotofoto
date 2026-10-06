@@ -10,7 +10,7 @@ const json=async name=>{const r=await fetch(new URL(name,root),{cache:'no-cache'
 self.onmessage=async ({data})=>{
   try{
     if(data.type==='init'){
-      [meta,index]=await Promise.all([json('meta.json'),json('chunks.json')]);
+      [meta,index]=await Promise.all([json('meta.json'),zipped(new URL('chunks.json.gz',root)).catch(()=>json('chunks.json'))]);
       if(!meta.chunked)throw Error('Nová aplikace potřebuje chunkovaný dataset. Obnov stránku po nasazení.');
       cache=new ChunkCache(async id=>{const c=index.chunks[id];const [geometry,schedule]=await Promise.all([zipped(new URL(c.geometry,root)),scheduleFile(new URL(c.schedule,root))]);return {geometry,schedule};},{maxBytes:4*1024*1024,maxEntries:8});
       renderCache=new ChunkCache(async key=>{const [id,level]=key.split('|');return zipped(new URL(index.chunks[id].render[level].path,root));},{maxBytes:4*1024*1024,maxEntries:16});

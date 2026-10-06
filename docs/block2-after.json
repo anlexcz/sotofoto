@@ -5,7 +5,7 @@
     "note": "Local compressed files, same feed and unthrottled CPU. Viewports are projected models, not emulated browsers. Canvas context records real layer draw operations without rasterization. No internet, tile paint, browser first-map timing or phone RAM measured."
   },
   "feed": "2026-10-06T18:48:01.245197+00:00",
-  "metadataBytes": 1064045,
+  "metadataBytes": 479632,
   "samples": [
     {
       "repeat": 0,
@@ -21,30 +21,30 @@
         50.12,
         14.52
       ],
-      "firstPreviewMs": 42.79181700000001,
-      "firstCountsMs": 1133.118289,
+      "firstPreviewMs": 51.230765000000005,
+      "firstCountsMs": 1273.295672,
       "trafficBytes": 6155869,
       "loadedEdges": 10285,
       "drawEdges": 7380,
-      "renderTransformMs": 104.15983499999993,
+      "renderTransformMs": 97.02092799999991,
       "sourceSamples": 9615,
-      "updateMs": 90.41832900000009,
+      "updateMs": 76.97127599999999,
       "strokes": 41823,
       "sunCalls": 51147,
       "drawMs": [
-        51.899946,
-        48.33547399999998,
-        45.28604900000005,
-        43.98730999999998,
-        45.46678700000007,
-        44.55802799999992,
-        45.616678999999976,
-        43.5879480000001
+        60.07068499999991,
+        50.013521999999966,
+        54.659069000000045,
+        45.89635199999998,
+        46.065342999999984,
+        55.88564900000006,
+        50.88200200000006,
+        55.48273500000005
       ],
-      "warmMs": 918.579847,
-      "panMs": 873.7535859999998,
-      "filterMs": 942.7448730000006,
-      "pointMs": 68.99571699999979,
+      "warmMs": 1165.16075,
+      "panMs": 964.8363319999999,
+      "filterMs": 971.2091359999995,
+      "pointMs": 83.2109559999999,
       "passages": 1097,
       "additionalBytes": 18590933,
       "cache": {
@@ -56,13 +56,13 @@
         "renderEntries": 16
       },
       "memory": {
-        "rss": 796082176,
-        "heapTotal": 645558272,
-        "heapUsed": 531657384,
-        "external": 67298392,
-        "arrayBuffers": 51098177
+        "rss": 747933696,
+        "heapTotal": 597975040,
+        "heapUsed": 508344080,
+        "external": 64907848,
+        "arrayBuffers": 48707633
       },
-      "rssPeakKiB": 777768
+      "rssPeakKiB": 732276
     },
     {
       "repeat": 0,
@@ -78,30 +78,30 @@
         50.098,
         14.468
       ],
-      "firstPreviewMs": 23.295235000000503,
-      "firstCountsMs": 406.2349949999998,
+      "firstPreviewMs": 22.851278000000093,
+      "firstCountsMs": 470.8066770000005,
       "trafficBytes": 2583107,
       "loadedEdges": 2801,
       "drawEdges": 1901,
-      "renderTransformMs": 23.83186299999943,
+      "renderTransformMs": 35.52613100000053,
       "sourceSamples": 2442,
-      "updateMs": 16.812960000000203,
+      "updateMs": 21.25655999999981,
       "strokes": 10332,
       "sunCalls": 12321,
       "drawMs": [
-        11.52552100000048,
-        16.680413000000044,
-        11.420263999999406,
-        10.976024999999936,
-        10.884618000000046,
-        12.475072000000182,
-        12.202867999999398,
-        10.631372000000738
+        16.256718999999975,
+        24.315310999999383,
+        18.922085000000152,
+        16.183460000000196,
+        16.209208999999646,
+        14.640310000000682,
+        13.937666999999237,
+        15.660334000000148
       ],
-      "warmMs": 20.227184999999736,
-      "panMs": 101.42715700000008,
-      "filterMs": 348.87353500000063,
-      "pointMs": 95.72092599999996,
+      "warmMs": 23.20119599999998,
+      "panMs": 111.75489199999993,
+      "filterMs": 381.32619500000055,
+      "pointMs": 133.22959700000047,
       "passages": 2047,
       "additionalBytes": 4105716,
       "cache": {
@@ -113,13 +113,13 @@
         "renderEntries": 8
       },
       "memory": {
-        "rss": 797851648,
-        "heapTotal": 337612800,
-        "heapUsed": 149540696,
+        "rss": 744796160,
+        "heapTotal": 336936960,
+        "heapUsed": 155388536,
         "external": 28081297,
         "arrayBuffers": 19420578
       },
-      "rssPeakKiB": 783956
+      "rssPeakKiB": 733568
     },
     {
       "repeat": 0,
@@ -135,30 +135,30 @@
         50.65,
         15.35
       ],
-      "firstPreviewMs": 3.047210000000632,
-      "firstCountsMs": 5320.723151000001,
+      "firstPreviewMs": 4.289426999999705,
+      "firstCountsMs": 5965.491112999999,
       "trafficBytes": 28082353,
       "loadedEdges": 139964,
       "drawEdges": 61777,
-      "renderTransformMs": 1104.5792530000017,
+      "renderTransformMs": 1293.1953869999998,
       "sourceSamples": 133836,
-      "updateMs": 713.8891999999996,
+      "updateMs": 758.1400729999987,
       "strokes": 519408,
       "sunCalls": 1113417,
       "drawMs": [
-        602.6418439999998,
-        603.0478480000002,
-        608.6382259999991,
-        673.0373689999997,
-        666.1965110000001,
-        667.019793999998,
-        691.7240220000022,
-        690.8411869999982
+        624.0618570000006,
+        640.3044300000001,
+        639.9874600000003,
+        656.576766000002,
+        636.2262090000004,
+        666.883260999999,
+        614.8227369999986,
+        654.5359309999985
       ],
-      "warmMs": 6443.011549999999,
-      "panMs": 5723.956642999998,
-      "filterMs": 5602.523643999997,
-      "pointMs": 52.90351300000475,
+      "warmMs": 6071.912583999998,
+      "panMs": 5850.386902999999,
+      "filterMs": 5732.482194999997,
+      "pointMs": 58.57442900000024,
       "passages": 0,
       "additionalBytes": 83713522,
       "cache": {
@@ -170,13 +170,13 @@
         "renderEntries": 16
       },
       "memory": {
-        "rss": 3107287040,
-        "heapTotal": 2456473600,
-        "heapUsed": 2375127560,
-        "external": 95201434,
-        "arrayBuffers": 81671191
+        "rss": 3160035328,
+        "heapTotal": 2450362368,
+        "heapUsed": 2323671560,
+        "external": 97492106,
+        "arrayBuffers": 79691817
       },
-      "rssPeakKiB": 3042816
+      "rssPeakKiB": 3090668
     },
     {
       "repeat": 0,
@@ -192,30 +192,30 @@
         50.08,
         14.44
       ],
-      "firstPreviewMs": 23.025911999997334,
-      "firstCountsMs": 355.11983099999634,
+      "firstPreviewMs": 25.950356999994256,
+      "firstCountsMs": 383.1213379999972,
       "trafficBytes": 1933678,
       "loadedEdges": 2157,
       "drawEdges": 1855,
-      "renderTransformMs": 21.48491500000091,
+      "renderTransformMs": 23.192078000000038,
       "sourceSamples": 1855,
-      "updateMs": 6.1192210000008345,
+      "updateMs": 6.878448999996181,
       "strokes": 1287,
       "sunCalls": 1116,
       "drawMs": [
-        2.8081269999966025,
-        2.7854839999999967,
-        2.6285510000016075,
-        2.542263000003004,
-        2.882547999994131,
-        2.2404349999997066,
-        2.31952199999796,
-        2.1911220000038156
+        2.6333489999960875,
+        3.823694999999134,
+        3.28903100000025,
+        3.015204999996058,
+        3.095183999997971,
+        2.2870849999962957,
+        2.267214999999851,
+        2.8386829999944894
       ],
-      "warmMs": 15.079274000003352,
-      "panMs": 13.18320500000118,
-      "filterMs": 290.3985399999947,
-      "pointMs": 101.77235700000165,
+      "warmMs": 13.426198000001023,
+      "panMs": 11.758482000004733,
+      "filterMs": 287.22367099999974,
+      "pointMs": 93.59992599999532,
       "passages": 2728,
       "additionalBytes": 2800831,
       "cache": {
@@ -227,13 +227,13 @@
         "renderEntries": 4
       },
       "memory": {
-        "rss": 3075784704,
-        "heapTotal": 1592872960,
-        "heapUsed": 1295397576,
-        "external": 63626711,
-        "arrayBuffers": 42218803
+        "rss": 3134554112,
+        "heapTotal": 1602076672,
+        "heapUsed": 1295891728,
+        "external": 63609430,
+        "arrayBuffers": 42201522
       },
-      "rssPeakKiB": 3042816
+      "rssPeakKiB": 3090668
     },
     {
       "repeat": 1,
@@ -249,30 +249,30 @@
         50.12,
         14.52
       ],
-      "firstPreviewMs": 21.44515600000159,
-      "firstCountsMs": 1077.691896000004,
+      "firstPreviewMs": 18.582361000000674,
+      "firstCountsMs": 1001.5743470000016,
       "trafficBytes": 6155869,
       "loadedEdges": 10285,
       "drawEdges": 7380,
-      "renderTransformMs": 95.54188099999737,
+      "renderTransformMs": 94.43219000000681,
       "sourceSamples": 9615,
-      "updateMs": 58.42108200000075,
+      "updateMs": 59.52550099999644,
       "strokes": 41823,
       "sunCalls": 51147,
       "drawMs": [
-        45.776676000001316,
-        45.79211799999757,
-        48.130489000002854,
-        43.448309999999765,
-        43.097310000004654,
-        46.95766800000274,
-        44.39883099999861,
-        63.88901499999338
+        46.18989699999656,
+        47.29522700000234,
+        43.86189200000081,
+        44.45681500000501,
+        43.44703600000503,
+        47.47640699999465,
+        45.164755999998306,
+        44.150581000001694
       ],
-      "warmMs": 1064.1135559999966,
-      "panMs": 929.9726709999959,
-      "filterMs": 939.1029310000013,
-      "pointMs": 64.619408999999,
+      "warmMs": 993.6487119999947,
+      "panMs": 880.9170389999999,
+      "filterMs": 869.4135509999978,
+      "pointMs": 62.913289000003715,
       "passages": 1097,
       "additionalBytes": 18590933,
       "cache": {
@@ -284,13 +284,13 @@
         "renderEntries": 16
       },
       "memory": {
-        "rss": 3070820352,
-        "heapTotal": 603627520,
-        "heapUsed": 494325336,
-        "external": 68829626,
-        "arrayBuffers": 52633363
+        "rss": 3133587456,
+        "heapTotal": 630792192,
+        "heapUsed": 535270832,
+        "external": 77083956,
+        "arrayBuffers": 58559781
       },
-      "rssPeakKiB": 3042816
+      "rssPeakKiB": 3090668
     },
     {
       "repeat": 1,
@@ -306,30 +306,30 @@
         50.098,
         14.468
       ],
-      "firstPreviewMs": 21.706119000002218,
-      "firstCountsMs": 435.8434899999993,
+      "firstPreviewMs": 23.134537000005366,
+      "firstCountsMs": 424.2502330000061,
       "trafficBytes": 2583107,
       "loadedEdges": 2801,
       "drawEdges": 1901,
-      "renderTransformMs": 21.18467899999814,
+      "renderTransformMs": 20.980681000000914,
       "sourceSamples": 2442,
-      "updateMs": 15.108882000000449,
+      "updateMs": 14.61910799999896,
       "strokes": 10332,
       "sunCalls": 12321,
       "drawMs": [
-        11.600677000002179,
-        18.368479999997362,
-        11.79171900000074,
-        12.219905000005383,
-        11.330696000004536,
-        11.642106999999669,
-        11.163747999999032,
-        11.26636999999755
+        11.384116999994149,
+        16.56010000000242,
+        12.019249000004493,
+        11.09899299999961,
+        10.951796000001195,
+        10.755683000003046,
+        10.593173000001116,
+        10.478653000005579
       ],
-      "warmMs": 17.22379099999671,
-      "panMs": 117.19667699999991,
-      "filterMs": 400.9261870000046,
-      "pointMs": 106.48729900000035,
+      "warmMs": 17.267069000001356,
+      "panMs": 106.8957190000001,
+      "filterMs": 342.88320399999793,
+      "pointMs": 111.45075099999667,
       "passages": 2047,
       "additionalBytes": 4105716,
       "cache": {
@@ -341,241 +341,241 @@
         "renderEntries": 8
       },
       "memory": {
-        "rss": 3051692032,
-        "heapTotal": 376586240,
-        "heapUsed": 207390144,
+        "rss": 3112574976,
+        "heapTotal": 374505472,
+        "heapUsed": 168402024,
+        "external": 28129997,
+        "arrayBuffers": 19473270
+      },
+      "rssPeakKiB": 3090668
+    },
+    {
+      "repeat": 1,
+      "name": "wide-PID",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 9,
+      "bounds": [
+        49.65,
+        13.85,
+        50.65,
+        15.35
+      ],
+      "firstPreviewMs": 2.8088690000004135,
+      "firstCountsMs": 5323.016584999998,
+      "trafficBytes": 28082353,
+      "loadedEdges": 139964,
+      "drawEdges": 61777,
+      "renderTransformMs": 1185.3220269999947,
+      "sourceSamples": 133836,
+      "updateMs": 852.5350319999998,
+      "strokes": 519408,
+      "sunCalls": 1113417,
+      "drawMs": [
+        615.8580339999971,
+        611.7711180000042,
+        634.6462240000037,
+        620.3623940000034,
+        617.6635850000021,
+        612.2110829999947,
+        611.1594719999994,
+        623.8985990000001
+      ],
+      "warmMs": 6111.581673999994,
+      "panMs": 5802.629704000006,
+      "filterMs": 5928.896246000004,
+      "pointMs": 55.36360799999966,
+      "passages": 0,
+      "additionalBytes": 83713522,
+      "cache": {
+        "dataBytes": 3704193,
+        "dataEntries": 6,
+        "countBytes": 8253484,
+        "countEntries": 22,
+        "renderBytes": 485213,
+        "renderEntries": 16
+      },
+      "memory": {
+        "rss": 3157360640,
+        "heapTotal": 2451750912,
+        "heapUsed": 2354754256,
+        "external": 94239662,
+        "arrayBuffers": 80709419
+      },
+      "rssPeakKiB": 3114900
+    },
+    {
+      "repeat": 1,
+      "name": "dense-close",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 16,
+      "bounds": [
+        50.073,
+        14.422,
+        50.08,
+        14.44
+      ],
+      "firstPreviewMs": 26.10816899999918,
+      "firstCountsMs": 380.8755700000038,
+      "trafficBytes": 1933678,
+      "loadedEdges": 2157,
+      "drawEdges": 1855,
+      "renderTransformMs": 19.385991999995895,
+      "sourceSamples": 1855,
+      "updateMs": 6.159781999987899,
+      "strokes": 1287,
+      "sunCalls": 1116,
+      "drawMs": [
+        2.846214000004693,
+        3.04772299999604,
+        2.551827000002959,
+        2.5537899999908404,
+        2.5491729999921517,
+        2.207146000000648,
+        2.2236400000110734,
+        2.206083999990369
+      ],
+      "warmMs": 13.742637000003015,
+      "panMs": 12.73065399999905,
+      "filterMs": 295.02929000000586,
+      "pointMs": 94.11733399999503,
+      "passages": 2728,
+      "additionalBytes": 2800831,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 5125120,
+        "countEntries": 8,
+        "renderBytes": 375046,
+        "renderEntries": 4
+      },
+      "memory": {
+        "rss": 3133661184,
+        "heapTotal": 1637728256,
+        "heapUsed": 1288595184,
+        "external": 63499060,
+        "arrayBuffers": 42091152
+      },
+      "rssPeakKiB": 3114900
+    },
+    {
+      "repeat": 2,
+      "name": "desktop-start",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 13,
+      "bounds": [
+        50.055,
+        14.35,
+        50.12,
+        14.52
+      ],
+      "firstPreviewMs": 24.897070999999414,
+      "firstCountsMs": 1102.948946000004,
+      "trafficBytes": 6155869,
+      "loadedEdges": 10285,
+      "drawEdges": 7380,
+      "renderTransformMs": 95.06573300001037,
+      "sourceSamples": 9615,
+      "updateMs": 62.97339800000191,
+      "strokes": 41823,
+      "sunCalls": 51147,
+      "drawMs": [
+        48.985943000006955,
+        48.48325599999225,
+        46.401396999994176,
+        51.026551000002655,
+        48.16430400000536,
+        51.05129800000577,
+        46.31630099999893,
+        48.35194199999387
+      ],
+      "warmMs": 1201.0213280000025,
+      "panMs": 1076.411432000008,
+      "filterMs": 997.9578210000036,
+      "pointMs": 62.83761499999673,
+      "passages": 1097,
+      "additionalBytes": 18590933,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8150998,
+        "countEntries": 18,
+        "renderBytes": 831562,
+        "renderEntries": 16
+      },
+      "memory": {
+        "rss": 3132497920,
+        "heapTotal": 591290368,
+        "heapUsed": 513154976,
+        "external": 67910039,
+        "arrayBuffers": 49385864
+      },
+      "rssPeakKiB": 3114900
+    },
+    {
+      "repeat": 2,
+      "name": "mobile-start",
+      "viewport": {
+        "x": 390,
+        "y": 768
+      },
+      "zoom": 13,
+      "bounds": [
+        50.052,
+        14.412,
+        50.098,
+        14.468
+      ],
+      "firstPreviewMs": 24.289732000004733,
+      "firstCountsMs": 430.2282669999986,
+      "trafficBytes": 2583107,
+      "loadedEdges": 2801,
+      "drawEdges": 1901,
+      "renderTransformMs": 24.66455600000336,
+      "sourceSamples": 2442,
+      "updateMs": 15.971664999990026,
+      "strokes": 10332,
+      "sunCalls": 12321,
+      "drawMs": [
+        12.54678600000625,
+        18.856826999995974,
+        11.590102000001934,
+        11.253571999986889,
+        11.422563000000082,
+        11.598253999996814,
+        11.273761999997078,
+        14.495773999995436
+      ],
+      "warmMs": 21.4413729999942,
+      "panMs": 117.0422419999959,
+      "filterMs": 418.8616420000035,
+      "pointMs": 100.66086899999937,
+      "passages": 2047,
+      "additionalBytes": 4105716,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8107152,
+        "countEntries": 14,
+        "renderBytes": 517110,
+        "renderEntries": 8
+      },
+      "memory": {
+        "rss": 3111157760,
+        "heapTotal": 373440512,
+        "heapUsed": 206640568,
         "external": 35996034,
         "arrayBuffers": 24673287
       },
-      "rssPeakKiB": 3042816
-    },
-    {
-      "repeat": 1,
-      "name": "wide-PID",
-      "viewport": {
-        "x": 1050,
-        "y": 860
-      },
-      "zoom": 9,
-      "bounds": [
-        49.65,
-        13.85,
-        50.65,
-        15.35
-      ],
-      "firstPreviewMs": 4.940943000001425,
-      "firstCountsMs": 5702.104624,
-      "trafficBytes": 28082353,
-      "loadedEdges": 139964,
-      "drawEdges": 61777,
-      "renderTransformMs": 1243.4852720000054,
-      "sourceSamples": 133836,
-      "updateMs": 779.0413489999992,
-      "strokes": 519408,
-      "sunCalls": 1113417,
-      "drawMs": [
-        704.1842459999971,
-        657.7488309999972,
-        669.9517930000002,
-        635.2711500000005,
-        660.6207829999985,
-        659.9770879999996,
-        672.9750819999972,
-        648.1182739999931
-      ],
-      "warmMs": 5722.349201999998,
-      "panMs": 5686.353644999996,
-      "filterMs": 5634.027688999995,
-      "pointMs": 57.620971999989706,
-      "passages": 0,
-      "additionalBytes": 83713522,
-      "cache": {
-        "dataBytes": 3704193,
-        "dataEntries": 6,
-        "countBytes": 8253484,
-        "countEntries": 22,
-        "renderBytes": 485213,
-        "renderEntries": 16
-      },
-      "memory": {
-        "rss": 3099729920,
-        "heapTotal": 2349481984,
-        "heapUsed": 2091505104,
-        "external": 52216162,
-        "arrayBuffers": 43559435
-      },
-      "rssPeakKiB": 3061500
-    },
-    {
-      "repeat": 1,
-      "name": "dense-close",
-      "viewport": {
-        "x": 1050,
-        "y": 860
-      },
-      "zoom": 16,
-      "bounds": [
-        50.073,
-        14.422,
-        50.08,
-        14.44
-      ],
-      "firstPreviewMs": 19.853937000007136,
-      "firstCountsMs": 357.71814900000754,
-      "trafficBytes": 1933678,
-      "loadedEdges": 2157,
-      "drawEdges": 1855,
-      "renderTransformMs": 19.568383999998332,
-      "sourceSamples": 1855,
-      "updateMs": 6.33387099999527,
-      "strokes": 1287,
-      "sunCalls": 1116,
-      "drawMs": [
-        2.6109850000066217,
-        2.85998500000278,
-        2.6097140000056243,
-        2.924691000007442,
-        2.8267049999994924,
-        2.6071589999919524,
-        2.395745000001625,
-        2.444127999988268
-      ],
-      "warmMs": 15.465253999995184,
-      "panMs": 13.352757999993628,
-      "filterMs": 278.492201999994,
-      "pointMs": 99.50501599999552,
-      "passages": 2728,
-      "additionalBytes": 2800831,
-      "cache": {
-        "dataBytes": 3123145,
-        "dataEntries": 1,
-        "countBytes": 5125120,
-        "countEntries": 8,
-        "renderBytes": 375046,
-        "renderEntries": 4
-      },
-      "memory": {
-        "rss": 3076321280,
-        "heapTotal": 1639301120,
-        "heapUsed": 1297848488,
-        "external": 63385697,
-        "arrayBuffers": 41977789
-      },
-      "rssPeakKiB": 3061500
-    },
-    {
-      "repeat": 2,
-      "name": "desktop-start",
-      "viewport": {
-        "x": 1050,
-        "y": 860
-      },
-      "zoom": 13,
-      "bounds": [
-        50.055,
-        14.35,
-        50.12,
-        14.52
-      ],
-      "firstPreviewMs": 18.707474999988335,
-      "firstCountsMs": 1021.0009060000011,
-      "trafficBytes": 6155869,
-      "loadedEdges": 10285,
-      "drawEdges": 7380,
-      "renderTransformMs": 88.99702999999863,
-      "sourceSamples": 9615,
-      "updateMs": 63.50329199999396,
-      "strokes": 41823,
-      "sunCalls": 51147,
-      "drawMs": [
-        45.081801000007545,
-        43.42229800000496,
-        46.33135500000208,
-        43.85093400000187,
-        44.24797299999045,
-        43.35349499998847,
-        47.095028999989154,
-        43.854475999993156
-      ],
-      "warmMs": 1015.161248000004,
-      "panMs": 873.2719030000007,
-      "filterMs": 899.2356049999944,
-      "pointMs": 107.90643299999647,
-      "passages": 1097,
-      "additionalBytes": 18590933,
-      "cache": {
-        "dataBytes": 3123145,
-        "dataEntries": 1,
-        "countBytes": 8150998,
-        "countEntries": 18,
-        "renderBytes": 831562,
-        "renderEntries": 16
-      },
-      "memory": {
-        "rss": 3067613184,
-        "heapTotal": 515895296,
-        "heapUsed": 150094240,
-        "external": 18193758,
-        "arrayBuffers": 11864943
-      },
-      "rssPeakKiB": 3061500
-    },
-    {
-      "repeat": 2,
-      "name": "mobile-start",
-      "viewport": {
-        "x": 390,
-        "y": 768
-      },
-      "zoom": 13,
-      "bounds": [
-        50.052,
-        14.412,
-        50.098,
-        14.468
-      ],
-      "firstPreviewMs": 19.342756999991252,
-      "firstCountsMs": 395.12013299998944,
-      "trafficBytes": 2583107,
-      "loadedEdges": 2801,
-      "drawEdges": 1901,
-      "renderTransformMs": 22.40782799999579,
-      "sourceSamples": 2442,
-      "updateMs": 15.540011000004597,
-      "strokes": 10332,
-      "sunCalls": 12321,
-      "drawMs": [
-        11.130041999989771,
-        18.082116999998107,
-        11.3877119999961,
-        10.797115000008489,
-        10.896181000003708,
-        12.541172999990522,
-        12.424930000008317,
-        10.4647510000068
-      ],
-      "warmMs": 17.80376399999659,
-      "panMs": 122.34393800000544,
-      "filterMs": 388.5869879999955,
-      "pointMs": 95.6442010000028,
-      "passages": 2047,
-      "additionalBytes": 4105716,
-      "cache": {
-        "dataBytes": 3123145,
-        "dataEntries": 1,
-        "countBytes": 8107152,
-        "countEntries": 14,
-        "renderBytes": 517110,
-        "renderEntries": 8
-      },
-      "memory": {
-        "rss": 3073605632,
-        "heapTotal": 347049984,
-        "heapUsed": 156068576,
-        "external": 28077305,
-        "arrayBuffers": 19420578
-      },
-      "rssPeakKiB": 3061500
+      "rssPeakKiB": 3114900
     },
     {
       "repeat": 2,
@@ -591,30 +591,30 @@
         50.65,
         15.35
       ],
-      "firstPreviewMs": 5.789952999999514,
-      "firstCountsMs": 5388.634943000012,
+      "firstPreviewMs": 4.352008999994723,
+      "firstCountsMs": 5988.956684999997,
       "trafficBytes": 28082353,
       "loadedEdges": 139964,
       "drawEdges": 61777,
-      "renderTransformMs": 1121.6123200000002,
+      "renderTransformMs": 1348.8465419999993,
       "sourceSamples": 133836,
-      "updateMs": 743.0985010000004,
+      "updateMs": 841.5072059999948,
       "strokes": 519408,
       "sunCalls": 1113417,
       "drawMs": [
-        624.1697270000004,
-        601.9779649999982,
-        601.376139,
-        608.1860160000069,
-        612.9585089999891,
-        615.8729189999867,
-        619.4526389999955,
-        614.1260890000121
+        646.863612000001,
+        636.4005250000046,
+        692.6132060000091,
+        683.9094900000055,
+        649.1287650000013,
+        628.1423809999978,
+        634.6236820000049,
+        657.2739710000023
       ],
-      "warmMs": 5886.199215000001,
-      "panMs": 5653.284249999997,
-      "filterMs": 5852.2128819999925,
-      "pointMs": 62.788799000001745,
+      "warmMs": 5997.149600999997,
+      "panMs": 5630.594303999998,
+      "filterMs": 5996.057208999991,
+      "pointMs": 56.52423500000441,
       "passages": 0,
       "additionalBytes": 83713522,
       "cache": {
@@ -626,13 +626,13 @@
         "renderEntries": 16
       },
       "memory": {
-        "rss": 3265024000,
-        "heapTotal": 2382774272,
-        "heapUsed": 2127318488,
-        "external": 62625414,
-        "arrayBuffers": 51739029
+        "rss": 3144536064,
+        "heapTotal": 2349408256,
+        "heapUsed": 2111089512,
+        "external": 59741209,
+        "arrayBuffers": 48854824
       },
-      "rssPeakKiB": 3215608
+      "rssPeakKiB": 3114900
     },
     {
       "repeat": 2,
@@ -648,30 +648,30 @@
         50.08,
         14.44
       ],
-      "firstPreviewMs": 24.545404999997118,
-      "firstCountsMs": 407.12373400000797,
+      "firstPreviewMs": 23.46154099999694,
+      "firstCountsMs": 399.08432899999025,
       "trafficBytes": 1933678,
       "loadedEdges": 2157,
       "drawEdges": 1855,
-      "renderTransformMs": 22.028029000008246,
+      "renderTransformMs": 20.845977000004495,
       "sourceSamples": 1855,
-      "updateMs": 6.676651000001584,
+      "updateMs": 7.176795000006678,
       "strokes": 1287,
       "sunCalls": 1116,
       "drawMs": [
-        2.695460999995703,
-        2.6989060000050813,
-        3.0696360000001732,
-        2.755048999999417,
-        3.3059680000005756,
-        2.2585029999900144,
-        2.326624000008451,
-        2.191372000001138
+        3.084779000011622,
+        3.0621959999989485,
+        2.5841959999961546,
+        2.7133279999980005,
+        3.03966299998865,
+        2.26948899999843,
+        2.300896000000648,
+        2.1822899999970105
       ],
-      "warmMs": 15.622568999999203,
-      "panMs": 12.909583000000566,
-      "filterMs": 297.3610110000009,
-      "pointMs": 95.36240500000713,
+      "warmMs": 15.803161000003456,
+      "panMs": 15.04149000000325,
+      "filterMs": 290.0379879999964,
+      "pointMs": 97.61038800000097,
       "passages": 2728,
       "additionalBytes": 2800831,
       "cache": {
@@ -683,13 +683,14 @@
         "renderEntries": 4
       },
       "memory": {
-        "rss": 3249524736,
-        "heapTotal": 1642770432,
-        "heapUsed": 1289627088,
-        "external": 63200869,
-        "arrayBuffers": 41792961
+        "rss": 3129446400,
+        "heapTotal": 1620426752,
+        "heapUsed": 1291418584,
+        "external": 63232907,
+        "arrayBuffers": 41824999
       },
-      "rssPeakKiB": 3215608
+      "rssPeakKiB": 3114900
     }
-  ]
+  ],
+  "manifestFormat": "chunks.json.gz; measured compressed metadata bytes independently, scenario timings exclude initialization"
 }

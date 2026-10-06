@@ -15,9 +15,10 @@ const labels=await import(pathToFileURL(source+'/route-labels.js'));
 const intensity=await import(pathToFileURL(source+'/intensity.js'));
 let transferred=0,reads=0;
 const load=p=>{const raw=readFileSync(root+'/'+p);transferred+=raw.length;reads++;const data=p.endsWith('.gz')?gunzipSync(raw):raw;return p.endsWith('.bin.gz')?decodeSchedule(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength)):JSON.parse(data);};
-const meta=load('meta.json'),index=load('chunks.json'),metadataBytes=transferred;
+const app=readFileSync(source+'/app.js','utf8');
+const meta=load('meta.json'),index=load(app.includes('intensity-toggle')?'chunks.json.gz':'chunks.json'),metadataBytes=transferred;
 const base={date:meta.startDate.slice(0,4)+'-'+meta.startDate.slice(4,6)+'-'+meta.startDate.slice(6),start:0,end:86400,allDay:true,operation:'all',routes:[],agencies:[],modes:[],directions:[]};
-const app=readFileSync(source+'/app.js','utf8'),layer=app.slice(app.indexOf('const RoutesLayer=L.Layer.extend('),app.indexOf('const routesLayer=new RoutesLayer()'));
+const layer=app.slice(app.indexOf('const RoutesLayer=L.Layer.extend('),app.indexOf('const routesLayer=new RoutesLayer()'));
 const report={environment:{node:process.version,platform:process.platform,note:'Local compressed files, same feed and unthrottled CPU. Viewports are projected models, not emulated browsers. Canvas context records real layer draw operations without rasterization. No internet, tile paint, browser first-map timing or phone RAM measured.'},feed:meta.builtAt,metadataBytes,samples:[]};
 function renderer(data,bounds,size,zoom,photo){
  const element=id=>({value:{opacity:'.8',color:'mode',thickness:'1',date:base.date}[id]||'',checked:false,hidden:false});
@@ -44,7 +45,7 @@ for(let repeat=0;repeat<3;repeat++)for(const [name,bounds,size,zoom] of [
  if(data.geometry.display){const {renderView}=await import(pathToFileURL(source+'/render-view.js'));display=renderView(data,zoom);}
  const renderTransformMs=performance.now()-transformStart;
  const r=renderer(display,bounds,size,zoom,true);
- if(source.endsWith('/src')&&app.includes("from './map-light.js'"))Object.assign(r.context,await import(pathToFileURL(source+'/render-view.js')),await import(pathToFileURL(source+'/map-light.js')));
+ if(source.endsWith('/src')&&app.includes("from './map-light.js"))Object.assign(r.context,await import(pathToFileURL(source+'/render-view.js')),await import(pathToFileURL(source+'/map-light.js')));
  if(r.context.MapLightCache)r.context.lightCache={sun:(...args)=>{r.stats.sunCalls++;return core.sunPosition(...args);}};
  runInNewContext(layer+';globalThis.layer=RoutesLayer;',r.context);
  const l=r.context.layer;l._map=r.map;l.canvas={style:{},getContext:()=>r.ctx};if(l.paint)l.draw=()=>{for(const _ of l.paint()){}};

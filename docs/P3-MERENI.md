@@ -8,7 +8,8 @@ Měřeno 6. 10. 2026 na produkčním PID datasetu a OSM snapshotu 2026-10-04T20:
 | --- | --- | --- |
 | [OSM PBF / Geofabrik ČR](https://download.geofabrik.de/europe/czech-republic.html) | Jeden automaticky zpracovatelný snapshot; footprint, building:part, height, levels, min_height, roof údaje; ODbL | Zvolen pro P3. Výšky jsou neúplné a mohou být odhadnuté/chybné. Jejich skutečný podíl se měří na zpracovaných datech. |
 | [ČÚZK otevřená data](https://www.cuzk.gov.cz/Uvod/Produkty-a-sluzby/Otevrena-data/Otevrena-data-zakladni-informace.aspx) | Celostátní footprinty / tematické sady; CC BY 4.0 | Neprokázána jednotná hotová celostátní sada solidů budov s jednoduchým aktuálním downloadem vhodná k přímému nasazení do této pipeline. Neznamená to, že ČÚZK výšková data nemá. |
-| [ČÚZK DMP 1G](https://geoportal.gov.cz/php/micka/record/full/CZ-CUZK-DMP1G-V) | Povrch včetně staveb, uváděná střední chyba 0,4 m pro budovy | Obsahuje i vegetaci, nejde přímo o relativní height tag. Vyžadoval by klasifikaci, footprinty, DMR a ověření distribuční pipeline; není automaticky přidán jako spolehlivý model budov. |
+| [ČÚZK DMP 1G (nahrazen DMP OK)](https://geoportal.gov.cz/php/micka/record/full/CZ-CUZK-DMP1G-V) | Povrch včetně staveb, uváděná střední chyba 0,4 m pro budovy | Obsahuje i vegetaci, nejde přímo o relativní height tag. Vyžadoval by klasifikaci, footprinty, DMR a ověření distribuční pipeline; není automaticky přidán jako spolehlivý model budov. |
+| [ČÚZK DMP OK](https://geoportal.cuzk.gov.cz/default.aspx?mode=News&newsID=3319&newsTyp=id) | Aktuální celostátní DSM z obrazové korelace, veřejné ATOM TIFF/LAZ po SM5, 3D služba; úplné ČR od dubna 2026 | Silný kandidát na budoucí doplnění nadmořských výšek. ImageServer uvádí pixel 0,5 m, což není vertikální přesnost. Pro P3 není prokázaná budovová klasifikace a validovaná konverze DSM + DMR → výška domu; nelze jej zaměnit za čistou vrstvu budov bez vegetace. Není nasazený. |
 | [3D model Prahy / IPR](https://iprpraha.cz/struktura) | Možnost přesnější pražské geometrie, otevřená/výdejová data | Nepokrývá celý PID. Strojová distribuce a kompletní licence jednotlivých vrstev nebyly v P3 ověřeny; nemá se vydávat za nasazený zdroj. |
 
 Výklad OSM: [height](https://wiki.openstreetmap.org/wiki/Key:height), [building:levels](https://wiki.openstreetmap.org/wiki/Key:building:levels), [Simple 3D Buildings](https://wiki.openstreetmap.org/wiki/Simple_3D_Buildings), [licence](https://www.openstreetmap.org/copyright). Výška height zahrnuje střechu, levels střechu nezahrnují; min_height vyjadřuje spodní otvor. Vegetace může být budoucí samostatná nejistá vrstva, nikoli součást P3.
@@ -59,11 +60,11 @@ python scripts/finalize_data.py
 - Node referenční viewport 50,06–50,10 / 14,39–14,49: 29 lokálních chunků, 153 392 B gzip + manifest; aktivní dekódované buffery 4 180 200 B, načtení 56,81 ms, dekódování 32,46 ms. 100 000 vyhodnocení 18,79 ms. Jde o Node a lokální disk, nikoli mobilní síť.
 - Mapová cache 2 MiB + nejvýše 4 MiB aktivních bufferů; detailní cache 1 MiB + 4 MiB aktivních bufferů. Při překročení limitu se oblast označí neověřená.
 
-Referenční body zahrnují Belárii, městskou ulici, vysoký dům, bloky, most, terén, svah s městem a autobus v Liblicích. Každý má souřadnice přichycené k aktuální trase, čas Europe/Prague, astronomickou polohu, oba horizonty a výsledný stav. Neznámé výšky jsou v této sadě časté; to je vlastnost zdroje, nikoli automaticky potvrzené světlo. Ortofoto/3D sanity check nebyl proveden.
+Referenční body zahrnují Belárii, městskou ulici, vysoký dům, bloky, most, terén, svah s městem a autobus v Liblicích. Každý má souřadnice přichycené k aktuální povrchové trase (při výběru referencí se vynechává metro; aplikace žádný nový filtr nemá), čas Europe/Prague, astronomickou polohu, oba horizonty a výsledný stav. Neznámé výšky jsou v této sadě časté; to je vlastnost zdroje, nikoli automaticky potvrzené světlo. Ruční ortofoto sanity check tří míst je uveden níže; výšky ani fyzický stín jím nejsou ověřené.
 
 Opakovaný build: 55,292 s, **0 nových výpočtů**, všech 2 160 881 profilů z cache, identických 51 938 756 B gzip.
 
-Testy: 66/66 Node testů a Python building suite; GTFS regrese sedmi oblastí × šesti filtrů prošla. Cache, hranice, poškozené chunky/retry, chybějící data, lokální struktury a nativní/NumPy shoda jsou testované.
+Testy: 68/68 Node testů a Python building suite; GTFS regrese sedmi oblastí × šesti filtrů prošla. Cache, hranice, poškozené chunky/retry, chybějící data, lokální struktury a nativní/NumPy shoda jsou testované.
 
 ## Prohlížeč / mobil
 
@@ -82,3 +83,29 @@ Slider mobil: medián P2 125,35 ms / P3 134,75 ms, p95 P2 163,40 / P3 164,70 ms.
 ## Publikace
 
 Implementace a benchmark jsou v [PR #2](https://github.com/anlexcz/sotofoto/pull/2). PR Actions ověřují testy a GTFS regresi. Produkční Actions na main sestavují skutečný statický zdroj/profily před Pages deployem; konečný stav běhu a živé stránky se ověřuje při nasazení. Tento dokument nedeklaruje fyzickou přesnost modelu ani dokončený deploy před úspěšným produkčním během.
+
+## Ruční kontrola ortofota (6. 10. 2026)
+
+[Oficiální WMS Ortofoto ČR](https://ags.cuzk.gov.cz/arcgis1/services/ORTOFOTO/MapServer/WMSServer?service=WMS&request=GetCapabilities), © ČÚZK. Prohlédnuté výřezy 0,003° × 0,002°, sever nahoře, střed v okolí referenčního bodu. Datum konkrétních snímků nebylo ověřeno.
+
+- Karlín (50,094567 / 14,453766): trať mezi bloky, budovy v jižním/jihovýchodním směru. Odpovídá typu případu a možnému rannímu stínu; neověřuje 19,5° ani výšky OSM.
+- Palackého most (50,0722 / 14,4127, bod přichycený k GTFS v JSON): most nad řekou a víceúrovňová situace. Neověřený stav je přiměřený; rovinný model nepotvrzuje přesnou nadmořskou výšku pozorovatele.
+- Český Brod, Liblice, obec (GTFS zastávka 50,074505 / 14,883168): silnice mezi rodinnými domy. Původní bod 50,04945 / 14,89798 byl na silnici mezi poli a byl opraven v referenčním skriptu i uložených výsledcích.
+
+DMP OK má veřejný [ATOM LAZ download](https://geoportal.cuzk.cz/Default.aspx?metadataID=CZ-CUZK-ATOM-DMPOK-SJTSK-LAZ&metadataXSL=metadata.sluzba&mode=TextMeta&side=WFS.ATOM_OSTATNI) a [3D ImageServer](https://ags.cuzk.gov.cz/arcgis/rest/services/3D/dmp/ImageServer?f=json). Volba OSM v P3 není tvrzením, že jiná česká výšková data neexistují nebo že OSM je nejpřesnější zdroj. Důvodem je hotová automatizovatelná vektorová identita budov/částí a explicitní model nejistoty, bez neověřené klasifikace DSM.
+
+Dodatečný browser fail-safe test (390×844, stejné lokální produkční soubory): manifest HTTP 404 a všechny building chunky s neplatným gzip. V obou scénářích základní mapa fungovala, detail uváděl NEOVĚŘENO, zůstalo 90 průjezdů a žádná JS chyba. Po pohybu slideru 0 nových building requestů. Chybové odpovědi se neukládají jako platné a při další změně bodu/oblasti se požadavek zopakuje.
+
+U lokálního bridge/covered/tunnel příznaku má neověřená výška pozorovacího bodu přednost před všemi rovinnými building obálkami. Jinak by most mohl získat falešně jistý stín domu z modelu v úrovni země. Tento případ má samostatný regresní test. Chybějící výška jiného domu nemůže zrušit skutečný známý blokátor; jde o rozdílné druhy nejistoty.
+
+První produkční [Actions běh](https://github.com/anlexcz/sotofoto/actions/runs/37503086155) i Pages deploy uspěly 6. 10. 2026. Produkce používá novější Geofabrik soubor `czech-republic-261005.osm.pbf`, SHA256 `0f780e03688d023730dc7a7a8917cafc2c2922d4631d5032b222eb86362e4537`. Příprava zdroje včetně downloadu 855 s, výpočet profilů 171,69 s, peak RSS profilové fáze 1 444 020 KiB. Publikováno 51 938 604 B gzip a 481 666 B gzip manifest; počty profilů/chunků a percentily velikostí stejné jako lokální benchmark. Relevantních komponent 1 583 035, explicitní 5 214 / odhad 722 702 / neznámá 855 119. Žádná chyba zdrojové geometrie. Lokální benchmark výše zůstává označen svým starším snapshotem; drobné rozdíly produkce nejsou zatajené.
+
+Na živé stránce bylo ověřeno obnovení sdíleného data/času/bodu, přímé slunce, text odhadu výšek, skutečný CSV download a předpověď počasí. Změna času 9→12 h nezměnila 597 průjezdů v kontrolním bodě. Publikované mapové i detailní binární chunky prošly kontrolou formátu, délky a SHA256 hashe jména. Aktuální lokální 3D priorita je navíc krytá novým testem; poslední navazující commit ji publikuje bez změny geografických profilů.
+
+Po opravě 3D priority zopakován celý browser scénář ([výsledky](P3-browser-confirmation.json)): mobil worker 0,495 s, první četnost 1,723 s, peak UI heap 36,80 MB; slider medián 147,15 ms. Desktop první četnost 2,632 s, slider medián 316,00 ms. Opět 0 slider requestů / counts zpráv, funkční CSV a obnovený share URL, žádná JS chyba. Rozptyl dvou P3 relací dokládá, proč se z jedné lokální relace nevyvozuje přesná rychlost telefonu.
+
+Povrchový Karlín 50,094567 / 14,453766 byl ověřen i na živém webu: 7. 10. 2026 9:00, odhadovaný dolní building horizont 19,5°, Slunce přibližně 15,7°, přímé slunce NE z důvodu zástavby, 944 průjezdů. Samostatný krytý kontrolní bod výše není tímto povrchovým referenčním bodem.
+
+Aktualizace oblasti přebírá shodné již aktivní buffery. Bez toho se při aktivní vrstvě větší než LRU mohly při otevření detailu znovu dekódovat mapové chunky (HTTP cache mohla ušetřit přenos, nikoli dekódování). Regresní test ověřuje nulový fetch pro stejný aktivní výřez i při malé LRU. Browser payload z Content-Length je velikost odpovědi, nikoli přesný wire-byte čítač; cache může vykázat nulovou délku nebo původní velikost. Deterministický studený viewport se měří samostatně z gzip souborů.
+
+Finální browser validace po převzetí aktivních bufferů ([výsledky](P3-browser-final-validation.json)): mobil worker 0.405 s / první četnost 1.681 s, focení 627492 B ve 31 building odpovědích včetně manifestu, detail 45930 B v 1 odpovědích. Slider 0 datových requestů a 0 přepočtů provozu; CSV a share URL opět prošly. Mobilní peak UI heap 33.68 MB, slider medián 138.10 ms / p95 167.70 ms (CPU 4×, včetně dvou snímků).

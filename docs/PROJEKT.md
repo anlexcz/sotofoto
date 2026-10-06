@@ -104,3 +104,5 @@ Binární formát `SFB1`: čtyři ASCII bajty magic + little-endian uint32 poče
 ### Actions a cena prvního buildu
 
 PR spouští kompletní unit/integration suite a produkční GTFS regresi. Reálné sestavení statického prostředí je ověřeno lokálně a produkčním jobem na `main`; PR nepřepočítává celostátní OSM při každém review commitu. Produkce nejprve připraví geografickou source cache (`--extract-only`) a ihned ji uloží pod fingerprintem snapshotu/pokrytí. Teprve potom počítá profily. Výpadek pozdějšího kroku proto neztratí drahý průchod zdrojem. Obyčejná změna README se známým snapshotem/buňkami přebírá zdroj i profily z cache. Actions cache může po době neaktivity či překročení úložného limitu zmizet; pak je nutný nový cold build, nikoli falešná data.
+
+Lokální příznak víceúrovňové/kryté trati má v building vrstvě přednost před dolními rovinnými obálkami: při neznámé výšce pozorovatele nejsou platným důkazem stínu domu. Pro DEM nadále platí samostatný povrchový model a jeho dokumentovaná omezení.

@@ -8,11 +8,12 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 - Konkrétní datum v platnosti balíčku a libovolný časový rozsah, včetně přechodu přes půlnoc. Stejný čas od/do znamená 24 hodin.
 - Tloušťka společných úseků podle četnosti pravidelného provozu po aplikaci všech filtrů. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
 - Kliknutí kdekoliv poblíž trasy: průjezdy v okolí 20–150 m, linka, cílová zastávka, dopravce, místní směr a azimut, odhad času a odjezd z předchozí zastávky. Celý den nebo vybraný čas.
-- Režim focení: celé vyfiltrované trasy se obarví podle slunce ve zvoleném okamžiku. Zelená = čelo, přes žlutou k oranžové = boční světlo, několik stupňů za bokem přechod do červené = světlo zezadu / protislunce. Pod obzorem šedá. Posuvník po 5 minutách od hodiny před východem do hodiny po západu, s označeným východem a západem. Lze zadat libovolný přesný čas; rozsah se v případě potřeby rozšíří. Posuvník nemění filtry ani počty spojů.
+- Režim focení: celé vyfiltrované trasy se obarví podle slunce ve zvoleném okamžiku. Zelená = čelo, přes žlutou k oranžové = boční světlo, několik stupňů za bokem přechod do červené = světlo zezadu / protislunce. Pod obzorem šedá. Metro je neutrálně šedé s označením „Metro — nasvícení se nehodnotí“, bez výpočtu světla. Posuvník po 5 minutách od hodiny před východem do hodiny po západu, s označeným východem a západem. Tlačítka −5 / +5 minut i výběr hodiny a minuty po pěti minutách jsou na mapě i v detailu počasí. Lze zadat libovolný přesný čas; rozsah se v případě potřeby rozšíří. Posuvník nemění filtry ani počty spojů.
 - Poloha slunce v době skutečného průjezdu, počty průjezdů s příznivým nasvícením po hodinách i ráno/poledne/odpoledne. Kliknutí na sloupec nastaví danou hodinu pro filtr provozu.
 - Tloušťka tras se přizpůsobuje přiblížení, aby při oddálení nezakrývaly mapový podklad.
 - Barvy podle druhu dopravy, linky, dopravce, intenzity nebo jedna vlastní barva; průhlednost. Tlačítko ⓘ vedle režimu focení otevírá legendu četnosti a aktuálních barev; v režimu focení vysvětluje nasvícení. Zavření tlačítkem, křížkem, klepnutím mimo nebo Escape.
-- CSV export průjezdů a sdílení odkazu: URL uchovává datum, čas, filtry, pohled mapy, vybrané místo, režim focení, jeho nastavený čas a režim barev.
+- CSV export všech vybraných průjezdů včetně metra; u metra jsou sluneční údaje prázdné a světlo výslovně nehodnocené. Krátký odkaz na místo zachovává polohu, zoom a provozní filtry a otevře výchozí datum / celý den. Samostatný odkaz na plán zachovává i datum, provozní čas a nezávislý čas světla. Nové odkazy neukládají vzhled; staré serializované odkazy se dál načítají.
+- Detail bodu nabízí obyčejný odkaz „Otevřít v Mapy.com“ na přesné souřadnice se značkou, bez API klíče. Jemné bílé zastření podkladu zlepšuje čitelnost tras.
 - Responzivní ovládání pro mobil; data podle výřezu mapy, omezené cache a výpočty ve Web Workeru. Při startu se nestahuje celý PID.
 
 ## Data a pravidla výpočtu
@@ -62,7 +63,7 @@ Terén tvoří geografické balíčky s manifestem `terrain-index.json`; běžn�
 
 ### Plošná vrstva počasí
 
-Režim focení automaticky zapíná překryv přes celý výřez mapy. Modrošedá ukazuje horší dohlednost (síla roste pod 10 km, nejvýraznější při mlze), šedé zastření oblačnost se slabým přímým sluncem. Dobré podmínky jsou průhledné. Noc nevyvolává šedé zastření jen kvůli nulovému slunečnímu záření. Počasí je pod trasami a značkami, nad mapovým podkladem; nemění barvy tras ani intenzitu spojů. V legendě lze vrstvu skrýt. Volba se ukládá do odkazu spolu s mapou.
+Režim focení automaticky zapíná překryv přes celý výřez mapy. Modrošedá ukazuje horší dohlednost (síla roste pod 10 km, nejvýraznější při mlze), šedé zastření oblačnost se slabým přímým sluncem. Dobré podmínky jsou průhledné. Noc nevyvolává šedé zastření jen kvůli nulovému slunečnímu záření. Počasí je pod trasami a značkami, nad mapovým podkladem; nemění barvy tras ani intenzitu spojů. V legendě lze vrstvu skrýt. Volba je místní vzhledové nastavení a do nových odkazů se neukládá.
 
 `src/weather-layer.js` načítá ALADIN pro pravidelnou geograficky zarovnanou síť celého výřezu, nikoli jen pro vybraný bod. Minimum je přibližně 1 km; na širších výřezech se vzorky adaptivně rozestupují, maximálně 64 bodů na výřez. Skutečný rozestup je uveden v legendě. Plynulý překryv používá bilineární interpolaci, která nezvyšuje přesnost modelu a může vyhlazovat lokální mlhu. Údaje všech bodů přicházejí v jedné dávce Open-Meteo; poskytovatel může počítat každý bod proti limitům API. Načítání se spustí 600 ms po ustálení mapy. Cache obsahuje nejvýše 256 bodů na 30 minut; změna času jen překresluje uložené hodinové hodnoty. Pozdní odpověď předchozího výřezu nesmí přepsat nový výřez nebo znovu zapnout vypnutou vrstvu.
 
@@ -70,13 +71,13 @@ Chybějící předpověď, nepokrytá oblast a chyba API jsou šrafované, nikol
 
 ### Detail místa a ovládání v terénu
 
-Kliknutí vybírá okolí bodu bez přepínání segmentů. Do 25 m od trasy zachovává původní kliknutí (důležité u křižovatek), dál se přichytí k nejbližší zobrazené trase do 150 m. Okolí je 40 m, v členité geometrii 55 m, nezávisle na zoomu. Kruhem a zvýrazněním jsou vyznačené zahrnuté části tras. Sousední segmenty stejného průjezdu se deduplikují; pozdější návrat do oblasti je samostatný průjezd. Povrchová doprava má při souběhu přednost před metrem; samostatný filtr metra vrátí metro v obou směrech.
+Kliknutí vybírá okolí bodu bez přepínání segmentů. Do 25 m od trasy zachovává původní kliknutí (důležité u křižovatek), dál se přichytí k nejbližší zobrazené trase do 150 m. Okolí je 40 m, v členité geometrii 55 m, nezávisle na zoomu. Kruhem a zvýrazněním jsou vyznačené zahrnuté části tras. Sousední segmenty stejného průjezdu se deduplikují; pozdější návrat do oblasti je samostatný průjezd. Metro se při souběhu s povrchovou dopravou neskrývá; všechny druhy podléhají stejným aktivním filtrům.
 
 Mobilní panel začíná v dolní třetině (s minimální výškou pro dva průjezdy), zvětšuje se přes celou obrazovku tlačítkem nebo tažením za hlavičku. Rozbalení počasí či statistik jej zvětší, sbalení nemění zvolenou výšku. Souřadnice lze zkopírovat klepnutím. Jednotlivé průjezdy mají čas, linku, cíl a značku světla v prvním řádku, předchozí zastávku s časem ve druhém; dopravce a azimuty jsou po rozbalení.
 
 „Teď“ zachytí dnešek a začátek pět minut zpátky; opětovným stisknutím čas obnoví. „Od času“ mění den celé aplikace a začátek seznamu, „Celý den“ zobrazí vybraný civilní den. Budoucí seznam je dostupný do konce následujícího dne v rozsahu platnosti GTFS. Po půlnoci používá 00:00 a oddělovače dnů. Nejde o živá zpoždění. První dávka cílí na dvě hodiny / maximálně 50 řádků; u řídkého provozu rozšíří okno nejvýše na šest hodin. Další dávky načítá u konce seznamu nebo tlačítkem. Výpočet denní statistiky není omezen dávkou seznamu.
 
-„Kdy fotit“ počítá celý vybraný den podle filtrů. Spojuje obsazené pětiminutové intervaly vhodných průjezdů s mezerou nejvýše 15 minut; řadí je podle počtu vhodných spojů, poté podílu vhodných a kratší délky. Ukazuje počet vhodných / všech průjezdů. Hodnotí pouze slunce a dostupný terén, bez počasí. Tlačítko doporučení nastaví začátek seznamu i světlo mapy.
+„Kdy fotit“ počítá celý vybraný den podle filtrů. Spojuje obsazené pětiminutové intervaly vhodných průjezdů s mezerou nejvýše 15 minut; řadí je podle počtu vhodných spojů, poté podílu vhodných a kratší délky. Ukazuje počet vhodných / všech povrchových průjezdů; metro se do obou stran poměru nezahrnuje. Hodinové počty, běžné statistiky a CSV metro zachovávají. Hodnotí pouze slunce a dostupný terén, bez počasí. Tlačítko doporučení nastaví začátek seznamu i světlo mapy.
 
 Počasí je sbalený přehled dohlednosti, oblačnosti, teploty a času. Rozbalený graf má dohlednost v km, hranici 1 km, vybraný čas a samostatný pás slunce/noci/chybějících dat. Hodinová tlačítka mění čas světla a počasí, nikoli seznam. Technické zdroje jsou pod „O datech“. GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti.
 
@@ -110,8 +111,14 @@ Pravidelné průjezdy linek a dopravců na společném úseku se sčítají po v
 
 ## Stav výkonové optimalizace P2
 
-P2 je dokončené a nasazené: data se načítají podle oblasti, cache jsou omezené a terén má samostatnou geografickou cache. Na produkci bylo ověřeno i úspěšné načtení předpovědi v detailu a mapové vrstvě. Výsledky měření, mobilní zpětná vazba a limity ověření jsou v [reportu P2](docs/P2-MERENI.md#závěrečná-kontrola-a-uzavření-p2--6-10-2026). Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou odložené samostatné úpravy UI.
+P2 je dokončené a nasazené: data se načítají podle oblasti, cache jsou omezené a terén má samostatnou geografickou cache. Na produkci bylo ověřeno i úspěšné načtení předpovědi v detailu a mapové vrstvě. Výsledky měření, mobilní zpětná vazba a limity ověření jsou v [reportu P2](docs/P2-MERENI.md#závěrečná-kontrola-a-uzavření-p2--6-10-2026). Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou součástí bloku 1.
 
 ## Návrat před P3 – 6. 10. 2026
 
 Zástavba a lokální stínění P3 byly na žádost uživatele odstraněné kvůli potlačení barev nasvícení při neověřených datech. Aplikace opět používá původní výpočet Slunce a terénu z dokončeného P2. P1/P2, počasí i provozní filtry zůstávají zachované.
+
+## Blok 1 – ovládání a přehlednost (6. 10. 2026)
+
+Implementováno: nehodnocené metro bez jeho automatického potlačování, oddělené sdílení místa/plánu bez vzhledu, pohodlné ovládání času světla, odkaz Mapy.com a bílé zastření podkladu. −5 / +5 minut končí na 00:00 / 23:59 vybraného dne; nemění datum, provozní filtr, GTFS ani načítání terénu/počasí. Přesný čas lze zadat samostatným časovým polem. Na smíšené hraně se barva vybírá jen podle přítomných povrchových směrů; metro samotné zůstává šedé. Výpočet Slunce, terén a počasí P2 jsou zachované, P3 se neobnovuje.
+
+Lokální ověření: 65 unit testů; produkční regresní kontrola a kontrola nasazení jsou zaznamenány v technické dokumentaci. Odkaz Mapy.com používá [oficiální `/fnc/v1/showmap`](https://developer.mapy.com/further-uses-of-mapycz/mapy-cz-url/), ověřený v desktopovém prohlížeči se značkou a správnými souřadnicemi. Předání do nativní mobilní aplikace zatím nebylo přímo ověřené.

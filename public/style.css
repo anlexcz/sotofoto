@@ -32,3 +32,12 @@
 @media(max-width:700px){.map-tools{left:12px;top:13px;gap:7px}.map-legend{left:12px;top:67px;max-width:calc(100% - 24px);max-height:calc(100dvh - 155px);width:320px}.map-tools .photo-mode-toggle{padding:10px 12px}.point-open .map-legend{max-height:calc(64dvh - 140px)}}
 
 .operation-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 7px;font-weight:600;font-size:12px}.operation-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.operation-chips button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px}.operation-chips svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.operation-chips [data-operation=day]:not(.active) svg{color:#bf8528}.operation-chips [data-operation=night]:not(.active) svg{color:#7460b7}
+
+/* Subtle, non-interactive wash, below weather and every route/marker. */
+.basemap-veil{position:absolute;inset:-100vh -100vw;background:rgba(255,255,255,.16);pointer-events:none}
+.light-step-controls{display:flex;align-items:center;gap:6px;margin:8px 0;flex-wrap:wrap}
+.light-step-controls button,.light-step-controls select,.photo-time-heading button,.photo-time-heading input{min-height:44px}
+.light-step-controls select{width:64px;padding:8px;font-size:15px}
+.light-step-controls button{min-width:64px}.light-step-controls button:disabled{opacity:.45;cursor:default}
+.external-button{display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;text-decoration:none;margin:8px 0}
+.share-controls{margin-top:18px}.share-controls button{min-height:44px}.share-controls input{width:100%;min-height:44px}

@@ -10,6 +10,7 @@ export function pageEnd(rows,start,from){
 // Merge occupied five-minute bins, permitting at most a fifteen-minute gap.
 // Rank by actual useful passages, then by useful share and shorter duration.
 export function photoWindows(rows){
+ rows=rows.filter(r=>r.light.level!=='unrated');
  const bins=new Map();for(const r of rows){if(r.time<0||r.time>=86400||r.light.level!=='good')continue;const b=Math.floor(r.time/300);bins.set(b,(bins.get(b)||0)+1);}
  const groups=[];for(const b of [...bins.keys()].sort((a,b)=>a-b)){const last=groups.at(-1);if(last&&b-last.at(-1)<=3)last.push(b);else groups.push([b]);}
  return groups.map(g=>{const start=g[0]*300,end=(g.at(-1)+1)*300,good=g.reduce((n,b)=>n+bins.get(b),0),all=rows.filter(r=>r.time>=start&&r.time<end).length;return {start,end,good,all};}).sort((a,b)=>b.good-a.good||b.good/b.all-a.good/a.all||(a.end-a.start)-(b.end-b.start));

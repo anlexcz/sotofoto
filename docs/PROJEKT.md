@@ -69,20 +69,29 @@ Optimalizace nemění občanský den Praha, předchozí/následující GTFS serv
 
 Výkonová a datová část P2 je dokončená a nasazená. Závěrečné ověření zahrnuje úspěšné načtení počasí v detailu i mapové vrstvě na produkci. Uživatel předal jeden případ mobilu, kde původní verze padala a nová funguje; nejde o plošný benchmark telefonů. Podrobnosti a limity ověření jsou v [měření P2](P2-MERENI.md).
 
-Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou po dohodě odložené samostatné úpravy UI, nikoli zbývající podmínky P2.
+Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou nyní realizované v samostatném bloku 1; nebyly podmínkou dokončení P2.
 
 ## Další práce
 
 P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stavu P2 (commit `8e05d74`). Neověřená zástavba a limity načítání potlačovaly barvy směru světla, takže mapový přehled nebyl prakticky použitelný. Kód, build, testy a reporty P3 jsou odstraněné; historie zůstává v Gitu. Slunce, terén, počasí a optimalizace P1/P2 zůstávají. P3 nyní není implementované; případný nový návrh vyžaduje samostatné zadání. P4/P5 zůstávají odložené.
 
-## Dohodnuté úkoly – 6. 10. 2026 (dosud neimplementované)
+## Dohodnuté úkoly – 6. 10. 2026
 
-### U1: Metro ve focení a v detailu bodu
+### U1: Metro ve focení a v detailu bodu — dokončeno v bloku 1
 
-- V režimu focení zobrazovat metro neutrálně šedé, bez výpočtu/skórování nasvícení a bez zahrnutí mezi vhodné průjezdy v doporučení „Kdy fotit“. V legendě uvést „Metro — nasvícení se nehodnotí“; šedá u metra neznamená ověřený stín. Část metra vede nad zemí; jde o dohodnuté zjednodušení.
-- Zrušit automatické potlačení metra při souběhu s povrchovou dopravou v okolí vybraného bodu. O zahrnutí rozhoduje výhradně aktivní filtr druhu dopravy a prostorový/časový výběr.
-- Zachovat průjezdy metra v detailu, počtech a exportu při zapnutém filtru; neodstraňovat data. Jiné režimy barev zůstávají beze změny.
-- Při realizaci ověřit smíšený úsek metro/povrch, pouze metro, vypnuté metro, doporučení a CSV. Sdílená kreslená hrana nesmí kvůli metru zešednout i pro povrchovou dopravu.
+- Metro má stav `unrated`, neutrální šedou a text „Metro — nasvícení se nehodnotí“. `passageLight` vůbec nevolá výpočet Slunce ani profil terénu pro metro. Průjezdy, počty, hodiny a CSV se zachovávají; CSV má prázdné údaje Slunce.
+- `Engine.passages` již nepoužívá přednost povrchu před metrem. Filtry, deduplikace, směry a půlnoc se nemění.
+- Worker vedle původních počtů vrací `surfaceForward` / `surfaceBackward` ve stejném průchodu po aktivních spojích. P2 přenáší dvě další Uint32 pole a přebírá je beze sčítání překryvů chunků. Focení na smíšené hraně hodnotí pouze přítomné povrchové směry; metro v opačném směru nemůže vyhrát jako „lepší“ světlo. Tloušťka a ostatní barevné režimy dál používají původní počty.
+- `photoWindows` i ranní/polední/odpolední poměry vyřazují nehodnocené metro z čitatele i jmenovatele. Hodinový graf zachovává celkový počet a počet vhodných povrchových průjezdů.
+
+### Blok 1: ovládání, sdílení a podklad — implementováno
+
+- Světlo na mapě i v rozbaleném počasí: tlačítka −5 / +5 minut, dva nativní selecty (hodina / minuty po pěti) a samostatné přesné časové pole po minutě. Přesná minuta mimo pětiminutové kroky zůstává viditelná ve výběru. Cíle nejméně 44 px, klávesnice a popisky. Tlačítka omezují den na 00:00–23:59; slider zachovává rozšíření sluneční osy. Změna volá jen `setLightTime`, překreslení uloženého počasí a tras; neposílá workeru nové počty ani nenačítá GTFS/terén/počasí.
+- `share.js`: verzovaný query hash `#v=2&kind=place...` pro místo; poloha, zoom, stabilní ID linek/dopravců a další aktivní provozní filtry. Výchozí den je dnešek v Praze v platnosti feedu, jinak začátek feedu; celý den, výchozí světlo a vzhled. Automatická URL je odkaz na místo. Tlačítko „Odkaz na plán“ přidá datum, časový interval (včetně přechodu přes půlnoc), režim seznamu a nezávislý čas světla. Žádná nová varianta neukládá vizuální volby. Tlačítka zobrazí URL pro ruční kopírování i při nedostupné clipboard API. Legacy JSON hash se dál čte včetně starého časového významu.
+- Mapy.com: obyčejný externí odkaz `/fnc/v1/showmap?center=lon,lat&zoom=16&marker=true`, `noopener noreferrer`. [Oficiální dokumentace](https://developer.mapy.com/further-uses-of-mapycz/mapy-cz-url/) potvrzuje web/mobil, značku i použití bez API klíče. Desktopové otevření bylo ověřeno se správným bodem; předání do nativní mobilní aplikace není přímo ověřené. Panorama není implementovaná.
+- Jediná nová bílá vrstva 16 %: Leaflet pane `basemap-veil` (250), nad dlaždicemi (200), pod počasím (350), trasami/zvýrazněním (400) a značkami (600). Pane i výplň mají `pointer-events:none`. Nepřidává ovládací panel.
+- Testy: 65 unit testů, včetně metra na společné hraně, obou směrů, výhradního/vypnutého filtru, doporučení, CSV, hranic světelného času a nových/legacy odkazů. Produkční regrese navíc porovnává obě nová směrová pole proti úplnému datasetu.
+- Stav publikování: připravené změny; výsledek standardního workflow a ověření živého webu se doplní po nasazení.
 
 ### O1: Více úrovní podrobnosti geometrie podle zoomu
 
@@ -102,4 +111,4 @@ P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stav
 - Přepočet vyvolat jen změnou DEM, algoritmu, rozlišení, dosahu, výšky cíle nebo explicitním rozšířením pokrytí. Terén je relativně stálý, nikoli navždy neměnný; zachovat verzi zdroje.
 - Při návrhu vybrat trvalé úložiště a distribuční cestu bez zbytečného backendu; určit velikost a licenci. Při realizaci ověřit dvě různé GTFS aktualizace, ztrátu Actions cache a novou oblast. Výpočet polohy Slunce pro vybraný čas samozřejmě zůstává.
 
-Tyto položky jsou zadání pro pozdější práci; zápis nemění aplikaci ani znovu nezavádí P3.
+O1/O2 jsou zadání pro pozdější práci. Blok 1 je neimplementuje a neobnovuje P3.

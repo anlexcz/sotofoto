@@ -9,9 +9,9 @@ const signature=rows=>rows.map(({edge,key,...r})=>r).sort((a,b)=>a.trip.localeCo
 for(const [name,lat,lon] of areas){
  const ids=selectChunks(index,[lat-.002,lon-.003,lat+.002,lon+.003]),chunks=ids.map(id=>({geometry:load(index.chunks[id].geometry),schedule:load(index.chunks[id].schedule)}));
  const local=mergeChunks(chunks),e=new Engine(meta,local.geometry,local.schedule),coord=new Map(g.edges.map(([a,b],i)=>[g.points[a].join(',')+'|'+g.points[b].join(','),i]));
- for(const f of [base,{...base,operation:'night'},{...base,allDay:false,start:23*3600,end:26*3600},{...base,agencies:[0]},{...base,directions:['S','V']},{...base,modes:[3]}]){
+ for(const f of [base,{...base,operation:'night'},{...base,allDay:false,start:23*3600,end:26*3600},{...base,agencies:[0]},{...base,directions:['S','V']},{...base,modes:[3]},{...base,modes:[1]},{...base,modes:[0,1,3]}]){
    const a=full.counts(f),b=e.counts(f);
-   for(let i=0;i<local.geometry.edges.length;i++){const [u,v]=local.geometry.edges[i],id=coord.get(local.geometry.points[u].join(',')+'|'+local.geometry.points[v].join(','));for(const field of ['counts','forward','backward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','colors','agencyColors'])assert.equal(b[field][i],a[field][id],`${name}: ${field} edge ${id}`);}
+   for(let i=0;i<local.geometry.edges.length;i++){const [u,v]=local.geometry.edges[i],id=coord.get(local.geometry.points[u].join(',')+'|'+local.geometry.points[v].join(','));for(const field of ['surfaceForward','surfaceBackward','counts','forward','backward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','colors','agencyColors'])assert.equal(b[field][i],a[field][id],`${name}: ${field} edge ${id}`);}
    assert.deepEqual(signature(e.passages([lat,lon],150,f).passages),signature(full.passages([lat,lon],150,f).passages),`${name}: passages`);
    global.gc?.();
  }

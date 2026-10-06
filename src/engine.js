@@ -62,6 +62,7 @@ export class Engine {
   counts(filter,trackJourneys=false) {
     const n=this.g.edges.length,counts=new Uint32Array(n),forward=new Uint32Array(n),backward=new Uint32Array(n),colors=new Int32Array(n).fill(-1),agencyColors=new Int32Array(n).fill(-1);
     const routeCounts={},edgeRoutes={},edgeAgencies={};let journeys=0;const journeyKeys=trackJourneys?[]:null;
+    const surfaceForward=new Uint32Array(n),surfaceBackward=new Uint32Array(n);
     const regularCounts=new Uint32Array(n),regularForward=new Uint32Array(n),regularBackward=new Uint32Array(n);
     // Preserve all regular counts for statistics; whole-day intensity uses only
     // daily routes. Manual windows include both daily and night regular service.
@@ -79,6 +80,7 @@ export class Engine {
         const time=(s.atStop[k]?t[5][index*2+1]:t[5][index*2+1]+(t[5][(index+1)*2]-t[5][index*2+1])*s.fractions[k])+offset;
         if(time<filter.start||time>=filter.end)continue;
         const frequencies=routeCounts[e]??={};frequencies[t[0]]=(frequencies[t[0]]||0)+1;(edgeRoutes[e]??=new Set()).add(t[0]);(edgeAgencies[e]??=new Set()).add(t[1]);counts[e]++;if(ref>0)forward[e]++;else backward[e]++;
+        if(this.meta.routes[t[0]][3]!==1){if(ref>0)surfaceForward[e]++;else surfaceBackward[e]++;}
         if(!s.regular||s.regular[k]){
           regularCounts[e]++;if(ref>0)regularForward[e]++;else regularBackward[e]++;
           if(filter.allDay&&this.meta.routes[t[0]][5]===0){
@@ -96,7 +98,7 @@ export class Engine {
       forwardCategories[e]=frequency(intensityForward[e],period).category;
       backwardCategories[e]=frequency(intensityBackward[e],period).category;
     }
-    return {...(journeyKeys?{journeyKeys}:{}),categories,forwardCategories,backwardCategories,regularCounts,regularForward,regularBackward,counts,forward,backward,colors,agencyColors,journeys,routeCounts,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
+    return {...(journeyKeys?{journeyKeys}:{}),surfaceForward,surfaceBackward,categories,forwardCategories,backwardCategories,regularCounts,regularForward,regularBackward,counts,forward,backward,colors,agencyColors,journeys,routeCounts,edgeRoutes:Object.fromEntries(Object.entries(edgeRoutes).map(([e,v])=>[e,[...v]])),edgeAgencies:Object.fromEntries(Object.entries(edgeAgencies).map(([e,v])=>[e,[...v]]))};
   }
   near(point,radius) {
     const degrees=radius/111195,lonDegrees=degrees/Math.cos(point[0]*Math.PI/180),ids=new Set();
@@ -133,8 +135,7 @@ export class Engine {
         result.push({operationType:passageOperation(p,c.pos.i),time,previousTime,previousStop:p[2][c.pos.i],route:t[0],agency:t[1],headsign:this.meta.headsigns[t[4]],bearing:c.seg.bearing,direction,estimated:!c.pos.atStop,fallback:!!p[3],distance:c.distance,lat:c.lat,lon:c.lon,edge:c.seg.edge,trip:t[7],shortName:t[6],serviceDay:day,key:`${index}:${day}:${c.seg.k}`});
       }
     }
-    const surface=result.some(r=>this.meta.routes[r.route][3]!==1),explicitMetro=filter.modes.length===1&&filter.modes[0]===1;
-    const passages=(surface&&!explicitMetro?result.filter(r=>this.meta.routes[r.route][3]!==1):result).sort((a,b)=>a.time-b.time);
-    return {passages,metroOmitted:surface&&!explicitMetro&&result.length!==passages.length,edges:[...new Set(passages.map(r=>r.edge))],nearest:near[0]||null};
+    const passages=result.sort((a,b)=>a.time-b.time);
+    return {passages,metroOmitted:false,edges:[...new Set(passages.map(r=>r.edge))],nearest:near[0]||null};
   }
 }

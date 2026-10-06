@@ -1,6 +1,6 @@
-import {Engine} from './engine.js';
+import {Engine} from './engine.js?v=block1';
 import {selectChunks,mergeChunks,ChunkCache} from './chunks.js';
-const fields=['regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
+const fields=['surfaceForward','surfaceBackward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
 export class ViewportEngine {
   constructor(meta,index,load){this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:24});}
   async counts(bounds,filter,cancelled=()=>false){

@@ -24,7 +24,7 @@ test('chunked engine gives identical counts, colors and frequency after combined
  const view=new ViewportEngine(fixture.meta,index,async id=>read(id));
  for(const filter of [f,{...f,operation:'night'},{...f,operation:'none'},{...f,routes:[0],agencies:[1]},{...f,modes:[3],directions:['V']},{...f,allDay:false,start:82800,end:93600}]){
    const expected=full.counts(filter),actual=await view.counts(bounds,filter);
-   for(const field of ['counts','forward','backward','regularCounts','categories','forwardCategories','backwardCategories','colors','agencyColors'])assert.deepEqual(actual[field],expected[field],field);
+   for(const field of ['surfaceForward','surfaceBackward','counts','forward','backward','regularCounts','categories','forwardCategories','backwardCategories','colors','agencyColors'])assert.deepEqual(actual[field],expected[field],field);
    assert.equal(actual.journeys,expected.journeys);
  }
 });

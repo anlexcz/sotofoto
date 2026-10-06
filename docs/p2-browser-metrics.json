@@ -1,0 +1,232 @@
+[
+  {
+    "name": "desktop",
+    "throttle": 1,
+    "first": {
+      "events": [
+        {
+          "type": "ready",
+          "time": 343.30000000074506
+        },
+        {
+          "type": "counts",
+          "time": 2833.7000000011176
+        }
+      ],
+      "sent": [
+        {
+          "type": "init",
+          "time": 238.40000000037253
+        },
+        {
+          "type": "counts",
+          "time": 509.1000000014901,
+          "bounds": [
+            50.02871056674573,
+            14.343406677246096,
+            50.121235408673,
+            14.536560058593752
+          ]
+        }
+      ],
+      "edges": 14485,
+      "dataRequests": [
+        "http://127.0.0.1:8000/data/meta.json",
+        "http://127.0.0.1:8000/data/chunks.json",
+        "http://127.0.0.1:8000/data/chunks/1000_286.6fa64329e7d7d7c8.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_286.5b7389e0c26bf72a.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_287.dbe4d7aa0b8da196.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_287.6505b22ee3765cc7.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_289.829af4646edd0590.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_289.4728157b9fa1f848.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_290.94dcd4674c0035d7.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_290.73d6182d7f566eac.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1001_286.78ca38d78c1ec8e8.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1001_286.d785e733366a54f5.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1001_290.4db58a32563222c4.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1001_290.bd63dbbc073f46da.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_286.fd94af3810322799.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_286.827b2ac06725a43c.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_287.022ea3552798c2e8.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_287.e8df19a14792e968.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_288.9e592fb3fb6f7ae6.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_288.c7d87518a3fac204.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_290.b47cae2fac5f0cbc.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_290.87a7384740acdc86.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_576.6288b1f2b2bedd0b.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_576.0939948341ff04a0.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_577.3538cd9002fd67e4.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_577.d5b2ead8459f8f9c.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_574.d8d2f5d6bfa75e9e.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_574.a23d8aa3d372c8f4.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_575.eda8a411f44c5970.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_575.a5377f79e3027edc.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_576.02c0736db3d9e754.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_576.d7a997937fab775f.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_577.8f6c2ce43dc50386.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_577.fdf7f76802321395.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_578.7bfae658adaad2a5.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_578.f23b458853fa9600.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_579.74decc894b7f2d3a.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_579.4ba446e462970050.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_574.c570168866c46120.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_574.7b4c5c10ff899f89.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_575.a95799bb2b785e61.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_575.9f4e54db3667b73a.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_576.ef7bb62b611e5797.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_576.7b54fb32fc7f8e0c.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_577.07a57c0b1b681d80.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_577.64221737b91c2928.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_578.a1b8a4fe9b544843.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_578.27515fe981e75be2.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_579.c7426e36a88cdf39.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_579.003d181a5cd2ada0.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_578.200a9da104831cfa.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_578.5cd1b8e2fb3fcac1.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_579.ba02e49ef10b70b2.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_579.241f0aa1818a5055.schedule.bin.gz"
+      ],
+      "payloadBytes": 8119051
+    },
+    "errors": [],
+    "sliderRequests": 0,
+    "sliderWeatherRequests": 0,
+    "shareRestored": true,
+    "csvExport": true,
+    "filters": true,
+    "requests": 378,
+    "terrainRequests": [
+      "http://127.0.0.1:8000/data/terrain-index.json",
+      "http://127.0.0.1:8000/data/terrain/1000_286.e107d22e0c7d1c17.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_287.b41de8e4e4a7970e.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_288.1cab917caecae3b9.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_289.6f6aea6d6fbef6fb.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_290.4b78a109424c2ce3.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_286.ac0858d0dabab6a2.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_287.925c465de4872579.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_288.fdc06619fef94ead.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_289.63794af236bb2d36.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_290.982f72fcea4c43be.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_286.37e8ff351e693adf.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_287.3248cd1ea3a854c2.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_288.1b707759707bf2cd.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_289.aa5d68740b5edda9.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_290.1f2c845bb05d347d.json.gz"
+    ],
+    "detailLength": 2123,
+    "metrics": [
+      {
+        "name": "TaskDuration",
+        "value": 4.496964
+      },
+      {
+        "name": "JSHeapUsedSize",
+        "value": 23081824
+      },
+      {
+        "name": "JSHeapTotalSize",
+        "value": 115195904
+      }
+    ]
+  },
+  {
+    "name": "mobile",
+    "throttle": 4,
+    "first": {
+      "events": [
+        {
+          "type": "ready",
+          "time": 655.5999999996275
+        },
+        {
+          "type": "counts",
+          "time": 2993.300000000745
+        }
+      ],
+      "sent": [
+        {
+          "type": "init",
+          "time": 471.5
+        },
+        {
+          "type": "counts",
+          "time": 926.4000000003725,
+          "bounds": [
+            50.02525748807083,
+            14.401153564453127,
+            50.124683354651275,
+            14.47881317138672
+          ]
+        }
+      ],
+      "edges": 6930,
+      "dataRequests": [
+        "http://127.0.0.1:8000/data/meta.json",
+        "http://127.0.0.1:8000/data/chunks.json",
+        "http://127.0.0.1:8000/data/chunks/1000_289.829af4646edd0590.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1000_289.4728157b9fa1f848.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_288.9e592fb3fb6f7ae6.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/1002_288.c7d87518a3fac204.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_576.6288b1f2b2bedd0b.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_576.0939948341ff04a0.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_577.3538cd9002fd67e4.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2001_577.d5b2ead8459f8f9c.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_576.02c0736db3d9e754.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_576.d7a997937fab775f.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_577.8f6c2ce43dc50386.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_577.fdf7f76802321395.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_578.7bfae658adaad2a5.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_578.f23b458853fa9600.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_579.74decc894b7f2d3a.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2002_579.4ba446e462970050.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_576.ef7bb62b611e5797.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_576.7b54fb32fc7f8e0c.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_577.07a57c0b1b681d80.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_577.64221737b91c2928.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_578.a1b8a4fe9b544843.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_578.27515fe981e75be2.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_579.c7426e36a88cdf39.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2003_579.003d181a5cd2ada0.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_578.200a9da104831cfa.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_578.5cd1b8e2fb3fcac1.schedule.bin.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_579.ba02e49ef10b70b2.geometry.json.gz",
+        "http://127.0.0.1:8000/data/chunks/fine-2004_579.241f0aa1818a5055.schedule.bin.gz"
+      ],
+      "payloadBytes": 5394455
+    },
+    "errors": [],
+    "sliderRequests": 0,
+    "sliderWeatherRequests": 0,
+    "shareRestored": true,
+    "csvExport": true,
+    "filters": true,
+    "requests": 186,
+    "terrainRequests": [
+      "http://127.0.0.1:8000/data/terrain-index.json",
+      "http://127.0.0.1:8000/data/terrain/1000_287.b41de8e4e4a7970e.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_288.1cab917caecae3b9.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1000_289.6f6aea6d6fbef6fb.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_287.925c465de4872579.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_288.fdc06619fef94ead.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1001_289.63794af236bb2d36.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_287.3248cd1ea3a854c2.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_288.1b707759707bf2cd.json.gz",
+      "http://127.0.0.1:8000/data/terrain/1002_289.aa5d68740b5edda9.json.gz"
+    ],
+    "detailLength": 839,
+    "metrics": [
+      {
+        "name": "TaskDuration",
+        "value": 7.088404
+      },
+      {
+        "name": "JSHeapUsedSize",
+        "value": 39365940
+      },
+      {
+        "name": "JSHeapTotalSize",
+        "value": 88457216
+      }
+    ]
+  }
+]

@@ -3,12 +3,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  pull_request:
 permissions:
   contents: read
   pages: write
   id-token: write
 concurrency:
-  group: pages
+  group: pages-${{ github.event.pull_request.number || 'production' }}
   cancel-in-progress: true
 jobs:
   build:
@@ -24,14 +25,23 @@ jobs:
       - run: npm test
       - run: pip install numpy==2.3.5 rasterio==1.5.2
       - run: python scripts/build_data.py
+      - run: node --expose-gc --max-old-space-size=6144 scripts/regression.mjs
+      - uses: actions/cache@v4
+        with:
+          path: .cache/terrain-v1.json
+          key: terrain-v1-${{ github.run_id }}
+          restore-keys: terrain-v1-
       - run: python scripts/build_terrain.py
+      - run: python scripts/finalize_data.py
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
   deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

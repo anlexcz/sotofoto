@@ -1,0 +1,55 @@
+{
+  "mode": "chunks",
+  "environment": "Node v24.19.0; local files, no network or browser timings",
+  "files": {},
+  "bounds": [
+    50.06,
+    14.39,
+    50.1,
+    14.49
+  ],
+  "chunkCount": 14,
+  "engineMs": 0.09642099999999232,
+  "cache": {
+    "bytes": 3211844,
+    "entries": 2
+  },
+  "indexBytes": 361207,
+  "countsMs": 1233.954686,
+  "totalMs": 1260.86824,
+  "payloadBytes": 5208350,
+  "decodedBytes": 25624620,
+  "parseMs": 223.45804600000042,
+  "decompressMs": 80.54498800000042,
+  "structures": {
+    "points": 5890,
+    "edges": 6398,
+    "patterns": null,
+    "trips": null,
+    "activeEdges": 5894
+  },
+  "memory": {
+    "rss": 382906368,
+    "heapTotal": 237486080,
+    "heapUsed": 104573608,
+    "external": 11483908,
+    "arrayBuffers": 7830152
+  },
+  "maxRssKiB": 379552,
+  "chunkStats": {
+    "count": 1027,
+    "geometry": {
+      "p50": 10160,
+      "p95": 58121,
+      "max": 228460,
+      "sum": 18027494
+    },
+    "schedule": {
+      "p50": 3362,
+      "p95": 34175,
+      "max": 438942,
+      "sum": 12238620
+    }
+  },
+  "geometryCloneMs": 3.1572530000000825
+}

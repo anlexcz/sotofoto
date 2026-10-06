@@ -73,4 +73,30 @@ Tlačítka −5 / +5 minut a odkaz na bod v Mapy.com jsou po dohodě odložené 
 
 ## Další práce
 
-P3 může přidat budovy a místní stínění jako samostatné geografické balíčky s vlastním manifestem, verzí a limitem cache. Rozhraní `profileAt` a oddělení provozního filtru od času světla nevyžadují přestavbu GTFS. Budovy nejsou v P2 implementované. P4/P5 zůstávají odložené.
+P3 implementuje samostatné geografické balíčky zástavby, popsané níže. Stav funkčního ověření a publikace je v `P3-MERENI.md`. P4/P5 zůstávají odložené.
+
+## P3: samostatná geografická zástavba
+
+Zdroj je OSM PBF celé ČR z Geofabrik; klient nemá API klíč, backend ani polygony. Licence odvozené databáze je ODbL 1.0. PBF a polygon pokrytí, URL snapshotu a SHA-256 se uchovávají v Actions cache `.cache/buildings`; aktualizace snapshotu je explicitní ruční volba workflow. GTFS určuje pouze požadované geografické klíče v okolí tras. Změna jeho ID nikdy není součástí klíče profilu.
+
+`build_buildings.py` skládá OSM areas včetně multipolygonů/děr pomocí libosmium. Budovy, části a kryté/tunelové dopravní cesty přiřazuje do všech dotčených dlaždic s **500m halo + rezerva geografické buňky**, takže překážka za hranicí chunku zůstává zahrnuta. ID objektu deduplikuje kopie uvnitř dlaždice. Obálky se kombinují maximem, nikoli součtem výšek. Nepopsaný outline s popsanými částmi zůstává konzervativně nejistý: nelze předpokládat, že části popisují celou budovu.
+
+Každému půdorysu přiřadí vnější obsahující kruh a vnitřní vepsaný kruh, respektující díry. Z nich NumPy při buildu počítá horní/dolní obálku. Vnější kruh se rozšiřuje, vnitřní zmenšuje o poloměr geografické buňky. V obálce se hodnotí celý 5° azimutový sektor; ne pouze tenký paprsek v jeho středu. Proto se zástavba na klientu **lineárně neinterpoluje**: interpolace bodových vzorků může úzký dům úplně vynechat. Terén nadále používá dosavadní kruhovou lineární interpolaci. Jemnější sektor 2,5°/1° byl porovnán samostatným skriptem `building_resolution.py`; výsledky v měření P3.
+
+Výškový model: `height` obsahuje střechu (nepřičítá se znovu); interní `exact` znamená výslovně popsanou hodnotu, nikoliv ověřené měření. `source:height` obsahující odhad snižuje kvalitu. Podlaží × 3 m + známá výška/podlaží střechy je `estimated`. Neznámá výška je azimutová maska `unknown`, bez libovolného modelového domu. Vyvýšené části `min_height`, roof-only přístřešky, covered/tunnel jsou nejisté, protože horní obzor neumí světlo pod převisem.
+
+Výpočet používá společnou horizontální místní rovinu, pozorovací výšku 1,5 m a LoD1 hranoly. Nezískává geodetické nadmořské výšky základů domů; mosty, náspy a svahy nemají přesný vertikální model. Souřadnice jsou pro tyto lokální kruhy škálované metricky při 50° s. š.; nejde o přesný 3D model. Zdroje DEM a budov se neslučují do jedné databáze. Copernicus je DSM, takže sám může obsahovat vliv některých velkých staveb. P3 nepřidává vegetaci. Budoucí možnost: DMP 1G + DMR a footprinty ČÚZK, případně pražský 3D model; nejprve ověřit strojovou distribuci, datum a oddělení stromů.
+
+### Cache a publikace
+
+Zdrojové dlaždice jsou cacheované podle SHA-256 PBF a verze parseru. Každá má lokální obsahový fingerprint. Profilová cache je oddělená podle hashe modelu (algoritmus, zdroj, buňka, dosah, výška bodu, podlaží, azimut, metrická projekce). Uvnitř jsou stabilní celočíselné geografické klíče. Již známé profily daného fingerprintu se znovu nepočítají; doplní se pouze chybějící. Změna snapshotu nezneplatní profily oblastí se shodným zdrojovým obsahem.
+
+Publikace: `building-index.json` s datovou/verzovací/licenční informací, bounds a stavy `profiles` / `empty` / `unknown`; `building-horizon/y_x.hash.bin.gz`. Prázdná oblast má pouze záznam manifestu, žádný nulový chunk. Mimo polygon zdrojového extraktu včetně halo je výsledek neověřený. Selhání geometrie zneplatní příslušné oblasti, neodstraní problémové objekty bez upozornění.
+
+Binární formát `SFB1`: čtyři ASCII bajty magic + little-endian uint32 počet. Záznam má 512 bajtů: int32 geografické y/x, 72×uint16 dolní obzor popsaných výšek, 72×uint16 dolní obzor odhadů, 72×uint16 horní obzor, 72×uint8 maska nejisté/odhadnuté výšky. Úhly jsou v desetinách stupně. Decoder ověří délku, duplicity a rozsah; typed-array pohledy drží společný buffer, nikoli tisíce JS číselných polí.
+
+`BuildingLoader` načítá manifest až při focení/detailu, potřebné chunky postupně. Vlastní LRU má 16 položek / 4 MiB binárních dat; aktuální výřez má limit 8 MiB a detail má přednost. V příliš širokém výřezu se vynechané oblasti označují neověřeně; chybějící chunk není nulové stínění. Chyba se necachuje, další aktualizace může požadavek zopakovat. Generation token brání přepsání novější oblasti starší odpovědí. Slider nemění výběr chunků, nevolá loader ani worker.
+
+### Evidence přímého Slunce
+
+`directSun` zachová astronomický, terénní a building stav zvlášť. Astronomická noc má přednost. Prokázaná modelová překážka stačí pro NE i při chybějícím druhém zdroji; jinak je bez obou ověřených zdrojů výsledek NEOVĚŘENO. Průjezdy zůstávají dostupné a exportovatelné; jen nemají skóre dobrého nasvícení. Nejde o nový provozní filtr. Neověřené nasvícení má modrošedou barvu a vysvětlení v legendě, prokázaný modelový stín šedou. Čelo/bok/zezadu zachovávají původní azimutovou logiku. Počasí je stále samostatná předpověď.

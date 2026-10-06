@@ -3,6 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      refresh_buildings:
+        description: Refresh static OSM source (otherwise reuse cached snapshot)
+        type: boolean
+        default: false
   pull_request:
 permissions:
   contents: read
@@ -22,8 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: pip install numpy==2.3.5 rasterio==1.5.2 shapely==2.1.2 osmium==4.3.1
       - run: npm test
-      - run: pip install numpy==2.3.5 rasterio==1.5.2
       - run: python scripts/build_data.py
       - run: node --expose-gc --max-old-space-size=6144 scripts/regression.mjs
       - uses: actions/cache@v4
@@ -32,6 +37,15 @@ jobs:
           key: terrain-v1-${{ github.run_id }}
           restore-keys: terrain-v1-
       - run: python scripts/build_terrain.py
+      - uses: actions/cache@v4
+        with:
+          path: .cache/buildings
+          key: buildings-v4-${{ github.run_id }}
+          restore-keys: buildings-v4-
+      - name: Refresh building source when requested
+        if: inputs.refresh_buildings == true
+        run: rm -f .cache/buildings/czech.osm.pbf .cache/buildings/source.json
+      - run: python scripts/build_buildings.py
       - run: python scripts/finalize_data.py
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'

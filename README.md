@@ -37,7 +37,7 @@ Jde o geometrické doporučení pro přímé slunce. Počasí ukazuje samostatn�
 
 ## Spuštění a ruční aktualizace
 
-Python 3.12+ a Node 22+. Pro geografický build a jeho testy: `pip install numpy==2.3.5 rasterio==1.5.2 shapely==2.1.2 osmium==4.3.1`. Klient nepřidává runtime knihovnu.
+Python 3.12+, Node 22+ a `g++` (jen build/test geografických profilů). Pro geografický build a jeho testy: `pip install numpy==2.3.5 rasterio==1.5.2 shapely==2.1.2 osmium==4.3.1`. Klient nepřidává runtime knihovnu.
 
 ```bash
 npm test
@@ -118,9 +118,9 @@ P2 je dokončené a nasazené: data se načítají podle oblasti, cache jsou ome
 
 Budovy pocházejí z [OpenStreetMap / Geofabrik, ČR](https://download.geofabrik.de/europe/czech-republic.html), © přispěvatelé OpenStreetMap, [ODbL 1.0](https://www.openstreetmap.org/copyright). Odvozené profily jsou samostatná databáze pod ODbL 1.0; zdrojový extrakt je veřejně ke stažení u Geofabrik, transformace v `scripts/build_buildings.py`. Datum/URL snapshotu, SHA-256 zdroje a verze modelu jsou v `data/building-index.json`. Snapshot se udržuje v cache nezávisle na GTFS; ruční Actions volba `refresh_buildings` jej aktualizuje.
 
-`height` je **popsaná výška v OSM**, nikoli důkaz geodetického měření. Obsahuje střechu. `building:levels × 3 m` plus známá `roof:height` / `roof:levels × 3 m` je označený odhad. Chybějící výška nemá univerzální fallback; směr s takovou budovou je neověřený. `min_height`, zvýšené části a kryté/tunelové dopravní cesty zůstávají neověřené, protože jeden obzor neumí spodní otvor. Půdorysy i části se kombinují maximem, výšky se nesčítají.
+`height` je **popsaná výška v OSM**, nikoli důkaz geodetického měření. Obsahuje střechu. `building:levels × 3 m` plus známá `roof:height` / `roof:levels × 3 m` je označený odhad. Chybějící výška nemá univerzální fallback; směr s takovou budovou je neověřený. `min_height` a zvýšené části zůstávají neověřené, protože jeden obzor neumí spodní otvor. Kryté/tunelové dopravní cesty a mosty nastaví neověřený výsledek jen v místním koridoru s nejistou 3D geometrií; tunel se nevydává za stínící dům v okolních ulicích. Půdorysy i části se kombinují maximem, výšky se nesčítají.
 
-Build ukládá obálky místního stínění po 5° do geografických buněk 0,0001° × 0,00015° (v Praze přibližně 11 × 11 m), v úzkém okolí dopravní sítě. Geografické klíče neobsahují GTFS ID. Dolní obálka prokazuje překážku v modelu, horní možnou překážku; mezi nimi se ukazuje **NEOVĚŘENO**. Nevznikají chunky pro prokazatelně prázdné oblasti zdroje; jejich stav je v manifestu. Mimo pokrytí není výsledek automaticky dobrý.
+Build ukládá obálky místního stínění po 5°: mapový přehled v buňkách 0,00025° × 0,0004° (v Praze přibližně 28 × 29 m), jemnější detail v zastavěných oblastech 0,0001° × 0,00015° (asi 11 × 11 m). Profily vznikají v úzkém okolí dopravní sítě; detailní chunky se načítají pouze pro vybraný bod. Geografické klíče neobsahují GTFS ID. Dolní obálka prokazuje překážku v modelu, horní možnou překážku; mezi nimi se ukazuje **NEOVĚŘENO**. Nevznikají chunky pro prokazatelně prázdné oblasti zdroje; jejich stav je v manifestu. Mimo pokrytí není výsledek automaticky dobrý.
 
 Bod má výšku 1,5 m nad společnou místní rovinou modelu. Zástavba je lokální model do 500 m, bez skutečných nadmořských výšek základů domů, sklonu střech a geometrie mostů/estakád. DEM zůstává oddělený hrubší model povrchu. Výsledek „ANO podle modelu“ není záruka skutečného slunce: OSM nemusí obsahovat všechny budovy a popsané výšky mohou být chybné. Stromy se nemodelují.
 

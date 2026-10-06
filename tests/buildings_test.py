@@ -5,6 +5,17 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from scripts.build_buildings import *
 from shapely.geometry import box
 class BuildingsTest(unittest.TestCase):
+ def test_compiled_matches_numpy_reference(self):
+  rng=np.random.default_rng(7);key=site_key(50,15);x,y=key[1]*CELL[1]*X,key[0]*CELL[0]*Y
+  rows=[]
+  for i in range(300):
+   cx,cy=x+rng.uniform(-700,700),y+rng.uniform(-700,700);radius=rng.uniform(1,60);quality=['exact','estimated','unknown'][i%3]
+   rows.append([str(i),[cx,cy,radius],[cx,cy,radius*.5],None if quality=='unknown' else rng.uniform(2,100),quality,False])
+  keys=[(key[0]+dy,key[1]+dx) for dy in range(-4,5) for dx in range(-4,5)]
+  for step in [5,2.5,1]:
+   for cell in [CELL,MAP_CELL]:
+    fast=profiles(keys,rows,step,cell);reference=profiles_numpy(keys,rows,step,cell)
+    for a,b in zip(fast,reference):self.assertTrue(np.array_equal(a,b))
  def test_heights(self):
   self.assertEqual(height_model({'height':'12','roof:height':'3'}),(12,'exact'))
   self.assertEqual(height_model({'building:levels':'4','roof:height':'2'}),(14,'estimated'))
@@ -43,9 +54,15 @@ class BuildingsTest(unittest.TestCase):
    self.assertEqual(stats['failed'],0)
    rows=[json.load(gzip.open(out/(t+'.json.gz'))) for t in ['5000_1500','5000_1501']]
    for row in rows:
-    self.assertTrue(row['complete']);self.assertEqual(len(row['objects']),2)
-    self.assertEqual(len({o[0] for o in row['objects']}),2)
-    self.assertTrue(any(o[0].startswith('covered:') and o[4]=='unknown' for o in row['objects']))
+    self.assertTrue(row['complete']);self.assertGreaterEqual(len(row['objects']),2)
+    self.assertEqual(len({o[0] for o in row['objects']}),len(row['objects']))
+    self.assertTrue(any(o[0].startswith('structure:') and o[4]=='unknown' for o in row['objects']))
+ def test_structure_only_invalidates_local_point_not_far_solar_direction(self):
+  key=site_key(50,15);x,y=key[1]*CELL[1]*X,key[0]*CELL[0]*Y
+  row=['structure:1',[x,y,10],[x,y,0],None,'unknown',False]
+  local=profiles([key],[row]);far=profiles([(key[0]+10,key[1])],[row])
+  self.assertTrue((local[3][0]==4).all());self.assertTrue((far[3][0]==0).all())
+  for a,b in zip(local,profiles_numpy([key],[row])):self.assertTrue(np.array_equal(a,b))
  def test_incremental_build_and_boundaries(self):
   g={'points':[[50,15],[50.0001,15.0101]],'edges':[[0,1]]}
   self.assertEqual(geographic_keys(g),geographic_keys({'points':list(reversed(g['points'])),'edges':[[1,0]]}))
@@ -61,4 +78,7 @@ class BuildingsTest(unittest.TestCase):
    with patch('scripts.build_buildings.extract',side_effect=AssertionError('source reread')),patch('scripts.build_buildings.profiles',side_effect=AssertionError('recompute')),patch('scripts.build_buildings.source_coverage',return_value=box(0,0,180,90)):n=build(data,cache,pbf)
    self.assertEqual(n['build']['computed'],0);self.assertEqual(n['build']['cached'],m['build']['computed'])
    self.assertEqual([c.get('path') for c in m['chunks'].values()],[c.get('path') for c in n['chunks'].values()])
+   with patch('scripts.build_buildings.extract',side_effect=AssertionError('source reread')),patch('scripts.build_buildings.source_coverage',return_value=box(0,0,180,90)),patch('scripts.build_buildings.MODEL_ID','changed-algorithm'):
+    invalidated=build(data,cache,pbf)
+   self.assertEqual(invalidated['build']['computed'],m['build']['computed'])
 if __name__=='__main__':unittest.main()

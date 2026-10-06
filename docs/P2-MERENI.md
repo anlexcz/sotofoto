@@ -84,3 +84,7 @@ python scripts/finalize_data.py
 ```
 
 Surová měření jsou ve `p2-*-metrics.json` a `p2-browser-before.json`. Prohlížečové běhy používaly Playwright jako externí testovací nástroj; projekt nemá novou runtime závislost.
+
+## Stav publikace
+
+Implementace a místní validace jsou připravené pro review. Automatická kontrola odmítla přímou aktualizaci `main`; produkce zatím zůstává na původní verzi. Pull request spouští build a regresní kontrolu bez deploye; publikace je vyhrazena větvi `main`.

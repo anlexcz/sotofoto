@@ -1,3 +1,4 @@
+import {BuildingLoader,buildingAt,fetchBuildingIndex} from './buildings.js';
 import {selectChunks,ChunkCache,zipped} from './chunks.js';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=p12-1';
@@ -6,7 +7,7 @@ import {mainRoutes,labelChains,chainSamples} from './route-labels.js?v=labels-1'
 import {normalize,queryTokens,matchesQuery,interval,operationValue,matchesOperation,toggleOperation} from './filter-utils.js?v=operation-2';
 import {civilClock,pageEnd,photoWindows,visibilityLabel} from './point-utils.js?v=panel-2';
 import {createWeatherLayer} from './weather-layer.js?v=overlay-2';
-import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js?v=panel-2';
+import {horizonHeight,directSun,environmentLight,weatherAt,fetchWeather} from './environment.js?v=p3-1';
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,timer,ready=false;
@@ -14,6 +15,10 @@ let lastTimeFilter=null;
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};
 let photoMode=false,photoSeconds=43200,solarDay=null,edgeBearings,lightFrame=null;
 let terrain=null,terrainIndex=new Map(),edgeTerrain,weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
+let buildingIndexRequest;
+const buildingManifest=()=>buildingIndexRequest??=fetchBuildingIndex().catch(e=>{buildingIndexRequest=null;throw e;});
+const buildings=new BuildingLoader({manifest:buildingManifest,maxBytes:2*1024*1024,maxActiveBytes:4*1024*1024});
+const detailedBuildings=new BuildingLoader({manifest:buildingManifest,layer:'detail',maxBytes:1024*1024,maxEntries:4,maxActiveBytes:4*1024*1024});
 const weatherCache=new Map();
 const weatherIcon=name=>`<svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${{eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',cloud:'<path d="M6 18a4 4 0 0 1-1-8 6 6 0 0 1 11-2 5 5 0 0 1 2 10Z"/>',thermo:'<path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><path d="M12 8v10"/>'}[name]}</svg>`;
 const selected={routes:new Set(),agencies:new Set(),modes:new Set(),directions:new Set()};
@@ -50,10 +55,8 @@ const RoutesLayer=L.Layer.extend({
       ctx.globalAlpha=+$('opacity').value*(highlightAgency!==null&&!(result.edgeAgencies?.[i]||[]).includes(highlightAgency)?.16:1);const normalColor=photoMode?null:edgeColor(i);
       let forwardColor=normalColor,backwardColor=normalColor,combinedColor=normalColor;
       if(photoMode){
-        const sun=sunPosition(instant,(p[0]+q[0])/2,(p[1]+q[1])/2),forward=photographyLight(sun,edgeBearings[i]),backward=photographyLight(sun,(edgeBearings[i]+180)%360);
+        const lat=(p[0]+q[0])/2,lon=(p[1]+q[1])/2,sun=sunPosition(instant,lat,lon),evidence=environmentAt(sun,lat,lon),forward=environmentLight(photographyLight(sun,edgeBearings[i]),evidence),backward=environmentLight(photographyLight(sun,(edgeBearings[i]+180)%360),evidence);
         forwardColor=forward.color;backwardColor=backward.color;
-        const profile=profileAt((p[0]+q[0])/2,(p[1]+q[1])/2);
-        if(terrainLight(sun,profile)){forwardColor=backwardColor='#8c959d';forward.color=backward.color='#8c959d';}
         const hasForward=result.forward[i]>0,hasBackward=result.backward[i]>0;
         combinedColor=hasForward&&hasBackward?(forward.score>=backward.score?forward.color:backward.color):hasForward?forward.color:backward.color;
       }
@@ -84,13 +87,13 @@ function updateLightControls(){
 function updateDaylight(){if(!ready)return;const c=map.getCenter();solarDay=daylightTimes(dateKey($('date').value),c.lat,c.lng);updateLightControls();}
 const weatherLayer=createWeatherLayer(map,()=>({instant:pragueInstant(dateKey($('date').value),photoSeconds),dayAt:(lat,lon)=>sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),lat,lon).altitude>0,label:clock(photoSeconds)}),(text,state)=>{$('weather-layer-status').textContent=text;$('weather-layer-status').dataset.coverage=state.coverage;$('weather-layer-status').dataset.loading=state.loading;});
 $('weather-overlay-toggle').onchange=()=>{weatherOverlay=$('weather-overlay-toggle').checked;weatherLayer.setEnabled(photoMode&&weatherOverlay);saveHash();};
-function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value){loadTerrain();requestWeather();}saveHash();}
+function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value){loadTerrain();loadBuildings();requestWeather();}else if(!point)loadBuildings();saveHash();}
 function setLightTime(seconds){photoSeconds=Math.max(0,Math.min(86399,seconds));updateLightControls();renderEnvironment();weatherLayer.draw();if(lightFrame!==null)cancelAnimationFrame(lightFrame);lightFrame=requestAnimationFrame(()=>{lightFrame=null;routesLayer.draw();});}
 $('photo-mode').onclick=()=>setPhotoMode(!photoMode);
 $('photo-slider').oninput=()=>setLightTime(Number($('photo-slider').value));
 $('photo-slider').onchange=saveHash;
 $('photo-time').onchange=()=>{if(!$('photo-time').value)return;const [h,m]=$('photo-time').value.split(':').map(Number);setLightTime(h*3600+m*60);saveHash();};
-map.on('moveend zoomend',()=>{if(ready){recalc();if(photoMode){updateDaylight();loadTerrain();requestWeather();}drawLegend();}});
+map.on('moveend zoomend',()=>{if(ready){recalc();if(photoMode){updateDaylight();loadTerrain();loadBuildings();requestWeather();}drawLegend();}});
 function viewport(){const b=map.getBounds().pad(.08);return [b.getSouth(),b.getWest(),b.getNorth(),b.getEast()];}
 function showStatus(text,busy=false,error=false){$('map-status').hidden=!busy&&!error;$('map-status').innerHTML=(busy?'<span class="spinner"></span>':'')+escape(text);$('map-status').classList.toggle('error',error);}
 function filter(){const [start,end]=interval($('from').value||'00:00',$('to').value||'00:00',mapAllDay);return {date:$('date').value,start,end,allDay:mapAllDay,operation:operationValue($('operation').value),...Object.fromEntries(Object.entries(selected).map(([k,v])=>[k,[...v]]))};}
@@ -100,7 +103,7 @@ function drawLegend(){
   $('legend-scale').innerHTML=FREQUENCY_LABELS.map((label,category)=>`<span class="legend-step"><span class="legend-stroke" style="height:${width(category)}px;${!photoMode&&$('color').value==='intensity'?`background:${frequencyColor(category)}`:''}"></span>${label}</span>`).join('');
   const swatch=(color,label)=>`<span class="color-legend-row"><i style="background:${color}"></i>${escape(label)}</span>`,mode=$('color').value;
   let title='',content='';
-  if(photoMode){title='Nasvícení';content=[['#23a455','Čelo'],['#f4841f','Bok'],['#db3d31','Zezadu'],['#8c959d','Noc / stín']].map(([color,label])=>swatch(color,label)).join('')+'<p class="hint">Sloučená čára ukazuje lepší z přítomných směrů. Rozdělené směry mají vlastní barvu.</p>';}
+  if(photoMode){title='Nasvícení';content=[['#23a455','Čelo'],['#f4841f','Bok'],['#db3d31','Zezadu'],['#8c959d','Noc / stín'],['#788caa','Přímé slunce neověřeno']].map(([color,label])=>swatch(color,label)).join('')+'<p class="hint">Sloučená čára ukazuje lepší z přítomných směrů. Rozdělené směry mají vlastní barvu.</p>';}
   else if(mode==='mode'){title='Druh dopravy';content=Object.entries(MODES).filter(([id])=>meta?.routes.some(r=>r[3]===+id)).map(([id,name])=>swatch(MODE_COLORS[id],name)).join('');}
   else if(mode==='route'){
     if(legendResult!==result){legendResult=result;legendRouteIds=[...new Set(Object.values(result?.edgeRoutes||{}).flat())].sort((a,b)=>meta.routes[a][1].localeCompare(meta.routes[b][1],'cs',{numeric:true}));}
@@ -133,7 +136,7 @@ function renderPicker(kind,list){const key=kind==='route'?'routes':'agencies',qu
 function renderRoutes(){renderPicker('route',visibleRoutes());}
 function renderAgencies(){renderPicker('agency',visibleAgencies());}
 function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('export').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
-function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();requestWeather();renderEnvironment();saveHash();}
+function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();loadBuildings();requestWeather();renderEnvironment();saveHash();}
 function snapPoint(lat,lon){
  const f=filter();pointMode=f.start===0&&f.end===86400?'day':'from';pointStart=f.start;
  const candidates=(routesLayer.visibleEdges||[]).map(edge=>{const [a,b]=geometry.edges[edge];return project([lat,lon],geometry.points[a],geometry.points[b]);}).filter(p=>p.distance<=150).sort((a,b)=>a.distance-b.distance),nearest=candidates[0];
@@ -146,12 +149,12 @@ $('point-coordinates').onclick=async()=>{if(!point)return;const text=point.map(v
 map.on('click',e=>{if(ready){const label=routesLayer.labels?.find(l=>Math.abs(e.containerPoint.x-l.x)<=l.w/2&&Math.abs(e.containerPoint.y-l.y)<=l.h/2);snapPoint(label?.lat??e.latlng.lat,label?.lon??e.latlng.lng);}});
 function sunFor(row){return sunPosition(pragueInstant(dateKey($('date').value),row.time),row.lat,row.lon);}
 function renderPoint(){
- for(const row of pointRows){row.sun=sunFor(row);row.light=photographyLight(row.sun,row.bearing);if(terrainLight(row.sun,profileAt(row.lat,row.lon)))row.light={...row.light,score:0,color:'#8c959d',level:'night',label:'Stín terénu'};}
+ for(const row of pointRows){row.sun=sunFor(row);row.light=environmentLight(photographyLight(row.sun,row.bearing),environmentAt(row.sun,row.lat,row.lon,true));}
  dayRows=pointRows.filter(r=>r.time>=0&&r.time<86400);windows=photoWindows(dayRows);
  $('point-title').textContent='Tady to projede';
  const hours=Array.from({length:24},(_,h)=>({h,all:0,good:0}));for(const r of dayRows){const h=hours[Math.floor(r.time/3600)];h.all++;if(r.light.level==='good')h.good++;}
- const best=windows[0];$('photo-quick').textContent=best?`☀ ${civilClock(best.start)}–${civilClock(best.end)}`:'Bez vhodného okna';
- $('recommendation').innerHTML=best?`<h3>${civilClock(best.start)}–${civilClock(best.end)}</h3><p>${best.good} z ${best.all} průjezdů má vhodné světlo.</p>`:'<p class="hint">V tomto dni a výběru není vhodně nasvícený průjezd.</p>';
+ const best=windows[0];$('photo-quick').textContent=best?`☀ ${civilClock(best.start)}–${civilClock(best.end)}`:'Bez ověřeného okna';
+ $('recommendation').innerHTML=best?`<h3>${civilClock(best.start)}–${civilClock(best.end)}</h3><p>${best.good} z ${best.all} průjezdů má vhodné světlo.</p>`:'<p class="hint">V tomto dni a výběru není ověřeně vhodně nasvícený průjezd. Neověřené podmínky zůstávají v seznamu.</p>';
  $('photo-windows').innerHTML=windows.slice(0,5).map((w,i)=>`<button data-window="${i}">${civilClock(w.start)}–${civilClock(w.end)} · ${w.good}/${w.all} vhodných · Ukázat průjezdy</button>`).join('');
  const periods=[['Ráno',5,10],['Poledne',10,14],['Odpoledne',14,20]];$('recommendation').insertAdjacentHTML('beforeend',`<div class="recommend-grid">${periods.map(([name,start,end])=>{const rows=dayRows.filter(r=>r.time>=start*3600&&r.time<end*3600);return `<div>${name}<strong>${rows.filter(r=>r.light.level==='good').length} / ${rows.length}</strong>vhodné / všechny</div>`;}).join('')}</div>`);const max=Math.max(1,...hours.map(h=>h.all));$('hour-chart').innerHTML=hours.map(h=>`<button title="${h.h}:00 · ${h.all} průjezdů, ${h.good} vhodných" aria-label="Vybrat hodinu ${h.h}:00, ${h.all} průjezdů, ${h.good} vhodných" data-hour="${h.h}" style="--height:${Math.max(3,h.all/max*57)}px"><i style="height:${h.all?h.good/h.all*100:0}%"></i>${h.h%3===0?`<span>${h.h}</span>`:''}</button>`).join('');
  renderList();
@@ -177,8 +180,8 @@ function showFrom(seconds){closeTimeEditor();pointMode='from';pointStart=seconds
 $('hour-chart').onclick=e=>{const b=e.target.closest('[data-hour]');if(b)showFrom(+b.dataset.hour*3600);};$('photo-windows').onclick=e=>{const b=e.target.closest('[data-window]');if(b)showFrom(windows[+b.dataset.window].start);};
 function setExpanded(value){expanded=value;$('point-panel').classList.toggle('expanded',value);$('point-expand').setAttribute('aria-expanded',value);$('point-expand').setAttribute('aria-label',value?'Zmenšit panel':'Zvětšit panel');$('point-expand').textContent=value?'↧':'↥';map.invalidateSize();if(!value)ensurePointVisible();}
 $('point-expand').onclick=()=>setExpanded(!expanded);let dragY=null;$('point-drag').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;dragY=e.clientY;$('point-drag').setPointerCapture(e.pointerId);});$('point-drag').addEventListener('pointerup',e=>{if(dragY!==null&&Math.abs(e.clientY-dragY)>35)setExpanded(e.clientY<dragY);dragY=null;});$('point-drag').addEventListener('pointercancel',()=>dragY=null);
-for(const id of ['weather-fold','photo-fold'])$(id).addEventListener('toggle',()=>{if($(id).open)setExpanded(true);});
-$('close-point').onclick=()=>{point=null;pointRows=[];listRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;if(photoMode)requestWeather();saveHash();};
+for(const id of ['light-fold','weather-fold','photo-fold'])$(id).addEventListener('toggle',()=>{if($(id).open)setExpanded(true);});
+$('close-point').onclick=()=>{point=null;pointRows=[];listRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;loadBuildings();if(photoMode)requestWeather();saveHash();};
 $('toggle-filters').onclick=()=>{const open=$('filters').classList.toggle('open');$('toggle-filters').setAttribute('aria-expanded',open);};
 function renderOperation(){const value=operationValue($('operation').value);for(const b of $('operation-chips').querySelectorAll('button')){const active=value==='all'||b.dataset.operation===value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}}
 function setOperation(value){$('operation').value=operationValue(value);renderOperation();if(ready){renderRoutes();recalc();}}
@@ -212,6 +215,9 @@ try{worker=new Worker(new URL('./worker.js?v=p12-1',import.meta.url),{type:'modu
   else if(data.type==='error'&&((data.request==='counts'&&data.id===countsRequest)||(data.request==='point'&&data.id===pointRequest)||!data.id)){showStatus('Data se nepodařilo načíst: '+data.message,false,true);if(data.request==='point'){$('point-now-status').textContent='Průjezdy se nepodařilo načíst.';$('passages').classList.remove('updating');$('passages').innerHTML='<p class="hint">Průjezdy se nepodařilo načíst. Zkus místo vybrat znovu.</p>';}}
 };worker.onerror=e=>showStatus(`Chyba aplikace: ${e.message}`,false,true);worker.postMessage({type:'init'});}catch(e){showStatus(e.message,false,true);}
 
+function buildingProfileAt(lat,lon,detail=false){return (detail?detailedBuildings.at(lat,lon):null)||buildings.at(lat,lon);}
+function environmentAt(sun,lat,lon,detail=false){return directSun(sun,profileAt(lat,lon),buildingAt(sun,buildingProfileAt(lat,lon,detail)));}
+async function loadBuildings(){const updated=await Promise.all([buildings.update(viewport(),{enabled:photoMode,point}),detailedBuildings.update(viewport(),{point})]);if(updated.some(Boolean)){routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();}}
 let terrainManifest,terrainCache,terrainGeneration=0,terrainPending;
 function profileAt(lat,lon){
   const p=terrainIndex.get(`${Math.round(lat/.002)},${Math.round(lon/.004)}`);
@@ -232,7 +238,7 @@ async function loadTerrain(){
     for(const id of ids){if(token!==terrainGeneration)return;for(const [key,horizon,valid] of await terrainCache.get(id,terrainManifest.chunks[id].bytes))next.set(key.join(','),[horizon,valid]);}
     if(token!==terrainGeneration)return;
     terrainIndex=next;terrain=true;routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();
-  }catch{if(token===terrainGeneration){terrainIndex.clear();terrain=null;$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}}
+  }catch{if(token===terrainGeneration){terrainIndex.clear();terrain=null;routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}}
 }
 function requestWeather(){
   clearTimeout(weatherTimer);weatherTimer=setTimeout(async()=>{
@@ -246,10 +252,14 @@ function requestWeather(){
 }
 function renderEnvironment(){
   if(!ready)return;
-  const loc=point||[map.getCenter().lat,map.getCenter().lng],sun=sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),...loc),profile=profileAt(...loc),shadow=terrainLight(sun,profile);
+  const loc=point||[map.getCenter().lat,map.getCenter().lng],sun=sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),...loc),profile=profileAt(...loc),building=buildingAt(sun,buildingProfileAt(...loc,true)),evidence=directSun(sun,profile,building),shadow=evidence.terrain==='blocked';
   $('point-light-time').value=civilClock(photoSeconds);if(point)renderWeatherChart();
   $('terrain-status').textContent=!terrain?'Načítám terénní obzory…':!profile?'Terén v tomto bodě není ověřený.':sun.altitude<=0?'Slunce pod obzorem.':shadow?`Stín terénu · slunce ${sun.altitude.toFixed(1)}°, obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`:`Slunce nad terénem · obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`;
-  $('map-terrain').textContent=terrain?'Šedá = noc nebo odhad stínu kopců. Přesné stíny domů a stromů nejsou zahrnuté.':'Terén není načtený — stíny kopců nejsou ověřené.';
+  $('map-terrain').textContent='Šedá = noc / modelovaný stín. Modrošedá = přímé slunce neověřeno. Stromy nejsou modelované.'+(buildings.omitted?' Část výřezu nemá ověřenou zástavbu.':'');
+  const reason=evidence.reasons.map(r=>({night:'Slunce pod obzorem',terrain:'terén',building:'zástavba'}[r])).join(' + ');
+  $('direct-sun-status').textContent=evidence.state==='clear'?`Přímé slunce: ANO podle modelu${building.quality==='estimated'?' (odhad výšek)':''}`:evidence.state==='unknown'?'Přímé slunce: NEOVĚŘENO':`Přímé slunce: NE · ${reason}${evidence.reasons.includes('building')&&building.quality==='estimated'?' (odhad výšky)':''}`;
+  $('building-status').textContent=sun.altitude<=0?'Zástavba: v noci se přímé slunce nehodnotí.':building.state==='unknown'?(building.reason==='structure'?'Přímé slunce neověřeno: krytá nebo víceúrovňová trať vyžaduje přesný 3D model.':building.reason==='height'?'Zástavba neověřena: v tomto směru chybí výška nebo jde o krytou strukturu.':building.reason==='position'?'Zástavba neověřena: výsledek závisí na přesné poloze u budovy.':'Zástavba neověřena: data pro tento bod nejsou dostupná.'):`Zástavba: ${building.state==='blocked'?'stíní':'neblokuje Slunce v modelu'}${building.quality==='estimated'?' · výška odhadnuta z podlaží':' · popsané výšky / bez objektů ve zdroji'}.`;
+  $('light-model-detail').textContent=`Slunce ${sun.azimuth.toFixed(1)}° / ${sun.altitude.toFixed(1)}°. Terén ${profile?horizonHeight(profile,sun.azimuth).toFixed(1)+'°':'neověřen'}. Zástavba ${building.horizon===undefined?'neověřena':building.horizon.toFixed(1)+'–'+building.upper.toFixed(1)+'°'}. ${detailedBuildings.at(...loc)?'Jemný profil ~11 m':'Přehledový profil ~28 m'}. Bod 1,5 m nad místní společnou rovinou; mosty, svahy a nepopsané stavby mohou model změnit.`;
   const w=weatherAt(weatherData,pragueInstant(dateKey($('date').value),photoSeconds));
   const summary=weatherError||(!weatherData?'Načítám počasí…':!w?'Pro tento den / čas není předpověď dostupná.':`${w.visibility===null?'Dohlednost neznámá':`Dohlednost ${(w.visibility/1000).toLocaleString('cs',{maximumFractionDigits:1})} km`} · oblačnost ${w.cloud??'—'} %${w.visibility!==null&&w.visibility<1000?' · ⚠ Možná mlha':''}`);
   $('weather-quick').innerHTML=w?`<span title="Dohlednost">${weatherIcon('eye')} ${visibilityLabel(w.visibility)}</span><span title="Oblačnost">${weatherIcon('cloud')} ${w.cloud??'—'} %</span><span title="Teplota">${weatherIcon('thermo')} ${w.temperature==null?'—':Math.round(w.temperature)+' °C'}</span><span class="weather-time">${civilClock(photoSeconds)}</span>`:weatherError?'Nedostupné':weatherData?'Bez předpovědi':'Načítám…';$('weather-summary').textContent=`Počasí v ${civilClock(photoSeconds)} · ${summary}`;$('map-weather').textContent=summary;

@@ -32,3 +32,19 @@ export async function fetchWeatherBatch(sites){
  const url=new URL('https://api.open-meteo.com/v1/forecast');url.search=new URLSearchParams({latitude:sites.map(p=>p[0].toFixed(6)).join(','),longitude:sites.map(p=>p[1].toFixed(6)).join(','),hourly:'temperature_2m,visibility,cloud_cover,cloud_cover_low,precipitation,direct_normal_irradiance_instant',models:'chmi_aladin_seamless',forecast_days:'3',past_days:'1',timeformat:'unixtime',timezone:'Europe/Prague'});
  const response=await fetch(url,{signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error('Vrstva počasí není dostupná');const data=await response.json(),list=Array.isArray(data)?data:[data];if(list.length!==sites.length)throw Error('Neúplná data počasí');return list;
 }
+
+// Evidence is kept separate: a known blocker wins even when another source is missing.
+export function directSun(sun,terrain,building){
+ const terrainState=terrain?'clear':'unknown';
+ if(sun.altitude<=0)return {state:'night',terrain:terrainState,building:building.state,reasons:['night'],quality:building.quality};
+ const terrainBlocked=Boolean(terrain)&&sun.altitude<=horizonHeight(terrain,sun.azimuth),reasons=[];
+ if(terrainBlocked)reasons.push('terrain');if(building.state==='blocked')reasons.push('building');
+ if(reasons.length)return {state:'blocked',terrain:terrainBlocked?'blocked':terrainState,building:building.state,reasons,quality:building.quality};
+ if(!terrain||building.state==='unknown')return {state:'unknown',terrain:terrainState,building:building.state,reasons:[...(!terrain?['terrain']:[]),...(building.state==='unknown'?['building']:[])],quality:building.quality};
+ return {state:'clear',terrain:'clear',building:'clear',reasons:[],quality:building.quality};
+}
+export function environmentLight(light,evidence){
+ if(evidence.state==='clear')return light;
+ const label=evidence.state==='night'?'Slunce pod obzorem':evidence.state==='unknown'?'Přímé slunce neověřeno':evidence.reasons.map(r=>r==='terrain'?'Stín terénu':`Stín zástavby${evidence.quality==='estimated'?' (odhad výšky)':''}`).join(' a ');
+ return {...light,score:0,color:evidence.state==='unknown'?'#788caa':'#8c959d',level:evidence.state==='unknown'?'unknown':'night',label};
+}

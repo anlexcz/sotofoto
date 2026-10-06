@@ -1,0 +1,941 @@
+{
+  "source": {
+    "url": "https://download.geofabrik.de/europe/czech-republic-latest.osm.pbf",
+    "sha256": "6acf8e569216faa75526c4f7a834cf667c1eab732cba8605b49fed98cf3ebaf7",
+    "dataTimestamp": "2026-10-04T20:20:21Z"
+  },
+  "build": {
+    "seconds": 262.039,
+    "computed": 2160881,
+    "cached": 0,
+    "empty": 3272,
+    "gzipBytes": 51938756,
+    "peakRssKiB": 1525808,
+    "mapProfiles": 972902,
+    "detailProfiles": 1187979
+  },
+  "stats": {
+    "objects": 2792383,
+    "components": 1583024,
+    "failed": 0,
+    "fatal": false,
+    "failedTiles": [],
+    "heights": {
+      "exact": 5215,
+      "estimated": 722691,
+      "unknown": 855118
+    },
+    "migration": "v3 footprints + fresh v4 structure ways"
+  },
+  "manifestBytes": 2782715,
+  "manifestGzipBytes": 481680,
+  "datasetGzipBytes": 51938756,
+  "chunks": 14833,
+  "chunkMedian": 1357,
+  "chunkP95": 16132,
+  "chunkMax": 98691,
+  "viewport": {
+    "bounds": [
+      50.06,
+      14.39,
+      50.1,
+      14.49
+    ],
+    "requests": 29,
+    "gzipBytes": 153392,
+    "activeDecodedBytes": 4180200,
+    "loadedMs": 56.81045200000001,
+    "decodeMs": 32.45564100000007
+  },
+  "compare100000Ms": 18.786145000000005,
+  "sliderRequests": 0,
+  "heap": {
+    "rss": 93011968,
+    "heapTotal": 51798016,
+    "heapUsed": 17313144,
+    "external": 9195103,
+    "arrayBuffers": 5581463
+  },
+  "references": [
+    {
+      "name": "Otevřená trať – Belárie",
+      "target": [
+        50.0105,
+        14.4032
+      ],
+      "distanceToRoute": 4.054735255705346,
+      "lat": 50.01046531210847,
+      "lon": 14.403217498120659,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.07717077310883,
+        "altitude": 15.698347236941549
+      },
+      "terrainHorizon": 2.3261736618487063,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 4.8,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Otevřená trať – Belárie",
+      "target": [
+        50.0105,
+        14.4032
+      ],
+      "distanceToRoute": 4.054735255705346,
+      "lat": 50.01046531210847,
+      "lon": 14.403217498120659,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.81945047425108,
+        "altitude": 33.50721457811953
+      },
+      "terrainHorizon": 2.4036109905149785,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 6,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Otevřená trať – Belárie",
+      "target": [
+        50.0105,
+        14.4032
+      ],
+      "distanceToRoute": 4.054735255705346,
+      "lat": 50.01046531210847,
+      "lon": 14.403217498120659,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.70555246880667,
+        "altitude": 21.12847937236519
+      },
+      "terrainHorizon": 1.2411104937613344,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 1.3,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Úzká ulice – Národní",
+      "target": [
+        50.08149,
+        14.4108
+      ],
+      "distanceToRoute": 17.595284316873045,
+      "lat": 50.081331902075924,
+      "lon": 14.410810376809204,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.10104433735245,
+        "altitude": 15.668154994242117
+      },
+      "terrainHorizon": 9.4,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 9.9,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Úzká ulice – Národní",
+      "target": [
+        50.08149,
+        14.4108
+      ],
+      "distanceToRoute": 17.595284316873045,
+      "lat": 50.081331902075924,
+      "lon": 14.410810376809204,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.84064475104037,
+        "altitude": 33.44009336665851
+      },
+      "terrainHorizon": 2.509561314937577,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 0.7,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Úzká ulice – Národní",
+      "target": [
+        50.08149,
+        14.4108
+      ],
+      "distanceToRoute": 17.595284316873045,
+      "lat": 50.081331902075924,
+      "lon": 14.410810376809204,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.69107482011123,
+        "altitude": 21.080729665425103
+      },
+      "terrainHorizon": 2.2014644892066726,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 4.2,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Vysoký dům – Pankrác",
+      "target": [
+        50.0504,
+        14.4396
+      ],
+      "distanceToRoute": 36.135276822446905,
+      "lat": 50.050545601916575,
+      "lon": 14.440052457040723,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.11847828661337,
+        "altitude": 15.699531765100502
+      },
+      "terrainHorizon": 2.2,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 2.8,
+        "upper": 90,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Vysoký dům – Pankrác",
+      "target": [
+        50.0504,
+        14.4396
+      ],
+      "distanceToRoute": 36.135276822446905,
+      "lat": 50.050545601916575,
+      "lon": 14.440052457040723,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.86972516850233,
+        "altitude": 33.47471442774298
+      },
+      "terrainHorizon": 1.5052109932599067,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 90,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Vysoký dům – Pankrác",
+      "target": [
+        50.0504,
+        14.4396
+      ],
+      "distanceToRoute": 36.135276822446905,
+      "lat": 50.050545601916575,
+      "lon": 14.440052457040723,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.7272969317371,
+        "altitude": 21.085073863521387
+      },
+      "terrainHorizon": 1.6199946750178362,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 90,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Mezi bloky – Karlín",
+      "target": [
+        50.0926,
+        14.4497
+      ],
+      "distanceToRoute": 45.208883951562115,
+      "lat": 50.09221841397916,
+      "lon": 14.449918742969821,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.13713712712382,
+        "altitude": 15.684778803337078
+      },
+      "terrainHorizon": null,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "blocked",
+        "quality": "estimated",
+        "horizon": 30.5,
+        "upper": 90
+      },
+      "result": {
+        "state": "blocked",
+        "terrain": "unknown",
+        "building": "blocked",
+        "reasons": [
+          "building"
+        ],
+        "quality": "estimated"
+      }
+    },
+    {
+      "name": "Mezi bloky – Karlín",
+      "target": [
+        50.0926,
+        14.4497
+      ],
+      "distanceToRoute": 45.208883951562115,
+      "lat": 50.09221841397916,
+      "lon": 14.449918742969821,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.88851346846252,
+        "altitude": 33.43613630100789
+      },
+      "terrainHorizon": null,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 90,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "unknown",
+        "building": "unknown",
+        "reasons": [
+          "terrain",
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Mezi bloky – Karlín",
+      "target": [
+        50.0926,
+        14.4497
+      ],
+      "distanceToRoute": 45.208883951562115,
+      "lat": 50.09221841397916,
+      "lon": 14.449918742969821,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.72377012209392,
+        "altitude": 21.054289155445407
+      },
+      "terrainHorizon": null,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 90,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "unknown",
+        "building": "unknown",
+        "reasons": [
+          "terrain",
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Most – Palackého",
+      "target": [
+        50.0722,
+        14.4127
+      ],
+      "distanceToRoute": 77.18379575784044,
+      "lat": 50.07288651818435,
+      "lon": 14.412540274640444,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.10045232829123,
+        "altitude": 15.673232410499551
+      },
+      "terrainHorizon": 5.320090465658247,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 4.8,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Most – Palackého",
+      "target": [
+        50.0722,
+        14.4127
+      ],
+      "distanceToRoute": 77.18379575784044,
+      "lat": 50.07288651818435,
+      "lon": 14.412540274640444,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.8412205002993,
+        "altitude": 33.448535191026316
+      },
+      "terrainHorizon": 1.7285803099461234,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 2.8,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Most – Palackého",
+      "target": [
+        50.0722,
+        14.4127
+      ],
+      "distanceToRoute": 77.18379575784044,
+      "lat": 50.07288651818435,
+      "lon": 14.412540274640444,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.6952217181166,
+        "altitude": 21.0850935751412
+      },
+      "terrainHorizon": 3.8017133030869963,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 4.5,
+        "reason": "structure"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Terén bez domů – Prokopské údolí",
+      "target": [
+        50.0393,
+        14.3553
+      ],
+      "distanceToRoute": 319.4771392214173,
+      "lat": 50.03787,
+      "lon": 14.35918,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.04629042024442,
+        "altitude": 15.660304956961799
+      },
+      "terrainHorizon": 9.2,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 0.8,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Terén bez domů – Prokopské údolí",
+      "target": [
+        50.0393,
+        14.3553
+      ],
+      "distanceToRoute": 319.4771392214173,
+      "lat": 50.03787,
+      "lon": 14.35918,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.77239484494828,
+        "altitude": 33.473349177716486
+      },
+      "terrainHorizon": 8.436416824808276,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "clear",
+        "quality": "exact",
+        "horizon": 0,
+        "upper": 0
+      },
+      "result": {
+        "state": "clear",
+        "terrain": "clear",
+        "building": "clear",
+        "reasons": [],
+        "quality": "exact"
+      }
+    },
+    {
+      "name": "Terén bez domů – Prokopské údolí",
+      "target": [
+        50.0393,
+        14.3553
+      ],
+      "distanceToRoute": 319.4771392214173,
+      "lat": 50.03787,
+      "lon": 14.35918,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.6567159230242,
+        "altitude": 21.13368497301688
+      },
+      "terrainHorizon": 4.734925452316128,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 1.3,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Svah a město – Trojská",
+      "target": [
+        50.1167,
+        14.4322
+      ],
+      "distanceToRoute": 61.893555062013924,
+      "lat": 50.11672851613146,
+      "lon": 14.433066918709484,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.12873909234844,
+        "altitude": 15.663405143956965
+      },
+      "terrainHorizon": 1.1302991273878746,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 13.2,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Svah a město – Trojská",
+      "target": [
+        50.1167,
+        14.4322
+      ],
+      "distanceToRoute": 61.893555062013924,
+      "lat": 50.11672851613146,
+      "lon": 14.433066918709484,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 164.87291730221045,
+        "altitude": 33.40965542094671
+      },
+      "terrainHorizon": 1.202541653955791,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "clear",
+        "quality": "exact",
+        "horizon": 0,
+        "upper": 0
+      },
+      "result": {
+        "state": "clear",
+        "terrain": "clear",
+        "building": "clear",
+        "reasons": [],
+        "quality": "exact"
+      }
+    },
+    {
+      "name": "Svah a město – Trojská",
+      "target": [
+        50.1167,
+        14.4322
+      ],
+      "distanceToRoute": 61.893555062013924,
+      "lat": 50.11672851613146,
+      "lon": 14.433066918709484,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 231.7008590426742,
+        "altitude": 21.047586205943887
+      },
+      "terrainHorizon": 1.634017180853484,
+      "buildingResolution": [
+        0.0001,
+        0.00015
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 0,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Autobus v obci – Liblice",
+      "target": [
+        50.04945,
+        14.89798
+      ],
+      "distanceToRoute": 16.509999994094986,
+      "lat": 50.04951386030103,
+      "lon": 14.897771251191088,
+      "date": "2026-10-07",
+      "time": "9:00 Europe/Prague",
+      "sun": {
+        "azimuth": 119.50990845500439,
+        "altitude": 15.956310620884942
+      },
+      "terrainHorizon": 0.6803963382001754,
+      "buildingResolution": [
+        0.00025,
+        0.0004
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 0,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Autobus v obci – Liblice",
+      "target": [
+        50.04945,
+        14.89798
+      ],
+      "distanceToRoute": 16.509999994094986,
+      "lat": 50.04951386030103,
+      "lon": 14.897771251191088,
+      "date": "2026-10-07",
+      "time": "12:00 Europe/Prague",
+      "sun": {
+        "azimuth": 165.40856033069008,
+        "altitude": 33.551091556541934
+      },
+      "terrainHorizon": 1.0081712066138018,
+      "buildingResolution": [
+        0.00025,
+        0.0004
+      ],
+      "building": {
+        "state": "unknown",
+        "quality": "unknown",
+        "horizon": 0,
+        "upper": 0.2,
+        "reason": "height"
+      },
+      "result": {
+        "state": "unknown",
+        "terrain": "clear",
+        "building": "unknown",
+        "reasons": [
+          "building"
+        ],
+        "quality": "unknown"
+      }
+    },
+    {
+      "name": "Autobus v obci – Liblice",
+      "target": [
+        50.04945,
+        14.89798
+      ],
+      "distanceToRoute": 16.509999994094986,
+      "lat": 50.04951386030103,
+      "lon": 14.897771251191088,
+      "date": "2026-10-07",
+      "time": "16:00 Europe/Prague",
+      "sun": {
+        "azimuth": 232.14794534018984,
+        "altitude": 20.854303214664327
+      },
+      "terrainHorizon": 0.914082186392406,
+      "buildingResolution": [
+        0.00025,
+        0.0004
+      ],
+      "building": {
+        "state": "clear",
+        "quality": "exact",
+        "horizon": 0,
+        "upper": 0
+      },
+      "result": {
+        "state": "clear",
+        "terrain": "clear",
+        "building": "clear",
+        "reasons": [],
+        "quality": "exact"
+      }
+    }
+  ]
+}

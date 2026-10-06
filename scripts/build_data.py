@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 URL = 'https://data.pid.cz/PID_GTFS.zip'
 
 
-def simplify_network(raw_shapes, tolerance=2):
+def simplify_network(raw_shapes, tolerance=2, protected=()):
     """Simplify shared degree-two chains once, preserving common edges and branches."""
     graph = {}
     endpoints = set()
@@ -27,7 +27,7 @@ def simplify_network(raw_shapes, tolerance=2):
         for a, b in zip(coordinates, coordinates[1:]):
             if a == b: continue
             graph.setdefault(a, set()).add(b); graph.setdefault(b, set()).add(a)
-    keep = endpoints | {p for p, neighbours in graph.items() if len(neighbours) != 2}
+    keep = endpoints | set(protected) | {p for p, neighbours in graph.items() if len(neighbours) != 2}
     visited = set()
     def simplify(chain):
         retained = {0, len(chain)-1}; stack = [(0, len(chain)-1)]
@@ -99,11 +99,35 @@ def build(source, out):
             service_index[sid] = len(services)
             services.append(dict(service_id=sid, start_date='99991231', end_date='00000101', **{d: '0' for d in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']}))
         exceptions.setdefault(r['date'], []).append([service_index[sid], int(r['exception_type'])])
+    raw_trips = list(rows('trips.txt'))
+    trip_index = {r['trip_id']: i for i, r in enumerate(raw_trips)}
+    stop_times = [[] for _ in raw_trips]
+    print('Reading stop times…', flush=True)
+    operation_counts = {}
+    for r in rows('stop_times.txt'):
+        operation = int(r['trip_operation_type'])
+        if operation < 1: raise ValueError(f'Invalid trip_operation_type: {operation}')
+        operation_counts[operation] = operation_counts.get(operation, 0) + 1
+        if r['trip_id'] in trip_index:
+            stop_times[trip_index[r['trip_id']]].append([int(r['stop_sequence']), r['stop_id'], float(r['shape_dist_traveled']) if r.get('shape_dist_traveled') else None, seconds(r['arrival_time']), seconds(r['departure_time']), operation])
+    # PID flags describe the outgoing stop-to-stop section, not the whole trip.
+    # Preserve operation boundaries when simplifying geometry.
+    transitions = {}
+    for trip, st in zip(raw_trips, stop_times):
+        st.sort()
+        for previous, current in zip(st, st[1:]):
+            if previous[5] != current[5]:
+                transitions.setdefault(trip.get('shape_id'), set()).add(current[2])
+    print(f'PID stop-time operation types: {operation_counts}', flush=True)
     print('Reading shape geometry…', flush=True)
     raw_shapes = {}
     for r in rows('shapes.txt'):
         raw_shapes.setdefault(r['shape_id'], []).append((int(r['shape_pt_sequence']), float(r['shape_pt_lat']), float(r['shape_pt_lon']), float(r['shape_dist_traveled'] or 0)))
-    simplify_network(raw_shapes)
+    for sid, distances in transitions.items():
+        if sid in raw_shapes and not distances.issubset({p[3] for p in raw_shapes[sid]}):
+            raise ValueError(f'Operation boundary missing from shape {sid}')
+    protected = {(round(p[1], 5), round(p[2], 5)) for sid, raw in raw_shapes.items() for p in raw if p[3] in transitions.get(sid, ())}
+    simplify_network(raw_shapes, protected=protected)
     points, point_index, edges, edge_index, shapes, shape_ids = [], {}, [], {}, [], {}
     for sid, raw in raw_shapes.items():
         raw.sort()
@@ -129,13 +153,6 @@ def build(source, out):
         shapes.append([refs, distances])
     del raw_shapes
     stops = {r['stop_id']: [r['stop_name'], float(r['stop_lat']), float(r['stop_lon'])] for r in rows('stops.txt') if r['stop_lat'] and r['stop_lon']}
-    raw_trips = list(rows('trips.txt'))
-    trip_index = {r['trip_id']: i for i, r in enumerate(raw_trips)}
-    stop_times = [[] for _ in raw_trips]
-    print('Reading stop times…', flush=True)
-    for r in rows('stop_times.txt'):
-        if r['trip_id'] in trip_index:
-            stop_times[trip_index[r['trip_id']]].append([int(r['stop_sequence']), r['stop_id'], float(r['shape_dist_traveled']) if r.get('shape_dist_traveled') else None, seconds(r['arrival_time']), seconds(r['departure_time'])])
     # Each pattern shares geometry and stop distances; times remain trip-specific.
     patterns, pattern_index, trips, headsigns, headsign_index = [], {}, [], [], {}
     fallback_count, missing_shapes = 0, 0
@@ -196,10 +213,13 @@ def build(source, out):
                 if candidates:
                     _,cursor,f=min(candidates);s[2]=ds[cursor][0]+f*(ds[cursor][1]-ds[cursor][0])
                 else:s[2]=0
-        key=(shape,tuple((s[1],s[2]) for s in st),is_fallback)
+        operations=tuple(s[5] for s in st)
+        key=(shape,tuple((s[1],s[2]) for s in st),is_fallback,operations)
         if key not in pattern_index:
             pattern_index[key]=len(patterns)
-            patterns.append([shape,[s[2] for s in st],[stops.get(s[1],[s[1]])[0] for s in st],int(is_fallback)])
+            pattern=[shape,[s[2] for s in st],[stops.get(s[1],[s[1]])[0] for s in st],int(is_fallback)]
+            if any(operation != 1 for operation in operations): pattern.append(operations)
+            patterns.append(pattern)
         head=r['trip_headsign'] or stops.get(st[-1][1],[''])[0]
         if head not in headsign_index:headsign_index[head]=len(headsigns);headsigns.append(head)
         agency=r.get('sub_agency_id','')
@@ -208,7 +228,7 @@ def build(source, out):
         trips.append([route_index[r['route_id']],agency_index[agency],service_index[r['service_id']],pattern_index[key],headsign_index[head],[v for s in st for v in (s[3],s[4])],r.get('trip_short_name') or '',r['trip_id']])
     feed = next(rows('feed_info.txt'))
     weekdays=['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-    meta={'version':1,'source':URL,'publisher':'ROPID / PID','builtAt':datetime.now(timezone.utc).isoformat(),'startDate':feed['feed_start_date'],'endDate':feed['feed_end_date'],'routes':[[r['route_id'],r['route_short_name'],r['route_long_name'],int(r['route_type']),r.get('route_color',''),int(r.get('is_night') or 0)] for r in routes],'agencies':agencies,'services':[[s['start_date'],s['end_date'],*[int(s[d]) for d in weekdays]] for s in services],'exceptions':exceptions,'headsigns':headsigns,'stats':{'trips':len(trips),'shapes':len(shapes),'edges':len(edges),'fallbackTrips':fallback_count,'skippedTrips':missing_shapes}}
+    meta={'version':2,'source':URL,'publisher':'ROPID / PID','builtAt':datetime.now(timezone.utc).isoformat(),'startDate':feed['feed_start_date'],'endDate':feed['feed_end_date'],'routes':[[r['route_id'],r['route_short_name'],r['route_long_name'],int(r['route_type']),r.get('route_color',''),int(r.get('is_night') or 0)] for r in routes],'agencies':agencies,'services':[[s['start_date'],s['end_date'],*[int(s[d]) for d in weekdays]] for s in services],'exceptions':exceptions,'headsigns':headsigns,'stats':{'trips':len(trips),'shapes':len(shapes),'edges':len(edges),'fallbackTrips':fallback_count,'skippedTrips':missing_shapes}}
     write_json(out/'meta.json',meta)
     write_json(out/'geometry.json.gz',{'points':points,'edges':edges,'shapes':shapes},True)
     write_json(out/'schedule.json.gz',{'patterns':patterns,'trips':trips},True)

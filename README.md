@@ -6,7 +6,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 
 - Všechny druhy dopravy obsažené v PID GTFS; kombinovatelné filtry linek, dopravců a druhů dopravy.
 - Konkrétní datum v platnosti balíčku a libovolný časový rozsah, včetně přechodu přes půlnoc. Stejný čas od/do znamená 24 hodin.
-- Tloušťka společných úseků podle četnosti provozu po aplikaci všech filtrů. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
+- Tloušťka společných úseků podle četnosti pravidelného provozu po aplikaci všech filtrů. Výchozí zobrazení sčítá oba směry; lze zobrazit protisměry vedle sebe nebo filtrovat místní směry S/SV/V/JV/J/JZ/Z/SZ.
 - Kliknutí kdekoliv poblíž trasy: průjezdy v okolí 20–150 m, linka, cílová zastávka, dopravce, místní směr a azimut, odhad času a odjezd z předchozí zastávky. Celý den nebo vybraný čas.
 - Režim focení: celé vyfiltrované trasy se obarví podle slunce ve zvoleném okamžiku. Zelená = čelo, přes žlutou k oranžové = boční světlo, několik stupňů za bokem přechod do červené = světlo zezadu / protislunce. Pod obzorem šedá. Posuvník po 5 minutách od hodiny před východem do hodiny po západu, s označeným východem a západem. Lze zadat libovolný přesný čas; rozsah se v případě potřeby rozšíří. Posuvník nemění filtry ani počty spojů.
 - Poloha slunce v době skutečného průjezdu, počty průjezdů s příznivým nasvícením po hodinách i ráno/poledne/odpoledne. Kliknutí na sloupec nastaví danou hodinu pro filtr provozu.
@@ -17,7 +17,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 
 ## Data a pravidla výpočtu
 
-Zdroj: [PID GTFS](https://data.pid.cz/PID_GTFS.zip), dokumentace a licence: [Otevřená data PID](https://pid.cz/o-systemu/opendata/). Autor dat ROPID / PID, licence dle zdroje CC BY. Data jsou upravena: indexace tras a jízdních řádů, zaokrouhlení geometrie na pět desetinných míst, zjednodušení sdílených větví s tolerancí 2 m při zachování křižovatek a konců tras, agregace průjezdů, interpolace časů. Nejde o skutečné vypravení ani živé polohy vozidel. Konkrétní typy vozidel nejsou odvozovány.
+Zdroj: [PID GTFS](https://data.pid.cz/PID_GTFS.zip), dokumentace a licence: [Otevřená data PID](https://pid.cz/o-systemu/opendata/). Autor dat ROPID / PID, licence dle zdroje CC BY. Data jsou upravena: indexace tras a jízdních řádů, zaokrouhlení geometrie na pět desetinných míst, zjednodušení sdílených větví s tolerancí 2 m při zachování křižovatek, konců tras a hranic typů provozu, agregace průjezdů, interpolace časů. Nejde o skutečné vypravení ani živé polohy vozidel. Konkrétní typy vozidel nejsou odvozovány.
 
 Dopravce se bere z `trips.sub_agency_id`, název z rozšíření PID `route_sub_agencies.txt`; obecné `agency.txt` uvádí společný PID. Kalendář respektuje `calendar.txt` i přidání/odebrání služeb v `calendar_dates.txt`.
 
@@ -79,14 +79,28 @@ Mobilní panel začíná v dolní třetině (s minimální výškou pro dva prů
 
 Počasí je sbalený přehled dohlednosti, oblačnosti, teploty a času. Rozbalený graf má dohlednost v km, hranici 1 km, vybraný čas a samostatný pás slunce/noci/chybějících dat. Hodinová tlačítka mění čas světla a počasí, nikoli seznam. Technické zdroje jsou pod „O datech“. GPS tlačítko pod zoomem jednorázově požádá o polohu a ukáže kruh přesnosti.
 
-Počty spojů a legenda tloušťky nejsou trvale na mapě. Stavový banner se zobrazuje pouze při načítání či chybě. Posuvník tloušťky je ve vzhledu; škála má šest pevných kategorií četnosti a přizpůsobuje se zoomu. Legenda četnosti je pod tlačítkem ⓘ vedle režimu focení.
+Počty spojů a legenda tloušťky nejsou trvale na mapě. Stavový banner se zobrazuje pouze při načítání či chybě. Posuvník tloušťky je ve vzhledu; škála má sedm pevných kategorií četnosti pravidelného provozu a přizpůsobuje se zoomu. Legenda četnosti je pod tlačítkem ⓘ vedle režimu focení.
 
-### Četnost provozu a denní/noční linky (P1)
+### Četnost pravidelného provozu (P1.1)
 
-Tloušťka i barevný režim intenzity používají šest kategorií efektivního intervalu: **≤ 5 min**, **> 5 až 10 min**, **> 10 až 30 min**, **> 30 až 60 min**, **> 60 až 120 min**, **> 120 min**. Efektivní interval je délka hodnoceného období v minutách / počet relevantních průjezdů. Nejde o medián rozestupů ani příslib pravidelného taktu. Nulový počet se nekreslí; jeden průjezd má nejtenčí čáru a interval `null`.
+Tloušťka i barevný režim intenzity používají sedm kategorií efektivního intervalu: **≤ 2 min**, **> 2 až 5 min**, **> 5 až 10 min**, **> 10 až 20 min**, **> 20 až 40 min**, **> 40 až 90 min**, **> 90 min**. Stejná škála platí pro všechny druhy dopravy i denní/noční linky. Efektivní interval je délka hodnoceného období v minutách / počet relevantních **pravidelných** průjezdů. Nejde o medián rozestupů ani příslib pravidelného taktu. Jeden pravidelný průjezd má nejtenčí čáru a interval `null`.
 
-V ručním časovém úseku se používá přesná délka `[od, do)`, včetně přechodu přes půlnoc. Stejné od/do je ručně zvolených 24 hodin. V režimu **Celý den** se nadále vybírá občanský den 00:00–24:00 v Praze (včetně dojezdů služeb předchozího dne), ale hodnocené období každého úseku je **poslední − první relevantní průjezd**. Mezery uvnitř se započítají; okraje bez provozu nikoli. Například rozsah 04:35–00:42 následujícího dne je ruční rozsah přes půlnoc, nikoli automatické rozšíření občanského dne. Časy se před výpočtem neskládají modulo 24 hodin.
+V ručním časovém úseku se používá přesná délka `[od, do)`, včetně přechodu přes půlnoc. Stejné od/do je ručně zvolených 24 hodin a liší se od režimu Celý den.
+
+V režimu **Celý den** se nadále vybírá občanský den 00:00–24:00 v Praze (včetně dojezdů předchozího GTFS service day s časy >24:00). Pouze pro hodnocené období intenzity se pravidelné průjezdy na každém úseku uspořádají na kruhovém 24h dni. Najde se největší mezera mezi sousedními průjezdy včetně mezery přes půlnoc; **hodnocené období = 24 h − největší mezera**. Provoz 04:30–00:30 tedy může mít období 20 h, noční 23:30–05:00 období 5,5 h. U provozu 05–09 a 15–19 zůstane šestihodinová polední mezera uvnitř období 05–19. Prosté první–poslední by u nočních linek chybně zahrnulo téměř celý den. Samotný výběr, přesné časy, pořadí a detail se modulo 24 nepřepisují.
+
+Toto je nejkratší souvislé období obsahující všechny pravidelné průjezdy, nikoli znalost skutečné provozní pauzy. Pokud je největší mezera uprostřed dne, odstraní se právě ona; všechny ostatní mezery zůstanou započtené. U velmi řídkého provozu nelze z několika průjezdů odvodit pravidelný takt. Shodné časy se počítají jako samostatné průjezdy.
+
+#### Výjezdy, zátahy a přejezdy
+
+Build čte explicitní PID **`stop_times.txt.trip_operation_type`**: `1` pravidelný provoz, `7` výjezd, `8` zátah, `9` přejezd na lince, `10` přejezd na jinou linku. Příznak zastávky platí pro úsek od ní k další zastávce; na hranici se použije nový typ. [Dokumentace PID](https://pid.cz/o-systemu/opendata/) například ukončuje typ 7 před první zastávkou na běžné trase a začíná typ 8 na poslední zastávce běžné trasy. Neoznačujeme celý trip podle jediného flagu. Výjezdy/zátahy vedené PID přímo na vlastní trase jako typ 1 zůstávají pravidelným provozem.
+
+Do četnosti přispívá **jen typ 1**. Ostatní typy nezmění pravidelný interval, ale zůstávají v datasetu, mapě, klikacím detailu, statistikách jednotlivých průjezdů a CSV. Úsek bez pravidelného provozu, ale se speciálními průjezdy, zůstává viditelný nejtenčí čárou, bez pravidelného intervalu (`null`). Úsek bez jakýchkoli průjezdů se nekreslí. Detail rozbaleného průjezdu a CSV uvádějí lidský typ speciálního provozu; běžný řádek detailu není zatížen štítkem „Pravidelný“.
+
+Dataset verze 2 uchovává malé číselné typy sdíleně v `schedule.patterns[i][4]`, po jednom pro každou zastávku. Čistě pravidelné patterny toto pole vynechávají (implicitní typ 1). Typy jsou součástí klíče patternu, takže totožná geometrie s rozdílným provozem nesdílí nesprávnou klasifikaci. Build zachová v zjednodušené geometrii body změny typu; pokud u existující shape nelze změnu přesně přiřadit podle PID vzdálenosti, build skončí chybou místo smíchání dvou typů. Chybějící/prázdná klasifikace ve feedu způsobí chybu buildu; neodhaduje se z čísla linky, módu ani času. Neznámé kladné typy zůstávají dostupné, ale nepočítají se jako pravidelné.
+
+#### Denní a noční linky
 
 Filtr provozu má dvě stejně široká, nezávisle přepínaná tlačítka **Denní** se sluncem a **Noční** s měsícem. Výchozí stav má oba typy zapnuté; lze vybrat pouze jeden nebo oba vypnout (žádné průjezdy). Filtr používá explicitní PID `routes.txt.is_night`: 0 = denní, 1 = noční. Předzpracování jej uchovává v `meta.routes[i][5]`. [Dokumentace PID](https://pid.cz/o-systemu/opendata/) tento příznak popisuje jako klasifikaci nočních linek. Hodina ani číslo linky nerozhodují; denní linka po půlnoci zůstává denní. Filtr je součástí výběru spojů v enginu pro mapu, detail, CSV i denní statistiky/doporučení a ukládá se do URL jako `operation`; hodnoty `all` / `day` / `night` / `none` zachovávají i prázdný výběr. Staré odkazy bez filtru mají oba typy zapnuté. Detail si zachovává vlastní dosavadní časové ovládání a denní statistiky nadále hodnotí celý den.
 
-Linky a dopravci na společném úseku se sčítají po všech filtrech. Sloučené směry mají společný počet a rozsah; rozdělené protisměry každý svůj. Místní směrový filtr omezuje i rozsah období. Worker sbírá počty a minima/maxima v jednom průchodu, pak jednou určí tři pole kategorií (společné a oba směry). Zoom, vzhled a posuvník světla používají uložené kategorie bez další agregace jízdních řádů.
+Pravidelné průjezdy linek a dopravců na společném úseku se sčítají po všech filtrech; speciální průjezdy je nenavyšují. Sloučené směry mají společné období, rozdělené protisměry každý svůj kruhový výpočet. Směrový filtr omezuje i množinu časů. Worker sbírá celkové a pravidelné počty v jednom průchodu. Pro Celý den ukládá pouze časy pravidelného provozu: každý úsek/směr se seřadí jednou, pro sloučené směry se dvě seřazená pole projdou bez třetího řazení. Ruční období žádné časy nesbírá ani neřadí. Zoom, vzhled a posuvník světla používají uložené kategorie bez další agregace jízdních řádů.

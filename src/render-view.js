@@ -2,12 +2,11 @@ import {bearing} from './core.js';
 import {matchesOperation} from './filter-utils.js';
 export const COUNT_FIELDS=['surfaceForward','surfaceBackward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
 const swap={surfaceForward:'surfaceBackward',surfaceBackward:'surfaceForward',regularForward:'regularBackward',regularBackward:'regularForward',forwardCategories:'backwardCategories',backwardCategories:'forwardCategories',forward:'backward',backward:'forward'};
-export const geometryLevel=zoom=>zoom<=11?'overview':zoom<=14?'medium':'detail';
+export const geometryLevel=zoom=>zoom<=9?'regional':zoom<=11?'overview':zoom<=14?'medium':'detail';
 export const intersects=(a,b,[s,w,n,e])=>Math.max(a[0],b[0])>=s&&Math.min(a[0],b[0])<=n&&Math.max(a[1],b[1])>=w&&Math.min(a[1],b[1])<=e;
 const typed=(f,n)=>f.includes('Categories')||f==='categories'?new Uint8Array(n):f==='colors'||f==='agencyColors'?new Int32Array(n):new Uint32Array(n);
 
-// No simplification here: build-supplied segments are used only across identical
-// dynamic results. A filter/time/category boundary falls back to original edges.
+// Merge only equal dynamic results; keep every count boundary and source sample.
 export function renderView(raw,zoom,bounds=null){
  const level=geometryLevel(zoom),g=raw.geometry,lookup=new Map(g.ids.map((id,i)=>[id,i])),used=new Set(),rows=[];
  const value=(i,f,sign)=>raw[sign<0?(swap[f]||f):f][i];
@@ -24,8 +23,23 @@ export function renderView(raw,zoom,bounds=null){
    const first=key(...members[0]);
    if(members.every(([i,s])=>!used.has(i)&&key(i,s)===first)){
      members.forEach(([i])=>used.add(i));emit(a,b,members);
-   }else for(const [i,s] of members)if(!used.has(i)){
-     used.add(i);const [u,v]=g.edges[i],a=g.points[s>0?u:v],b=g.points[s>0?v:u];emit(a,b,[[i,s]]);
+   }else {
+     // Split only at changed values or already-covered edges. Preserve source
+     // samples, but simplify each remaining equal-valued run independently.
+     let run=[],signature;
+     const flush=()=>{
+       if(!run.length)return;
+       const points=run.map(([i,s])=>g.points[g.edges[i][s>0?0:1]]);
+       const [i,s]=run.at(-1);points.push(g.points[g.edges[i][s>0?1:0]]);
+       const tolerance=level==='detail'?0:1.5*156543.03392*Math.cos(points[0][0]*Math.PI/180)/2**zoom;
+       const keep=new Set(level==='detail'?points.map((_,i)=>i):[0,points.length-1]),stack=[[0,points.length-1]];
+       while(stack.length){const [a,b]=stack.pop();if(b<=a+1)continue;const c=Math.cos(points[a][0]*Math.PI/180),dx=(points[b][1]-points[a][1])*c,dy=points[b][0]-points[a][0],den=dx*dx+dy*dy;let max=0,k=a;
+         for(let j=a+1;j<b;j++){const x=(points[j][1]-points[a][1])*c,y=points[j][0]-points[a][0],f=den?Math.max(0,Math.min(1,(x*dx+y*dy)/den)):0,d=Math.hypot(x-f*dx,y-f*dy)*111195;if(d>max){max=d;k=j;}}
+         if(max>tolerance){keep.add(k);stack.push([a,k],[k,b]);}
+       }
+       const indices=[...keep].sort((a,b)=>a-b);for(let j=1;j<indices.length;j++)emit(points[indices[j-1]],points[indices[j]],run.slice(indices[j-1],indices[j]));run=[];
+     };
+     for(const member of members){const [i,s]=member,next=key(i,s);if(used.has(i)){flush();signature=undefined;continue;}if(run.length&&next!==signature)flush();signature=next;used.add(i);run.push(member);}flush();
    }
  }
  for(let i=0;i<g.edges.length;i++)if(!used.has(i)){const [a,b]=g.edges[i];emit(g.points[a],g.points[b],[[i,1]]);}

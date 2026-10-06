@@ -11,7 +11,7 @@ export function selectChunks(index,bounds,filter=null){
 // Pages sets max-age=600; immutable content hashes can reuse even stale HTTP entries.
 // Unversioned URLs must still revalidate, including compatibility manifests.
 export function dataCacheMode(url){
-  return /\.[a-f0-9]{16}\.(?:(?:geometry|schedule|overview|medium|detail)\.)?(?:json|bin)\.gz$/.test(new URL(url,'https://data.invalid/').pathname)?'force-cache':'no-cache';
+  return /\.[a-f0-9]{16}\.(?:(?:geometry|schedule|regional|overview|medium|detail)\.)?(?:json|bin)\.gz$/.test(new URL(url,'https://data.invalid/').pathname)?'force-cache':'no-cache';
 }
 export async function zipped(url){
   const r=await fetch(url,{cache:dataCacheMode(url)});if(!r.ok)throw Error(`Data: HTTP ${r.status}`);

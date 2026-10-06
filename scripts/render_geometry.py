@@ -2,9 +2,10 @@
 import bisect, math
 from collections import defaultdict
 
-# At latitude 50 degrees: <= 0.34 px at z11 / <= 0.66 px at z14.
-LEVELS = {'overview': {'maxZoom': 11, 'tolerance': 16},
-          'medium': {'maxZoom': 14, 'tolerance': 4},
+# At latitude 50 degrees: ~1.7 CSS pixels at the upper zoom of each LOD.
+LEVELS = {'regional': {'maxZoom': 9, 'tolerance': 320},
+          'overview': {'maxZoom': 11, 'tolerance': 80},
+          'medium': {'maxZoom': 14, 'tolerance': 10},
           'detail': {'maxZoom': 19, 'tolerance': 0}}
 
 def retained(points, tolerance):

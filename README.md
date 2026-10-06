@@ -135,3 +135,11 @@ Detail místa a přichycení bodu dál používají přesná data. Zjednodušen�
 Hashované render/LOD, přesné geometrické, schedule a terénní soubory používají `fetch` s `force-cache`. Po vyhození z malé RAM LRU se mohou znovu dekomprimovat, ale browser znovu použije i prošlou HTTP odpověď stejného hashe. Manifesty `meta`, gzip/JSON index a terénní index používají `no-cache` (revalidaci, nikoli zákaz uložení). Limity RAM se nezvyšují. HTTP cache může prohlížeč sám vyprázdnit; potom je nový přenos nutný. Známý výřez s hotovými výsledky nepřepisuje potvrzené trasy částečným náhledem. Výsledky závěrečného nasazení a živé kontroly jsou v [reportu Bloku 2](docs/BLOK2-MERENI.md).
 
 Blok 2 je **DONE**: standardní Pages nasazení a následná živá acceptance kontrola desktopu i mobilního viewportu prošly. 80/80 unit testů, 56 provozních + 63 LOD regresních kombinací; při návratu A → B → A opakované známé chunky přenesly 0 B. Podrobnosti a omezení jsou v reportu výše.
+
+### Dodatek: plynulejší pan/zoom a výraznější LOD (6. 10. 2026)
+
+Malý posun uvnitř potvrzené oblasti se stejným filtrem a LOD neodesílá nový výpočet: canvas pouze přepočítá obrazové souřadnice. Výpočet připravuje rezervu 16 % kolem mapy, kontrolovaný viditelný výřez má rezervu 8 %. Worker uchovává jeden přesný výsledek pro stejnou sadu chunků a filtr; změna LOD pak mění pouze kreslicí geometrii. Nová oblast nebo filtr může stále vyžadovat výpočet.
+
+Aktuální LOD: regional do z9 / 320 m, overview z10–11 / 80 m, medium z12–14 / 10 m, detail od z15 / přesná geometrie. Při rozdílném provozu se segment rozdělí na souvislé části se stejnými hodnotami; zjednodušují se jednotlivé části, nikoli přes hranice počtů či identit. Původní hrany a vzorky světla zůstávají zachované.
+
+Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; počet malých LRU položek je nejvýše 256. Kreslicí/datová/terénní RAM a HTTP politika se nemění. Rozpočet je odhad paměti, nikoli tvrdý limit celé JS haldy. Samostatná funkční a výkonová acceptance tohoto dodatku je na žádost uživatele odložená; starší označení DONE a měření níže patří předchozí verzi.

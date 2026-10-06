@@ -1,10 +1,12 @@
-import {renderView,previewView,geometryLevel} from './render-view.js';
+import {renderView,previewView,geometryLevel} from './render-view.js?v=viewport-1';
 import {project} from './core.js';
-import {ViewportEngine} from './chunk-engine.js?v=block2-acceptance-1';
+import {ViewportEngine} from './chunk-engine.js?v=viewport-1';
 import {Engine} from './engine.js?v=block1';
-import {selectChunks,mergeChunks,ChunkCache,zipped,scheduleFile} from './chunks.js?v=http-cache-1';
-let meta,index,cache,renderCache,view,exactView,generation=0;
+import {selectChunks,mergeChunks,ChunkCache,zipped,scheduleFile} from './chunks.js?v=http-cache-2';
+let meta,index,cache,renderCache,view,exactView,generation=0,retained=null;
 const buffers=r=>[...new Set([...Object.values(r),...Object.values(r.geometry||{})].filter(v=>ArrayBuffer.isView(v)).map(v=>v.buffer))];
+const snapshotBytes=raw=>Object.values(raw).reduce((n,v)=>n+(ArrayBuffer.isView(v)?v.byteLength:0),0)+raw.geometry.points.length*64+raw.geometry.edges.length*256+raw.geometry.display.reduce((n,r)=>n+160+r[2].length*16,0);
+const retain=(key,raw,level)=>{const bytes=snapshotBytes(raw);retained=bytes<=8*1024*1024?{key,raw,level}:null;view.countCache.maxBytes=8*1024*1024-(retained?bytes:0);view.countCache.trim();};
 const root=new URL('../data/',import.meta.url);
 const json=async (name,gzip=false)=>{const r=await fetch(new URL(name,root),{cache:'no-cache'});if(!r.ok)throw Error(`Metadata: HTTP ${r.status}`);return gzip?new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json():r.json();};
 self.onmessage=async ({data})=>{
@@ -22,11 +24,20 @@ self.onmessage=async ({data})=>{
       generation++;
     }else if(data.type==='counts'){
       const token=++generation,previews=[];let last=0;
-      const raw=await view.counts(data.bounds,data.filter,()=>token!==generation,render=>{
+      const ids=selectChunks(index,data.bounds,data.filter),key=JSON.stringify([ids,data.filter]),level=geometryLevel(data.zoom);
+      let raw;
+      if(retained?.key===key){
+        raw=retained.raw;await new Promise(resolve=>setTimeout(resolve,0));if(token!==generation)return;
+        if(retained.level!==level){const display=[];for(const id of ids){if(token!==generation)return;const c=index.chunks[id].render?.[level];if(c){try{const r=await renderCache.get(id+'|'+level,c.decodedBytes);display.push(...r.segments);}catch{/* Exact geometry remains available. */}}}if(token!==generation)return;raw.geometry.display=display;retain(key,raw,level);}
+      }else {
+      retained=null;view.countCache.maxBytes=8*1024*1024;
+      raw=await view.counts(data.bounds,data.filter,()=>token!==generation,render=>{
         previews.push(render);const now=Date.now();if(now-last<100)return;last=now;
         const result=previewView(previews,meta,data.filter,data.zoom,data.bounds);
         if(token===generation)self.postMessage({type:'preview',id:data.id,...result},buffers(result));
       },data.zoom);
+      if(raw&&token===generation)retain(key,raw,level);
+      }
       if(!raw||token!==generation)return;
       const result=renderView(raw,data.zoom,data.bounds);
       self.postMessage({type:'counts',id:data.id,...result},buffers(result));

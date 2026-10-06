@@ -1,8 +1,8 @@
 import {Engine} from './engine.js?v=block1';
-import {selectChunks,mergeChunks,ChunkCache} from './chunks.js?v=http-cache-1';
+import {selectChunks,mergeChunks,ChunkCache} from './chunks.js?v=http-cache-2';
 const fields=['surfaceForward','surfaceBackward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
 export class ViewportEngine {
-  constructor(meta,index,load,renderLoad=null){this.renderLoad=renderLoad;this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:24});}
+  constructor(meta,index,load,renderLoad=null){this.renderLoad=renderLoad;this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:256});}
   async counts(bounds,filter,cancelled=()=>false,onPreview=null,zoom=19){
   const {meta,index,cache,countCache}=this;
   const ids=selectChunks(index,bounds,filter),edges=new Map(),journeys=new Set(),display=[];

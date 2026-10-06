@@ -17,7 +17,7 @@ Statická aplikace na GitHub Pages. Leaflet 1.9.4, vlastní Canvas tras, ES modu
 | `meta.json` | Platnost, linky, módy, dopravci, denní/noční klasifikace, kalendář, cíle, asociace linek a dopravců | Start |
 | `chunks.json.gz` (fallback `chunks.json`) | Bounds, cesty, velikosti a malý linkový/dopravcovský index | Start |
 | `chunks/*.geometry.json.gz` | Pouze místní hrany a části shapes | Výřez mapy nebo okolí bodu |
-| `chunks/*.{overview,medium,detail}.json.gz` | Kreslicí LODy, statické identity a původní ID hran | Výřez mapy, pouze právě zvolená úroveň |
+| `chunks/*.{regional,overview,medium,detail}.json.gz` | Kreslicí LODy, statické identity a původní ID hran | Výřez mapy, pouze právě zvolená úroveň |
 | `chunks/*.schedule.bin.gz` | Místní patterny, identita spojů a binární zastávkové časy | Stejná oblast, ve workeru |
 | `terrain-index.json` | Bounds a cesty terénních balíčků | Focení nebo detail bodu |
 | `terrain/*.json.gz` | Geografické klíče, profily obzoru a platnost | Potřebná oblast |
@@ -46,7 +46,7 @@ Detail bodu vybírá všechny balíčky dotýkající se poloměru, nezávisle n
 
 - Kreslicí LRU: nejvýše 16 balíčků / 4 MiB dekomprimovaných bajtů (blok 2).
 - Datová LRU: nejvýše 8 balíčků / 4 MiB podle dekomprimovaných bajtů.
-- LRU výsledků: nejvýše 24 položek / 8 MiB odhadu, včetně identit jízd a příspěvků linek.
+- LRU výsledků: nejvýše 256 položek / sdílených 8 MiB odhadu, včetně identit jízd a příspěvků linek.
 - Terénní LRU: nejvýše 16 balíčků / 4 MiB dekomprimovaných bajtů.
 - Stejný rozpracovaný požadavek sdílí Promise; chyba se necachuje a umožňuje opakování.
 - Browser HTTP cache poskytuje další úroveň po vyhození z RAM. Hashované geometry/schedule/render/terrain gzip soubory používají `force-cache`, takže i po vypršení Pages `max-age=600` mohou využít uloženou odpověď bez revalidace. Nehashované soubory používají `no-cache`. `meta.json`, `chunks.json.gz` (i fallback JSON) a `terrain-index.json` se revalidují při inicializaci, nikoli při každém pohybu. HTTP cache spravuje browser a může ji vyprázdnit; nejde o garantované offline úložiště.
@@ -131,7 +131,7 @@ O1 je implementované v bloku 2; O2 zůstává pro pozdější práci. P3 se neo
 
 ## Blok 2: rychlý náhled a kreslicí geometrie (6. 10. 2026)
 
-- [x] Build vytváří tři prostorové varianty **linií**: overview do z11 / 16 m, medium z12–14 / 4 m, detail od z15 / bez dalšího zjednodušení. Při 50° zeměpisné šířky jde nejvýše o 0,34 / 0,66 obrazového pixelu na horním zoomu. Každá varianta je samostatný hashovaný gzip; klient volí pouze právě potřebnou úroveň. Přesné GTFS chunky dál používá worker.
+- [x] Build vytváří čtyři prostorové varianty **linií**: regional do z9 / 320 m, overview z10–11 / 80 m, medium z12–14 / 10 m, detail od z15 / bez dalšího zjednodušení. Při 50° zeměpisné šířky jde přibližně o 1,6 / 1,7 obrazového pixelu na horním zoomu. Každá varianta je samostatný hashovaný gzip; klient volí pouze právě potřebnou úroveň. Přesné GTFS chunky dál používá worker.
 - [x] Zjednodušení končí na větvení, koncích původních shapes, místních koncích chunků a změně množiny linka/dopravce/směr/typ úseku. Nepřipojuje blízké paralelní trasy. Každý kreslicí segment odkazuje na uspořádané původní podepsané ID hran.
 - [x] Worker sloučí segment pouze při shodě **všech** dynamických počtů, kategorií, povrchových směrů a identit po orientaci. Při změně hodnot použije původní jednotlivé hrany. Počty sousedních hran se nikdy nesčítají. Detail, přichycení bodu, interpolace, doporučení a CSV používají přesnou geometrii a původní pravidla.
 - [x] První malý kreslicí chunk lze zobrazit během načítání provozu. Náhled respektuje statické filtry linek/dopravců/druhů/denních-nočních linek, ale **nepotvrzuje aktivitu ve vybraném dni, čase či směru**. Status i legenda jej označují jako předběžný; ve focení a barvě intenzity používá samostatnou nehodnocenou barvu. Po přesném výsledku se nahradí potvrzenými trasami. Výpadek náhledových dat nezablokuje přesný výsledek.
@@ -148,3 +148,11 @@ Uživatel po nasazení `26fc388` potvrdil na vlastním telefonu funkční ikonku
 ### Závěrečná acceptance Bloku 2 — DONE
 
 Nasazená oprava `eacffff` a standardní [workflow 37532798650](https://github.com/anlexcz/sotofoto/actions/runs/37532798650) prošly unit testy (80/80), novou produkční regresí (56 + 63 kombinací) a následnou živou kontrolou desktopu i mobilního viewportu. Zdrojové soubory produkce souhlasí s kódem. A → B → A, známé LODy a filtry mají u opakovaných hashů nulový síťový přenos; eviction RAM znovu dekóduje HTTP cache. Čas světla a intenzity nevytvořily GTFS request. Invarianty průjezdů, Prahy/půlnoci/>24h a typů 7/8/9/10 ověřuje původní engine a rozšířená regrese. Podrobnosti v [reportu](BLOK2-MERENI.md) a [strojovém souhrnu](block2-acceptance.json). Fyzický telefon nebyl nově benchmarkován.
+
+### Dodatek: plynulejší pan/zoom a výraznější LOD (6. 10. 2026)
+
+Malý posun uvnitř potvrzené oblasti se stejným filtrem a LOD neodesílá nový výpočet: canvas pouze přepočítá obrazové souřadnice. Výpočet připravuje rezervu 16 % kolem mapy, kontrolovaný viditelný výřez má rezervu 8 %. Worker uchovává jeden přesný výsledek pro stejnou sadu chunků a filtr; změna LOD pak mění pouze kreslicí geometrii. Nová oblast nebo filtr může stále vyžadovat výpočet.
+
+Aktuální LOD: regional do z9 / 320 m, overview z10–11 / 80 m, medium z12–14 / 10 m, detail od z15 / přesná geometrie. Při rozdílném provozu se segment rozdělí na souvislé části se stejnými hodnotami; zjednodušují se jednotlivé části, nikoli přes hranice počtů či identit. Původní hrany a vzorky světla zůstávají zachované.
+
+Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; počet malých LRU položek je nejvýše 256. Kreslicí/datová/terénní RAM a HTTP politika se nemění. Rozpočet je odhad paměti, nikoli tvrdý limit celé JS haldy. Samostatná funkční a výkonová acceptance tohoto dodatku je na žádost uživatele odložená; starší označení DONE a měření níže patří předchozí verzi.

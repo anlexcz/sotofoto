@@ -69,3 +69,11 @@ Počty jsou volání browser fetch, nikoli počet nových serverových přenosů
 - Vynucená eviction (RAM LRU pouze 1 položka) v produkčním workeru A → B → A znovu dekódovala první geometrii z HTTP cache s přenosem 0 B. Nezvětšuje se žádný limit RAM. Browser smí svoji HTTP cache smazat; pak je nový síťový přenos nutný.
 - První živý síťový pokus selhal kvůli neověřenému certifikátu testovací proxy: Chromium ignorovalo certifikační chybu a neukládalo HTTPS odpovědi do HTTP cache. Diagnostika doložila stejné cacheable Pages hlavičky (`max-age=600`) i při opakovaném plném přenosu. Po důvěryhodném nastavení certifikátu prostředí a odstranění `ignoreHTTPSErrors` test prošel. Runner proto vyžaduje normální ověření HTTPS; chybu certifikátu nesmí skrýt. Produkční aplikace kvůli tomu nepotřebovala další opravu.
 - Limity: mobilní viewport/touch a vizuální kontrola nejsou test fyzického telefonu, tepelných limitů nebo slabé CPU. Počasí/externí API není předmětem cache GTFS; chybějící odpověď zůstává explicitně neověřená. Cache nepřidává infrastrukturu, service worker ani trvalou vlastní databázi.
+
+### Dodatek: plynulejší pan/zoom a výraznější LOD (6. 10. 2026)
+
+Malý posun uvnitř potvrzené oblasti se stejným filtrem a LOD neodesílá nový výpočet: canvas pouze přepočítá obrazové souřadnice. Výpočet připravuje rezervu 16 % kolem mapy, kontrolovaný viditelný výřez má rezervu 8 %. Worker uchovává jeden přesný výsledek pro stejnou sadu chunků a filtr; změna LOD pak mění pouze kreslicí geometrii. Nová oblast nebo filtr může stále vyžadovat výpočet.
+
+Aktuální LOD: regional do z9 / 320 m, overview z10–11 / 80 m, medium z12–14 / 10 m, detail od z15 / přesná geometrie. Při rozdílném provozu se segment rozdělí na souvislé části se stejnými hodnotami; zjednodušují se jednotlivé části, nikoli přes hranice počtů či identit. Původní hrany a vzorky světla zůstávají zachované.
+
+Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; počet malých LRU položek je nejvýše 256. Kreslicí/datová/terénní RAM a HTTP politika se nemění. Rozpočet je odhad paměti, nikoli tvrdý limit celé JS haldy. Samostatná funkční a výkonová acceptance tohoto dodatku je na žádost uživatele odložená; starší označení DONE a měření níže patří předchozí verzi.

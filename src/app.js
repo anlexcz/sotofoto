@@ -74,7 +74,9 @@ const RoutesLayer=L.Layer.extend({
 const routesLayer=new RoutesLayer().addTo(map);
 // Tile pane 200 < veil 250 < weather 350 < routes/highlight 400 < markers 600.
 const veil=map.createPane('basemap-veil');veil.style.zIndex=250;veil.style.pointerEvents='none';
-L.DomUtil.create('div','basemap-veil',veil);
+const veilCover=L.DomUtil.create('div','basemap-veil',veil);
+function syncVeil(){const size=map.getSize();L.DomUtil.setPosition(veilCover,map.containerPointToLayerPoint([0,0]));veilCover.style.width=`${size.x}px`;veilCover.style.height=`${size.y}px`;}
+map.on('move resize zoomend',syncVeil);syncVeil();
 
 function updateLightControls(){
   syncLightPickers();

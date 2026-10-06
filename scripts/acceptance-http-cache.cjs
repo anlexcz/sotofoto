@@ -1,5 +1,5 @@
 // Real browser HTTP cache test, with immediately stale immutable responses.
-const {chromium}=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright');
+const {chromium}=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES?process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright':'playwright');
 const http=require('node:http'),fs=require('node:fs'),assert=require('node:assert/strict'),{gzipSync}=require('node:zlib');
 (async()=>{
  let version=1;const hits={};
@@ -13,7 +13,7 @@ const http=require('node:http'),fs=require('node:fs'),assert=require('node:asser
   res.end(gzipSync(JSON.stringify({path:req.url})));
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/tmp/p3-chrome/chrome-headless-shell-linux64/chrome-headless-shell',args:['--no-sandbox']});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,args:['--no-sandbox']});
  try{
   const page=await browser.newPage();await page.goto(`http://127.0.0.1:${server.address().port}`);
   const result=await page.evaluate(async()=>{

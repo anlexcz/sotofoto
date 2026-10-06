@@ -39,7 +39,7 @@ Podstatný přínos je dřívější náhled, méně kreslených hran a rychlej�
 
 ## Nasazení a živé ověření
 
-Publikace používá nezměněné standardní `.github/workflows/pages.yml` s unit testy a produkční regresí. Skutečný výsledek nasazení a živé kontroly bude při předání uveden v závěrečné zprávě; offline výsledky výše samy o sobě nejsou ověřením produkce.
+Publikace používá nezměněné standardní `.github/workflows/pages.yml` s unit testy a produkční regresí. Závěrečná publikace a živá acceptance kontrola jsou doložené v dodatku níže; offline výsledky výše samy o sobě nejsou ověřením produkce.
 
 ## Závěrečná acceptance kontrola a cache
 
@@ -51,4 +51,21 @@ Lokálně: 80/80 unit testů; plná produkční regrese 56 kombinací + 63 LOD k
 
 Reprodukce nad instalovaným Playwright/Chromium: `node scripts/acceptance-http-cache.cjs` a `node scripts/acceptance-browser.cjs https://anlexcz.github.io/sotofoto/ /tmp/block2-live.json`. Runtime lze zadat přes `CODEX_PRIMARY_RUNTIME_NODE_MODULES`, cestu Chromium přes `CHROME_PATH`. Druhý runner zaznamenává skutečné worker Resource Timing (transferSize/encodedBodySize); neinterceptuje síť a nemění produkční soubory. Mobilní viewport/touch nejsou fyzický telefon. Počasí může být v testovacím prostředí nedostupné, zůstává explicitně neověřené a neblokuje provoz.
 
-Stav nové publikace: čeká na standardní workflow a následnou živou acceptance kontrolu. Blok 2 tímto mezivýsledkem ještě není označen DONE.
+**Blok 2: DONE.** Oprava `eacffffaba25ff2afbcbf95b5d246c0983b41a97` prošla [standardním Pages workflow 37532798650](https://github.com/anlexcz/sotofoto/actions/runs/37532798650) včetně unit testů, nové produkční regrese, terénu, finalizace a deploye. Potom proběhla živá kontrola s čistými browser kontexty. Produkční HTML/app/worker/chunks/chunk-engine byly bajtově porovnány s nasazeným kódem a souhlasily. Strojový souhrn: [block2-acceptance.json](block2-acceptance.json).
+
+| Živý scénář | Desktop: fetch / přenos | Mobilní viewport: fetch / přenos |
+| --- | ---: | ---: |
+| Stejný výřez | 99 / 0 B | 0 / 0 B |
+| B → původní A | 99 / 0 B | 42 / 0 B |
+| Návrat z overview do známého medium | 99 / 0 B | 30 / 0 B |
+| Noční filtr | 99 / 0 B | 28 / 0 B |
+| Denní filtr | 99 / 0 B | 28 / 0 B |
+| Všechny linky | 99 / 0 B | 28 / 0 B |
+
+Počty jsou volání browser fetch, nikoli počet nových serverových přenosů. Větší výřez přesahuje RAM LRU a po opětovném načtení se znovu dekóduje; pro již známé hashe skutečný worker Resource Timing ukazuje `transferSize=0`. Nová oblast a nová LOD varianta se přenášejí jednou podle potřeby. Malé manifesty se při pohybu/zoomu neopakují; revalidují se při inicializaci stránky/workeru. Terén se načítá jen pro potřebnou oblast při focení nebo detailu, jeho hashe mají stejnou HTTP politiku.
+
+- V obou čistých kontextech přišel označený předběžný náhled před přesným výsledkem. Po dostupnosti metadat první náhled za 279 / 283 ms, přesný výsledek za 8 202 / 3 148 ms (desktop / mobile viewport). Jde o jediný běh přes testovací proxy, nikoli reprezentativní dobu startu na telefonu. Aktivní přesné trasy ověřuje shoda 63 LOD kombinací s původními hranami a hodnotami; neaktivní statické náhledové trasy se po potvrzení provozu správně odstraní.
+- Prošly overview z11, medium z13 a detail z15, denní/noční/vše, pan/zoom, intenzity, focení, osm rychlých změn světla, rychlý sled viewportů a přesný detail Náměstí Míru s průjezdy tramvaje/metro/bus. Světlo a přepnutí intenzit: 0 GTFS requestů a 0 counts messages. Zrušené generace neměnily poslední výsledek. Bez JS a worker chyb, bez vodorovného přetečení mobilního layoutu; mapa, detail a první řádky byly vizuálně zkontrolovány.
+- Vynucená eviction (RAM LRU pouze 1 položka) v produkčním workeru A → B → A znovu dekódovala první geometrii z HTTP cache s přenosem 0 B. Nezvětšuje se žádný limit RAM. Browser smí svoji HTTP cache smazat; pak je nový síťový přenos nutný.
+- První živý síťový pokus selhal kvůli neověřenému certifikátu testovací proxy: Chromium ignorovalo certifikační chybu a neukládalo HTTPS odpovědi do HTTP cache. Diagnostika doložila stejné cacheable Pages hlavičky (`max-age=600`) i při opakovaném plném přenosu. Po důvěryhodném nastavení certifikátu prostředí a odstranění `ignoreHTTPSErrors` test prošel. Runner proto vyžaduje normální ověření HTTPS; chybu certifikátu nesmí skrýt. Produkční aplikace kvůli tomu nepotřebovala další opravu.
+- Limity: mobilní viewport/touch a vizuální kontrola nejsou test fyzického telefonu, tepelných limitů nebo slabé CPU. Počasí/externí API není předmětem cache GTFS; chybějící odpověď zůstává explicitně neověřená. Cache nepřidává infrastrukturu, service worker ani trvalou vlastní databázi.

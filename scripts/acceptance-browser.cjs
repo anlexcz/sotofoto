@@ -1,14 +1,14 @@
 // Optional live acceptance runner: Playwright + Chromium, no production instrumentation.
-const {chromium}=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright');
+const {chromium}=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES?process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright':'playwright');
 const fs=require('fs'),assert=require('node:assert/strict');
 const url=process.argv[2]||'https://anlexcz.github.io/sotofoto/';
 (async()=>{
- const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/tmp/p3-chrome/chrome-headless-shell-linux64/chrome-headless-shell',proxy:process.env.HTTPS_PROXY?{server:process.env.HTTPS_PROXY}:undefined,args:['--no-sandbox','--proxy-bypass-list=<-loopback>']});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH,proxy:process.env.HTTPS_PROXY?{server:process.env.HTTPS_PROXY}:undefined,args:['--no-sandbox','--proxy-bypass-list=<-loopback>']});
  const server=url.startsWith('http://127.0.0.1:')?require('node:child_process').spawn('python',['-m','http.server',new URL(url).port,'--directory','dist'],{stdio:'ignore'}):null;
  if(server)await new Promise(r=>setTimeout(r,600));
  const report={url,at:new Date().toISOString(),scenarios:[]};
  try{for(const mobile of [false,true]){
- const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:mobile?{width:390,height:844}:{width:1440,height:900},isMobile:mobile,hasTouch:mobile});
+ const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:900},isMobile:mobile,hasTouch:mobile});
  const page=await context.newPage(),errors=[],requests=[];page.on('pageerror',e=>{errors.push(e.message);console.log('PAGE ERROR',e.message)});context.on('request',r=>{if(r.url().includes('/data/'))requests.push(r.url());});
  await page.addInitScript(()=>{window.__accept={messages:[]};const Base=window.Worker;window.Worker=class extends Base{constructor(...args){super(...args);this.addEventListener('message',({data:d})=>{window.__accept.messages.push({type:d.type,id:d.id,level:d.level,at:performance.now(),edges:d.geometry?.edges.length,journeys:d.journeys,message:d.message,counts:d.counts?Array.from(d.counts):undefined,passages:d.passages?.length});});}};});
  // Capture Leaflet's map through its public factory before the application module starts.

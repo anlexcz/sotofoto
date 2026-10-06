@@ -133,3 +133,5 @@ Detail místa a přichycení bodu dál používají přesná data. Zjednodušen�
 ### Cache chunků (závěrečná kontrola Bloku 2)
 
 Hashované render/LOD, přesné geometrické, schedule a terénní soubory používají `fetch` s `force-cache`. Po vyhození z malé RAM LRU se mohou znovu dekomprimovat, ale browser znovu použije i prošlou HTTP odpověď stejného hashe. Manifesty `meta`, gzip/JSON index a terénní index používají `no-cache` (revalidaci, nikoli zákaz uložení). Limity RAM se nezvyšují. HTTP cache může prohlížeč sám vyprázdnit; potom je nový přenos nutný. Známý výřez s hotovými výsledky nepřepisuje potvrzené trasy částečným náhledem. Výsledky závěrečného nasazení a živé kontroly jsou v [reportu Bloku 2](docs/BLOK2-MERENI.md).
+
+Blok 2 je **DONE**: standardní Pages nasazení a následná živá acceptance kontrola desktopu i mobilního viewportu prošly. 80/80 unit testů, 56 provozních + 63 LOD regresních kombinací; při návratu A → B → A opakované známé chunky přenesly 0 B. Podrobnosti a omezení jsou v reportu výše.

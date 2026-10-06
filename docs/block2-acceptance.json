@@ -1,0 +1,347 @@
+{
+  "status": "PASS",
+  "deployedRevision": "eacffffaba25ff2afbcbf95b5d246c0983b41a97",
+  "workflow": "https://github.com/anlexcz/sotofoto/actions/runs/37532798650",
+  "browserStartedAt": "2026-10-06T21:24:55.026Z",
+  "environment": "Chromium desktop 1440x900 and mobile/touch 390x844, normal HTTPS certificate verification; proxy trust configured. No physical phone performance claim.",
+  "unitTests": {
+    "pass": 80,
+    "fail": 0
+  },
+  "regression": {
+    "trafficCombinations": 56,
+    "lodCombinations": 63,
+    "status": "PASS"
+  },
+  "sourceChecks": [
+    {
+      "file": "src/app.js",
+      "match": true,
+      "sha256": "dec315e58e8847075ac63cd6a9980d1b53afade669ff1e499b03d35fc2d2abe1"
+    },
+    {
+      "file": "src/worker.js",
+      "match": true,
+      "sha256": "bd0877b978bee0b31ed8f356fac19bf82ae4130315c33863c0e3b6785355fbea"
+    },
+    {
+      "file": "src/chunks.js",
+      "match": true,
+      "sha256": "1b26f90a231752c8e2c13c76615552b64d1de32b4c91a3c043c4688ab0b394c4"
+    },
+    {
+      "file": "src/chunk-engine.js",
+      "match": true,
+      "sha256": "ea78f23384702eca8f92b8ac61d5e458a98e6bccf5c822b219db907ff9de4268"
+    },
+    {
+      "file": "index.html",
+      "match": true,
+      "sha256": "0af27016e2fca065f6402eb0b227b2f87c6fd9b58222c12df6f2bb2c286aaee1"
+    }
+  ],
+  "nativeStaleHTTPCache": {
+    "pass": true,
+    "responseCacheControl": "max-age=0",
+    "serverHits": {
+      "/": 1,
+      "/src/chunks.js": 1,
+      "/data/A.0123456789abcdef.json.gz": 1,
+      "/data/B.0123456789abcdef.json.gz": 1,
+      "/data/chunks.json.gz": 2,
+      "/data/meta.json": 2,
+      "/advance": 1,
+      "/data/2.0123456789abcdef.json.gz": 1
+    }
+  },
+  "scenarios": [
+    {
+      "mobile": false,
+      "name": "same viewport",
+      "level": "medium",
+      "edges": 8552,
+      "journeys": 37098,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "A to B",
+      "level": "medium",
+      "edges": 1274,
+      "journeys": 849,
+      "fetchCalls": 45,
+      "repeatedHashRequests": 0,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 615439
+    },
+    {
+      "mobile": false,
+      "name": "B to A",
+      "level": "medium",
+      "edges": 8552,
+      "journeys": 37098,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "detail zoom",
+      "level": "detail",
+      "edges": 935,
+      "journeys": 18064,
+      "fetchCalls": 6,
+      "repeatedHashRequests": 0,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 48178
+    },
+    {
+      "mobile": false,
+      "name": "overview zoom",
+      "level": "overview",
+      "edges": 26857,
+      "journeys": 43478,
+      "fetchCalls": 558,
+      "repeatedHashRequests": 66,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 8164028
+    },
+    {
+      "mobile": false,
+      "name": "medium zoom",
+      "level": "medium",
+      "edges": 8552,
+      "journeys": 37098,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "night filter",
+      "level": "medium",
+      "edges": 612,
+      "journeys": 29,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "day filter",
+      "level": "medium",
+      "edges": 8544,
+      "journeys": 37069,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "all filter",
+      "level": "medium",
+      "edges": 8552,
+      "journeys": 37098,
+      "fetchCalls": 99,
+      "repeatedHashRequests": 99,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "rapid pan zoom latest wins",
+      "level": "detail",
+      "edges": 935,
+      "journeys": 18064,
+      "fetchCalls": 7,
+      "repeatedHashRequests": 6,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": false,
+      "name": "startup / light / detail / eviction",
+      "previewAfterReadyMs": 278.5,
+      "countsAfterReadyMs": 8202.0,
+      "lightGTFSRequests": 0,
+      "errors": [],
+      "workerErrors": [],
+      "horizontalOverflow": false,
+      "eviction": {
+        "ids": [
+          "1002:287",
+          "1002:288"
+        ],
+        "entries": 1,
+        "resources": [
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_287.022ea3552798c2e8.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 92004
+          },
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_288.9e592fb3fb6f7ae6.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 78047
+          },
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_287.022ea3552798c2e8.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 92004
+          }
+        ]
+      }
+    },
+    {
+      "mobile": true,
+      "name": "same viewport",
+      "level": "medium",
+      "edges": 3660,
+      "journeys": 26199,
+      "fetchCalls": 0,
+      "repeatedHashRequests": 0,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "A to B",
+      "level": "medium",
+      "edges": 637,
+      "journeys": 749,
+      "fetchCalls": 27,
+      "repeatedHashRequests": 0,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 469575
+    },
+    {
+      "mobile": true,
+      "name": "B to A",
+      "level": "medium",
+      "edges": 3660,
+      "journeys": 26199,
+      "fetchCalls": 42,
+      "repeatedHashRequests": 42,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "detail zoom",
+      "level": "detail",
+      "edges": 379,
+      "journeys": 10879,
+      "fetchCalls": 2,
+      "repeatedHashRequests": 0,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 17837
+    },
+    {
+      "mobile": true,
+      "name": "overview zoom",
+      "level": "overview",
+      "edges": 13795,
+      "journeys": 39822,
+      "fetchCalls": 234,
+      "repeatedHashRequests": 28,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 6888239
+    },
+    {
+      "mobile": true,
+      "name": "medium zoom",
+      "level": "medium",
+      "edges": 3660,
+      "journeys": 26199,
+      "fetchCalls": 30,
+      "repeatedHashRequests": 30,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "night filter",
+      "level": "medium",
+      "edges": 336,
+      "journeys": 19,
+      "fetchCalls": 28,
+      "repeatedHashRequests": 28,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "day filter",
+      "level": "medium",
+      "edges": 3655,
+      "journeys": 26180,
+      "fetchCalls": 28,
+      "repeatedHashRequests": 28,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "all filter",
+      "level": "medium",
+      "edges": 3660,
+      "journeys": 26199,
+      "fetchCalls": 28,
+      "repeatedHashRequests": 28,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "rapid pan zoom latest wins",
+      "level": "detail",
+      "edges": 379,
+      "journeys": 10879,
+      "fetchCalls": 2,
+      "repeatedHashRequests": 2,
+      "repeatedHashWireBytes": 0,
+      "totalWireBytes": 0
+    },
+    {
+      "mobile": true,
+      "name": "startup / light / detail / eviction",
+      "previewAfterReadyMs": 283.3,
+      "countsAfterReadyMs": 3148.0,
+      "lightGTFSRequests": 0,
+      "errors": [],
+      "workerErrors": [],
+      "horizontalOverflow": false,
+      "eviction": {
+        "ids": [
+          "1002:287",
+          "1002:288"
+        ],
+        "entries": 1,
+        "resources": [
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_287.022ea3552798c2e8.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 92004
+          },
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_288.9e592fb3fb6f7ae6.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 78047
+          },
+          {
+            "name": "https://anlexcz.github.io/sotofoto/data/chunks/1002_287.022ea3552798c2e8.geometry.json.gz",
+            "transferSize": 0,
+            "encodedBodySize": 92004
+          }
+        ]
+      }
+    }
+  ]
+}

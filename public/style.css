@@ -42,3 +42,5 @@
 .point-location{display:flex;align-items:center;gap:4px;min-width:0}.point-location .coordinates{white-space:nowrap}
 .point-mapy{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border-radius:8px;color:var(--accent);cursor:pointer;text-decoration:none}.point-mapy:hover{background:#eef5f2}.point-mapy svg{width:22px;height:22px}
 .share-controls{margin-top:18px}.share-controls button{min-height:44px}.share-controls input{width:100%;min-height:44px}
+
+.intensity-control{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:600}.intensity-control input{width:22px;height:22px;accent-color:#16877d}

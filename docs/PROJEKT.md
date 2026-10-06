@@ -104,7 +104,7 @@ P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stav
 - V živém DOM byla jediná bílá vrstva, `pointer-events:none`, pořadí dlaždice 200 / zastření 250 / počasí 350 / trasy 400 / značky 600. Po posunu klávesnicí a zoomu přesně kryla mapový viewport, mapa reagovala a ulice i trasy zůstaly čitelné. Legenda obsahuje samostatné nehodnocené metro. Nové viditelné ovladače mají výšku 44 px.
 - Limit mobilního ověření: dostupný cloudový prohlížeč neposkytuje řízení mobilního viewportu a nepovoluje otevření lokálního testovacího HTML. Mobilní layout, nativní časový picker, dotykové ovládání a přechod do aplikace Mapy.com proto nebyly přímo ověřené. Implementace používá stejná nativní tlačítka/selecty na mobilu a desktopu, ale nejde o náhradu testu na telefonu.
 
-### O1: Více úrovní podrobnosti geometrie podle zoomu
+### O1: Více úrovní podrobnosti geometrie podle zoomu — implementováno v bloku 2
 
 - Navrhnout a změřit alespoň tři úrovně: hrubý oddálený přehled, střední detail a nejpřesnější blízký pohled. Jde o linie tras, nikoli plošné polygony.
 - Prahy zoomu a toleranci v metrech/pixelech stanovit podle měření, ne libovolnými čísly. Zahrnout mobil, široký výřez, pan/zoom a změnu času světla; porovnat počet kreslených segmentů, přenos, čas vykreslení a paměť.
@@ -122,4 +122,21 @@ P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stav
 - Přepočet vyvolat jen změnou DEM, algoritmu, rozlišení, dosahu, výšky cíle nebo explicitním rozšířením pokrytí. Terén je relativně stálý, nikoli navždy neměnný; zachovat verzi zdroje.
 - Při návrhu vybrat trvalé úložiště a distribuční cestu bez zbytečného backendu; určit velikost a licenci. Při realizaci ověřit dvě různé GTFS aktualizace, ztrátu Actions cache a novou oblast. Výpočet polohy Slunce pro vybraný čas samozřejmě zůstává.
 
-O1/O2 jsou zadání pro pozdější práci. Blok 1 je neimplementuje a neobnovuje P3.
+O1 je implementované v bloku 2; O2 zůstává pro pozdější práci. P3 se neobnovuje.
+
+
+## Blok 2: rychlý náhled a kreslicí geometrie (6. 10. 2026)
+
+- [x] Build vytváří tři prostorové varianty **linií**: overview do z11 / 16 m, medium z12–14 / 4 m, detail od z15 / bez dalšího zjednodušení. Při 50° zeměpisné šířky jde nejvýše o 0,34 / 0,66 obrazového pixelu na horním zoomu. Každá varianta je samostatný hashovaný gzip; klient volí pouze právě potřebnou úroveň. Přesné GTFS chunky dál používá worker.
+- [x] Zjednodušení končí na větvení, koncích původních shapes, místních koncích chunků a změně množiny linka/dopravce/směr/typ úseku. Nepřipojuje blízké paralelní trasy. Každý kreslicí segment odkazuje na uspořádané původní podepsané ID hran.
+- [x] Worker sloučí segment pouze při shodě **všech** dynamických počtů, kategorií, povrchových směrů a identit po orientaci. Při změně hodnot použije původní jednotlivé hrany. Počty sousedních hran se nikdy nesčítají. Detail, přichycení bodu, interpolace, doporučení a CSV používají přesnou geometrii a původní pravidla.
+- [x] První malý kreslicí chunk lze zobrazit během načítání provozu. Náhled respektuje statické filtry linek/dopravců/druhů/denních-nočních linek, ale **nepotvrzuje aktivitu ve vybraném dni, čase či směru**. Status i legenda jej označují jako předběžný; ve focení a barvě intenzity používá samostatnou nehodnocenou barvu. Po přesném výsledku se nahradí potvrzenými trasami. Výpadek náhledových dat nezablokuje přesný výsledek.
+- [x] V existujícím ⓘ je přístupný checkbox **Intenzity**, výchozí vypnutý, dotykový cíl 44 px. Vypnuto = jednotná tloušťka; zapnuto = původní kategorie. Počty se počítají na pozadí i při vypnutí. Přepnutí pouze překresluje; nemění čas/datum/filtry/průjezdy, neposílá workerový výpočet ani síťové požadavky. Volba vzhledu se nesdílí v URL.
+- [x] Slunce na zjednodušené čáře se vyhodnocuje v původních středech hran a s jejich skutečnými místními azimuty. Přehled ukazuje **nejhorší** dílčí hodnocení; ve sloučených směrech se nejdříve vybere lepší přítomný povrchový směr každého dílu. Stín terénu se nepřekryje lepším sousedem. Samostatné metro nadále nic nepočítá. Bodový detail není tímto přehledem změněn.
+- [x] Souřadnice pro canvas se promítají jednou na uzel a překreslení nereaguje dvakrát na zoomend/moveend. Řetězce popisků vznikají až při použití režimu linek na dostatečném zoomu. Cache Slunce používá přesné souřadnice, jeden čas a současný výřez; při výměně geometrie se uvolní. Transferovány jsou i zdrojové sluneční vzorky. Render cache má 4 MiB / 16 záznamů vedle dosavadních 4 MiB / 8 datových a 8 MiB / 24 výsledkových záznamů. Limity jsou účetní odhady, nikoli záruka celkové RAM JS runtime.
+- [x] Nová změna výřezu/filtru okamžitě invaliduje staré odpovědi před debounce; worker kontroluje generaci mezi chunky. Změny času světla ponechávají jízdní řády, terén a načtené počasí beze změny.
+- [x] Cílené testy, skutečný worker s přenosem bufferů a rozšířená produkční regrese. Opakované stejné scénáře a omezení měření: [report](BLOK2-MERENI.md), [před](block2-before.json), [po](block2-after.json).
+
+Přesný provozní vstup se nezmenšuje; malé render soubory jsou dodatečný přenos pro dřívější náhled. Nejde o trvalé úložiště terénu, novou aktualizaci GTFS, P3 ani P4/P5. Měřený široký fotografický přehled nad 20 tisíc kreslených hran rozděluje práci do snímků s cílem 12 ms na dávku (kontrola po 128 hranách). Nové překreslení předchozí dávky zruší. Hodnoty ani geometrická kvalita se při tom nemění; celková práce na přesném nasvícení stále zůstává. Stav nasazení a skutečné UI ověření uvádí report.
+
+Uživatel po nasazení `26fc388` potvrdil na vlastním telefonu funkční ikonku Mapy.com a otevření bodu v mobilní aplikaci. To doplňuje omezení přímého mobilního ověření bloku 1 výše; nové ovládání bloku 2 na telefonu tím ověřené není.

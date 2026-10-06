@@ -1,0 +1,659 @@
+{
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "note": "Local compressed files, same feed and unthrottled CPU. Viewports are projected models, not emulated browsers. Canvas context records real layer draw operations without rasterization. No internet, tile paint, browser first-map timing or phone RAM measured."
+  },
+  "feed": "2026-10-06T18:48:01.245197+00:00",
+  "metadataBytes": 694234,
+  "samples": [
+    {
+      "repeat": 0,
+      "name": "desktop-start",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 13,
+      "bounds": [
+        50.055,
+        14.35,
+        50.12,
+        14.52
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 1264.623662,
+      "trafficBytes": 6022919,
+      "loadedEdges": 10285,
+      "drawEdges": 10285,
+      "sourceSamples": null,
+      "updateMs": 101.84391800000003,
+      "strokes": 54000,
+      "sunCalls": 50922,
+      "drawMs": [
+        33.67383199999995,
+        28.294488,
+        27.749568999999838,
+        28.692828999999847,
+        27.385298000000148,
+        27.83008800000016,
+        28.155500000000075,
+        27.331997
+      ],
+      "warmMs": 1016.004289,
+      "panMs": 931.1147719999999,
+      "filterMs": 989.8105759999999,
+      "pointMs": 83.07139900000038,
+      "passages": 1097,
+      "additionalBytes": 18207630,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8150998,
+        "countEntries": 18
+      },
+      "memory": {
+        "rss": 716058624,
+        "heapTotal": 361123840,
+        "heapUsed": 156679584,
+        "external": 21005975,
+        "arrayBuffers": 14673208
+      },
+      "rssPeakKiB": 702648
+    },
+    {
+      "repeat": 0,
+      "name": "mobile-start",
+      "viewport": {
+        "x": 390,
+        "y": 768
+      },
+      "zoom": 13,
+      "bounds": [
+        50.052,
+        14.412,
+        50.098,
+        14.468
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 462.95569200000045,
+      "trafficBytes": 2543258,
+      "loadedEdges": 2801,
+      "drawEdges": 2801,
+      "sourceSamples": null,
+      "updateMs": 33.37143199999991,
+      "strokes": 13401,
+      "sunCalls": 12222,
+      "drawMs": [
+        7.986023000000387,
+        7.187547999999879,
+        6.6669449999999415,
+        6.752892999999858,
+        6.653776000000107,
+        7.4741839999996955,
+        6.9895040000001245,
+        8.862554000000273
+      ],
+      "warmMs": 23.26800600000024,
+      "panMs": 131.4531189999998,
+      "filterMs": 456.1803310000005,
+      "pointMs": 136.3634119999997,
+      "passages": 2047,
+      "additionalBytes": 4089971,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8107152,
+        "countEntries": 14
+      },
+      "memory": {
+        "rss": 703418368,
+        "heapTotal": 313430016,
+        "heapUsed": 179364984,
+        "external": 38089718,
+        "arrayBuffers": 24537313
+      },
+      "rssPeakKiB": 702648
+    },
+    {
+      "repeat": 0,
+      "name": "wide-PID",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 9,
+      "bounds": [
+        49.65,
+        13.85,
+        50.65,
+        15.35
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 5655.864240000001,
+      "trafficBytes": 26922051,
+      "loadedEdges": 139964,
+      "drawEdges": 139964,
+      "sourceSamples": null,
+      "updateMs": 1539.2026910000004,
+      "strokes": 1117287,
+      "sunCalls": 1112454,
+      "drawMs": [
+        623.9787209999995,
+        639.1931089999998,
+        661.9368759999998,
+        581.4911140000004,
+        566.409959999999,
+        574.0810960000017,
+        561.7219270000023,
+        586.4936989999987
+      ],
+      "warmMs": 6082.253938999998,
+      "panMs": 6648.991850999999,
+      "filterMs": 5678.8316250000025,
+      "pointMs": 54.44745300000068,
+      "passages": 0,
+      "additionalBytes": 80288207,
+      "cache": {
+        "dataBytes": 3704193,
+        "dataEntries": 6,
+        "countBytes": 8253484,
+        "countEntries": 22
+      },
+      "memory": {
+        "rss": 3149967360,
+        "heapTotal": 2381594624,
+        "heapUsed": 2302410736,
+        "external": 88394670,
+        "arrayBuffers": 74864427
+      },
+      "rssPeakKiB": 3091824
+    },
+    {
+      "repeat": 0,
+      "name": "dense-close",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 16,
+      "bounds": [
+        50.073,
+        14.422,
+        50.08,
+        14.44
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 347.9218150000015,
+      "trafficBytes": 1898442,
+      "loadedEdges": 2157,
+      "drawEdges": 2157,
+      "sourceSamples": null,
+      "updateMs": 32.54884000000311,
+      "strokes": 1287,
+      "sunCalls": 1116,
+      "drawMs": [
+        2.224521999996796,
+        2.3430680000019493,
+        2.2829989999954705,
+        2.4438779999982216,
+        1.6672440000038478,
+        1.5168209999974351,
+        1.4905419999995502,
+        1.506306000002951
+      ],
+      "warmMs": 13.649179000000004,
+      "panMs": 10.572621999999683,
+      "filterMs": 299.09660700000677,
+      "pointMs": 101.00020999999833,
+      "passages": 2728,
+      "additionalBytes": 2800831,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 5125120,
+        "countEntries": 8
+      },
+      "memory": {
+        "rss": 3128926208,
+        "heapTotal": 1558614016,
+        "heapUsed": 1231178192,
+        "external": 57168712,
+        "arrayBuffers": 35760804
+      },
+      "rssPeakKiB": 3091824
+    },
+    {
+      "repeat": 1,
+      "name": "desktop-start",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 13,
+      "bounds": [
+        50.055,
+        14.35,
+        50.12,
+        14.52
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 1065.5826020000022,
+      "trafficBytes": 6022919,
+      "loadedEdges": 10285,
+      "drawEdges": 10285,
+      "sourceSamples": null,
+      "updateMs": 110.68541499999992,
+      "strokes": 54000,
+      "sunCalls": 50922,
+      "drawMs": [
+        36.892487999997684,
+        29.417983999999706,
+        29.610920000006445,
+        32.213081999994756,
+        30.21823199999926,
+        33.631718000004184,
+        32.21731899999577,
+        30.355125000001863
+      ],
+      "warmMs": 1070.0062400000024,
+      "panMs": 866.8959329999998,
+      "filterMs": 908.6575680000024,
+      "pointMs": 62.9714260000037,
+      "passages": 1097,
+      "additionalBytes": 18207630,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8150998,
+        "countEntries": 18
+      },
+      "memory": {
+        "rss": 3127980032,
+        "heapTotal": 576356352,
+        "heapUsed": 496506872,
+        "external": 67294353,
+        "arrayBuffers": 51098090
+      },
+      "rssPeakKiB": 3091824
+    },
+    {
+      "repeat": 1,
+      "name": "mobile-start",
+      "viewport": {
+        "x": 390,
+        "y": 768
+      },
+      "zoom": 13,
+      "bounds": [
+        50.052,
+        14.412,
+        50.098,
+        14.468
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 412.894570000004,
+      "trafficBytes": 2543258,
+      "loadedEdges": 2801,
+      "drawEdges": 2801,
+      "sourceSamples": null,
+      "updateMs": 33.86607599999843,
+      "strokes": 13401,
+      "sunCalls": 12222,
+      "drawMs": [
+        7.912924000003841,
+        8.472564999996393,
+        6.657941999998002,
+        7.764062999995076,
+        6.440920000000915,
+        7.387815000001865,
+        7.244502999994438,
+        6.609028999999282
+      ],
+      "warmMs": 22.029296999993676,
+      "panMs": 118.50432,
+      "filterMs": 484.84148699999787,
+      "pointMs": 103.56778000000486,
+      "passages": 2047,
+      "additionalBytes": 4089971,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8107152,
+        "countEntries": 14
+      },
+      "memory": {
+        "rss": 3122941952,
+        "heapTotal": 317255680,
+        "heapUsed": 210718944,
+        "external": 39144548,
+        "arrayBuffers": 25592143
+      },
+      "rssPeakKiB": 3091824
+    },
+    {
+      "repeat": 1,
+      "name": "wide-PID",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 9,
+      "bounds": [
+        49.65,
+        13.85,
+        50.65,
+        15.35
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 5602.259422999996,
+      "trafficBytes": 26922051,
+      "loadedEdges": 139964,
+      "drawEdges": 139964,
+      "sourceSamples": null,
+      "updateMs": 1635.505584000006,
+      "strokes": 1117287,
+      "sunCalls": 1112454,
+      "drawMs": [
+        631.7853560000003,
+        622.9959600000002,
+        604.6157549999989,
+        618.3148170000059,
+        614.3660319999981,
+        583.2795659999974,
+        612.0958780000001,
+        625.9726540000047
+      ],
+      "warmMs": 5841.713751999996,
+      "panMs": 6138.890430000007,
+      "filterMs": 5608.718238999994,
+      "pointMs": 61.99328500000411,
+      "passages": 0,
+      "additionalBytes": 80288207,
+      "cache": {
+        "dataBytes": 3704193,
+        "dataEntries": 6,
+        "countBytes": 8253484,
+        "countEntries": 22
+      },
+      "memory": {
+        "rss": 3315068928,
+        "heapTotal": 2314563584,
+        "heapUsed": 2211942624,
+        "external": 73179370,
+        "arrayBuffers": 59649127
+      },
+      "rssPeakKiB": 3246392
+    },
+    {
+      "repeat": 1,
+      "name": "dense-close",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 16,
+      "bounds": [
+        50.073,
+        14.422,
+        50.08,
+        14.44
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 344.11778200000117,
+      "trafficBytes": 1898442,
+      "loadedEdges": 2157,
+      "drawEdges": 2157,
+      "sourceSamples": null,
+      "updateMs": 16.318000999992364,
+      "strokes": 1287,
+      "sunCalls": 1116,
+      "drawMs": [
+        14.778324999992037,
+        2.371549999996205,
+        2.3635579999972833,
+        1.8760850000107894,
+        1.561266999997315,
+        1.4812589999928605,
+        1.490141999995103,
+        1.6125130000000354
+      ],
+      "warmMs": 13.46458500000881,
+      "panMs": 11.545536999998149,
+      "filterMs": 273.7763970000087,
+      "pointMs": 103.3625219999958,
+      "passages": 2728,
+      "additionalBytes": 2800831,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 5125120,
+        "countEntries": 8
+      },
+      "memory": {
+        "rss": 3290587136,
+        "heapTotal": 1554186240,
+        "heapUsed": 1223373656,
+        "external": 57025676,
+        "arrayBuffers": 35617768
+      },
+      "rssPeakKiB": 3246392
+    },
+    {
+      "repeat": 2,
+      "name": "desktop-start",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 13,
+      "bounds": [
+        50.055,
+        14.35,
+        50.12,
+        14.52
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 1012.8801830000011,
+      "trafficBytes": 6022919,
+      "loadedEdges": 10285,
+      "drawEdges": 10285,
+      "sourceSamples": null,
+      "updateMs": 101.1010399999941,
+      "strokes": 54000,
+      "sunCalls": 50922,
+      "drawMs": [
+        30.29901199998858,
+        27.239720999990823,
+        29.35673400000087,
+        28.98272799998813,
+        27.49291699999594,
+        28.453842000002624,
+        28.100988999998663,
+        28.506380999999237
+      ],
+      "warmMs": 855.1102410000021,
+      "panMs": 902.9567180000013,
+      "filterMs": 1084.368386000002,
+      "pointMs": 66.76054100001056,
+      "passages": 1097,
+      "additionalBytes": 18207630,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8150998,
+        "countEntries": 18
+      },
+      "memory": {
+        "rss": 3298103296,
+        "heapTotal": 382140416,
+        "heapUsed": 234583992,
+        "external": 32348831,
+        "arrayBuffers": 21026084
+      },
+      "rssPeakKiB": 3246392
+    },
+    {
+      "repeat": 2,
+      "name": "mobile-start",
+      "viewport": {
+        "x": 390,
+        "y": 768
+      },
+      "zoom": 13,
+      "bounds": [
+        50.052,
+        14.412,
+        50.098,
+        14.468
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 436.36625799999456,
+      "trafficBytes": 2543258,
+      "loadedEdges": 2801,
+      "drawEdges": 2801,
+      "sourceSamples": null,
+      "updateMs": 25.279481000005035,
+      "strokes": 13401,
+      "sunCalls": 12222,
+      "drawMs": [
+        13.72304900000745,
+        7.085176999986288,
+        6.399508999995305,
+        6.557483000011416,
+        6.487489999999525,
+        6.4186469999986,
+        6.612073999989661,
+        6.713374999992084
+      ],
+      "warmMs": 17.94236099999398,
+      "panMs": 119.68094800000836,
+      "filterMs": 413.538109000001,
+      "pointMs": 153.26012799999444,
+      "passages": 2047,
+      "additionalBytes": 4089971,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 8107152,
+        "countEntries": 14
+      },
+      "memory": {
+        "rss": 3262517248,
+        "heapTotal": 294862848,
+        "heapUsed": 111031312,
+        "external": 15845727,
+        "arrayBuffers": 9516912
+      },
+      "rssPeakKiB": 3246392
+    },
+    {
+      "repeat": 2,
+      "name": "wide-PID",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 9,
+      "bounds": [
+        49.65,
+        13.85,
+        50.65,
+        15.35
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 5282.734937999994,
+      "trafficBytes": 26922051,
+      "loadedEdges": 139964,
+      "drawEdges": 139964,
+      "sourceSamples": null,
+      "updateMs": 1719.693877999991,
+      "strokes": 1117287,
+      "sunCalls": 1112454,
+      "drawMs": [
+        628.1410759999999,
+        617.3642109999928,
+        601.2606299999898,
+        643.1262940000015,
+        666.9992419999908,
+        621.8006959999911,
+        607.2674949999928,
+        611.918749000004
+      ],
+      "warmMs": 5916.560125999997,
+      "panMs": 5599.208385999998,
+      "filterMs": 5619.979627000008,
+      "pointMs": 52.53772900000331,
+      "passages": 0,
+      "additionalBytes": 80288207,
+      "cache": {
+        "dataBytes": 3704193,
+        "dataEntries": 6,
+        "countBytes": 8253484,
+        "countEntries": 22
+      },
+      "memory": {
+        "rss": 3317624832,
+        "heapTotal": 2246352896,
+        "heapUsed": 2100646272,
+        "external": 74321074,
+        "arrayBuffers": 60790831
+      },
+      "rssPeakKiB": 3247780
+    },
+    {
+      "repeat": 2,
+      "name": "dense-close",
+      "viewport": {
+        "x": 1050,
+        "y": 860
+      },
+      "zoom": 16,
+      "bounds": [
+        50.073,
+        14.422,
+        50.08,
+        14.44
+      ],
+      "firstPreviewMs": null,
+      "firstCountsMs": 353.26638699999603,
+      "trafficBytes": 1898442,
+      "loadedEdges": 2157,
+      "drawEdges": 2157,
+      "sourceSamples": null,
+      "updateMs": 15.442840999996406,
+      "strokes": 1287,
+      "sunCalls": 1116,
+      "drawMs": [
+        1.958556999990833,
+        2.068931000001612,
+        2.3302790000016103,
+        1.8176179999863962,
+        1.566034999996191,
+        1.4888800000044284,
+        1.4846739999920828,
+        1.5030310000001919
+      ],
+      "warmMs": 20.56199899999774,
+      "panMs": 11.982895999986795,
+      "filterMs": 274.03095099999337,
+      "pointMs": 98.13388500000292,
+      "passages": 2728,
+      "additionalBytes": 2800831,
+      "cache": {
+        "dataBytes": 3123145,
+        "dataEntries": 1,
+        "countBytes": 5125120,
+        "countEntries": 8
+      },
+      "memory": {
+        "rss": 3293728768,
+        "heapTotal": 1635966976,
+        "heapUsed": 1223250936,
+        "external": 54397869,
+        "arrayBuffers": 32989961
+      },
+      "rssPeakKiB": 3247780
+    }
+  ]
+}

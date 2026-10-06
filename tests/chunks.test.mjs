@@ -47,3 +47,11 @@ test('pan and unchanged filters reuse per-chunk counts; cancelled load publishes
  await view.counts(bounds,f);const before=calls;await view.counts(bounds,f);assert.equal(calls,before);
  assert.equal(await view.counts(bounds,f,()=>true),null);
 });
+test('Render preview arrives while exact schedule is blocked; stale and missing render stay safe',async()=>{
+ let release;const blocked=new Promise(r=>release=r),events=[];
+ const level='overview',view=new ViewportEngine(fixture.meta,index,async id=>{await blocked;events.push('counts');return read(id);},async id=>load(index.chunks[id].render[level].path));
+ const pending=view.counts(bounds,f,()=>false,()=>events.push('preview'),10);
+ await new Promise(r=>setTimeout(r,10));assert.deepEqual(events,['preview']);release();const exact=await pending;assert.ok(exact.counts.some(Boolean));assert.ok(exact.geometry.display.length);
+ let cancelled=false;const stale=new ViewportEngine(fixture.meta,index,async id=>read(id),async id=>{cancelled=true;return load(index.chunks[id].render[level].path);});let published=false;assert.equal(await stale.counts(bounds,f,()=>cancelled,()=>published=true,10),null);assert.equal(published,false);
+ const missing=new ViewportEngine(fixture.meta,index,async id=>read(id),async()=>{throw Error('offline render');});assert.ok((await missing.counts(bounds,f)).counts.some(Boolean));
+});

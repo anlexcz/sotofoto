@@ -4,6 +4,10 @@ from array import array
 import sys
 from collections import defaultdict
 from pathlib import Path
+try:
+    from scripts.render_geometry import attributes, display_levels, LEVELS
+except ModuleNotFoundError:
+    from render_geometry import attributes, display_levels, LEVELS
 
 
 def tiles_for_edge(p, q, cell):
@@ -58,7 +62,9 @@ def encode_schedule(data):
 def write_chunks(directory, g=None, s=None, cell=.05):
     if g is None:g=json.load(gzip.open(directory/'geometry.json.gz'))
     if s is None:s=json.load(gzip.open(directory/'schedule.json.gz'))
-    manifest={'version':1,'cell':cell,'chunks':{}}
+    manifest={'version':2,'cell':cell,'levels':LEVELS,'chunks':{}}
+    attrs=attributes(g,s)
+    anchors={tuple(g["points"][g["edges"][abs(ref)-1][endpoint]]) for refs,*_ in g["shapes"] if refs for ref,endpoint in [(refs[0],0 if refs[0]>0 else 1),(refs[-1],1 if refs[-1]>0 else 0)]}
     target=directory/'chunks'
     if target.exists():shutil.rmtree(target)
     target.mkdir()
@@ -78,6 +84,12 @@ def write_chunks(directory, g=None, s=None, cell=.05):
             digest=hashlib.sha256(raw).hexdigest()[:16]
             path=f'chunks/{stem}.{digest}.{name}.'+('bin.gz' if name=='schedule' else 'json.gz');(directory/path).write_bytes(blob)
             entry[name]=path;entry[name+'Bytes']=len(blob);entry[name+'DecodedBytes']=len(raw)
+        levels=display_levels(geometry,attrs,anchors)
+        entry['render']={}
+        for level,segments in levels.items():
+            raw=json.dumps({'version':1,'level':level,'segments':segments},separators=(',',':')).encode();blob=gzip.compress(raw,mtime=0)
+            digest=hashlib.sha256(raw).hexdigest()[:16];path=f'chunks/{stem}.{digest}.{level}.json.gz';(directory/path).write_bytes(blob)
+            entry['render'][level]={'path':path,'bytes':len(blob),'decodedBytes':len(raw),'segments':len(segments)}
         entry['routes']=sorted({t[1][0] for t in schedule['trips']})
         entry['agencies']=sorted({t[1][1] for t in schedule['trips']})
         manifest['chunks'][key]=entry

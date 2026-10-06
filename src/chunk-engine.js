@@ -2,17 +2,22 @@ import {Engine} from './engine.js?v=block1';
 import {selectChunks,mergeChunks,ChunkCache} from './chunks.js';
 const fields=['surfaceForward','surfaceBackward','regularCounts','regularForward','regularBackward','categories','forwardCategories','backwardCategories','counts','forward','backward','colors','agencyColors'];
 export class ViewportEngine {
-  constructor(meta,index,load){this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:24});}
-  async counts(bounds,filter,cancelled=()=>false){
+  constructor(meta,index,load,renderLoad=null){this.renderLoad=renderLoad;this.meta=meta;this.index=index;this.cache=new ChunkCache(load,{maxBytes:4*1024*1024,maxEntries:8});this.countCache=new ChunkCache(()=>{throw Error('Unexpected count miss');},{maxBytes:8*1024*1024,maxEntries:24});}
+  async counts(bounds,filter,cancelled=()=>false,onPreview=null,zoom=19){
   const {meta,index,cache,countCache}=this;
-  const ids=selectChunks(index,bounds,filter),edges=new Map(),journeys=new Set();
+  const ids=selectChunks(index,bounds,filter),edges=new Map(),journeys=new Set(),display=[];
   for(const id of ids){
     if(cancelled())return null;
     const c=index.chunks[id],key=id+'|'+JSON.stringify(filter);
+    // Kick both requests off together; the small render-only file can win.
+    const renderPromise=this.renderLoad?this.renderLoad(id,zoom):null;
+    let loadPromise=countCache.items.has(key)?null:cache.get(id,c.geometryDecodedBytes+c.scheduleDecodedBytes);
+    loadPromise?.catch(()=>{});
+    if(renderPromise){const render=await renderPromise.catch(()=>null);if(cancelled())return null;if(render){for(const segment of render.segments)display.push(segment);onPreview?.(render,id);}}
     let entry=countCache.items.get(key)?.value;
     if(entry){await countCache.get(key);}
     else {
-      const chunk=await cache.get(id,c.geometryDecodedBytes+c.scheduleDecodedBytes);
+      const chunk=await loadPromise;
       if(cancelled())return null;
       const local=mergeChunks([chunk]),e=new Engine(meta,local.geometry,local.schedule,{pointIndex:false}),counts=e.counts(filter,true);
       entry={edges:chunk.geometry.edges,counts};
@@ -34,6 +39,6 @@ export class ViewportEngine {
     fields.forEach((f,i)=>result[f][k]=entry.values[i]);
     for(const f of ['routeCounts','edgeRoutes','edgeAgencies'])if(entry[f])result[f][k]=entry[f];k++;
   }
-  return {geometry:{points,edges:refs},...result};
+  return {geometry:{points,edges:refs,ids:[...edges.keys()].sort((a,b)=>a-b),display},...result};
 }
 }

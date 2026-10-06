@@ -1,18 +1,22 @@
 """Precompute approximate terrain horizons; no live elevation API needed."""
-import gzip,json,math,urllib.request,shutil,time
+import gzip,json,math,urllib.request,shutil,time,hashlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import numpy as np
-import rasterio
-from rasterio.merge import merge
 
 
-def build(directory=Path('dist/data')):
+def build(directory=Path('dist/data'), profile_cache=Path('.cache/terrain-v1.json')):
     g=json.load(gzip.open(directory/'geometry.json.gz'))
-    points=np.asarray(g['points']);edges=np.asarray(g['edges'])
-    mids=(points[edges[:,0]]+points[edges[:,1]])/2
-    # Shared cells approximately 220 x 280 m near Prague.
-    keys,inv=np.unique(np.floor(mids/[.002,.004]+.5).astype(int),axis=0,return_inverse=True)
+    # Geographical cells are independent of feed-specific edge and shape IDs.
+    all_keys=geographic_keys(g)
+    profile_cache.parent.mkdir(parents=True,exist_ok=True)
+    saved=json.loads(profile_cache.read_text()) if profile_cache.exists() else {}
+    missing=[k for k in all_keys if ','.join(map(str,k)) not in saved]
+    if not missing:
+        publish(directory,all_keys,saved);print('Terrain computed 0 cached',len(all_keys),flush=True);return
+    import numpy as np
+    import rasterio
+    from rasterio.merge import merge
+    keys=np.asarray(missing,dtype=int).reshape(-1,2)
     sites=keys*[.002,.004]
     south,west=sites.min(axis=0)-.35;north,east=sites.max(axis=0)+.35
     cache=Path('/tmp/sotofoto-dem');cache.mkdir(exist_ok=True);datasets=[]
@@ -58,8 +62,32 @@ def build(directory=Path('dist/data')):
             horizons[begin:begin+len(lat),k]=np.round(np.maximum(0,angles.max(axis=1))*10)
         valid[begin:begin+len(lat)]=ok
         print('Horizons',begin+len(lat),'/',len(sites),flush=True)
-    data={'version':1,'source':'Copernicus DEM GLO-30, resampled to ~90 m','cell':[.002,.004],'radius':20000,'step':5,'keys':keys.tolist(),'horizons':horizons.tolist(),'valid':valid.astype(int).tolist()}
-    with gzip.open(directory/'terrain.json.gz','wt',encoding='utf-8',compresslevel=9) as f:json.dump(data,f,separators=(',',':'))
-    print('Terrain complete',len(sites),int(valid.sum()),flush=True)
+    for key,horizon,ok in zip(keys,horizons,valid):
+        saved[','.join(map(str,key))]=[horizon.tolist(),int(ok)]
+    temporary=profile_cache.with_suffix('.tmp');temporary.write_text(json.dumps(saved,separators=(',',':')));temporary.replace(profile_cache)
+    publish(directory,all_keys,saved)
+    print('Terrain computed',len(sites),'cached',len(all_keys)-len(sites),flush=True)
+
+
+def geographic_keys(g):
+    return sorted({(math.floor((g['points'][a][0]+g['points'][b][0])/2/.002+.5),math.floor((g['points'][a][1]+g['points'][b][1])/2/.004+.5)) for a,b in g['edges']})
+
+
+def publish(directory,keys,saved):
+    chunks={}
+    for key in keys:
+        lat,lon=key[0]*.002,key[1]*.004;tile=f'{math.floor(lat/.05)}:{math.floor(lon/.05)}'
+        chunks.setdefault(tile,[]).append([list(key),*saved[','.join(map(str,key))]])
+    manifest={'version':1,'cell':[.002,.004],'chunks':{}}
+    target=directory/'terrain'
+    if target.exists():shutil.rmtree(target)
+    target.mkdir()
+    for tile,profiles in chunks.items():
+        y,x=map(int,tile.split(':'))
+        raw=json.dumps(profiles,separators=(',',':')).encode()
+        digest=hashlib.sha256(raw).hexdigest()[:16];path=f"terrain/{tile.replace(':','_')}.{digest}.json.gz"
+        (directory/path).write_bytes(gzip.compress(raw,mtime=0))
+        manifest['chunks'][tile]={'bounds':[y*.05,x*.05,(y+1)*.05,(x+1)*.05],'path':path,'bytes':len(raw)}
+    (directory/'terrain-index.json').write_text(json.dumps(manifest,separators=(',',':')))
 
 if __name__=='__main__':build()

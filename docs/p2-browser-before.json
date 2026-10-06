@@ -1,0 +1,25 @@
+{
+  "name": "legacy-mobile",
+  "viewport": [
+    390,
+    844
+  ],
+  "mainThreadCpuThrottle": 4,
+  "events": [
+    {
+      "type": "ready",
+      "time": 3242.60000000149
+    },
+    {
+      "type": "counts",
+      "time": 8881.10000000149
+    }
+  ],
+  "errors": [],
+  "requests": [
+    "http://127.0.0.1:8000/legacy/data/meta.json?v=p12-1",
+    "http://127.0.0.1:8000/legacy/data/geometry.json.gz?v=p12-1",
+    "http://127.0.0.1:8000/legacy/data/schedule.json.gz?v=p12-1",
+    "http://127.0.0.1:8000/legacy/data/terrain.json.gz"
+  ]
+}

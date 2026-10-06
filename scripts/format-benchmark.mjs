@@ -1,0 +1,6 @@
+import {readFileSync,writeFileSync} from 'node:fs';import {gunzipSync,gzipSync} from 'node:zlib';import {performance} from 'node:perf_hooks';import {decodeSchedule} from '../src/chunks.js';
+const root=process.argv[2]||'dist/data',index=JSON.parse(readFileSync(root+'/chunks.json')),sample=Object.values(index.chunks).sort((a,b)=>b.scheduleBytes-a.scheduleBytes)[0];
+const compressed=readFileSync(root+'/'+sample.schedule),raw=gunzipSync(compressed),buffer=raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength),decoded=decodeSchedule(buffer);
+const text=JSON.stringify(decoded,(_,v)=>v instanceof Uint32Array?[...v]:v),json=Buffer.from(text),jsonGzip=gzipSync(json,{level:9});
+const times=fn=>{const results=[];for(let i=0;i<5;i++){const t=performance.now();fn();results.push(performance.now()-t);}return results.sort((a,b)=>a-b)[2];};
+const result={sample:sample.schedule,note:'Same largest chunk; JSON serializes time views to plain numeric arrays; median of five decodes; decompression excluded',binary:{compressed:compressed.length,decoded:raw.length,decodeMs:times(()=>decodeSchedule(buffer))},json:{compressed:jsonGzip.length,decoded:json.length,decodeMs:times(()=>JSON.parse(text))},timeValues:decoded.trips.reduce((n,[,t])=>n+t[5].length,0)};writeFileSync('docs/p2-format-metrics.json',JSON.stringify(result,null,2)+'\n');console.log(result);

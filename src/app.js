@@ -1,3 +1,4 @@
+import {selectChunks,ChunkCache,zipped} from './chunks.js';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=p12-1';
 import {timeFilterKey,roundedNow,filterLightTime} from './photo-time.js?v=photo-sync-1';
@@ -8,7 +9,7 @@ import {createWeatherLayer} from './weather-layer.js?v=overlay-2';
 import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js?v=panel-2';
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let meta,geometry,result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,timer,ready=false;
+let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,timer,ready=false;
 let lastTimeFilter=null;
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};
 let photoMode=false,photoSeconds=43200,solarDay=null,edgeBearings,lightFrame=null;
@@ -16,7 +17,7 @@ let terrain=null,terrainIndex=new Map(),edgeTerrain,weatherData=null,weatherKey=
 const weatherCache=new Map();
 const weatherIcon=name=>`<svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${{eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',cloud:'<path d="M6 18a4 4 0 0 1-1-8 6 6 0 0 1 11-2 5 5 0 0 1 2 10Z"/>',thermo:'<path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><path d="M12 8v10"/>'}[name]}</svg>`;
 const selected={routes:new Set(),agencies:new Set(),modes:new Set(),directions:new Set()};
-const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([50.075,14.44],11);
+const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([50.075,14.44],13);
 L.control.zoom({position:'topright'}).addTo(map);
 const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · GTFS: <a href="https://pid.cz/o-systemu/opendata/">ROPID / PID</a>, upraveno pro Šotofoto'}).addTo(map);
 let tileError=false;tiles.on('tileerror',()=>{if(!tileError){tileError=true;$('map-help').textContent='Mapový podklad se nepodařilo načíst. Trasy a průjezdy zůstávají dostupné.';}});
@@ -51,7 +52,7 @@ const RoutesLayer=L.Layer.extend({
       if(photoMode){
         const sun=sunPosition(instant,(p[0]+q[0])/2,(p[1]+q[1])/2),forward=photographyLight(sun,edgeBearings[i]),backward=photographyLight(sun,(edgeBearings[i]+180)%360);
         forwardColor=forward.color;backwardColor=backward.color;
-        const profile=terrain?.horizons[edgeTerrain?.[i]];
+        const profile=profileAt((p[0]+q[0])/2,(p[1]+q[1])/2);
         if(terrainLight(sun,profile)){forwardColor=backwardColor='#8c959d';forward.color=backward.color='#8c959d';}
         const hasForward=result.forward[i]>0,hasBackward=result.backward[i]>0;
         combinedColor=hasForward&&hasBackward?(forward.score>=backward.score?forward.color:backward.color):hasForward?forward.color:backward.color;
@@ -83,16 +84,17 @@ function updateLightControls(){
 function updateDaylight(){if(!ready)return;const c=map.getCenter();solarDay=daylightTimes(dateKey($('date').value),c.lat,c.lng);updateLightControls();}
 const weatherLayer=createWeatherLayer(map,()=>({instant:pragueInstant(dateKey($('date').value),photoSeconds),dayAt:(lat,lon)=>sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),lat,lon).altitude>0,label:clock(photoSeconds)}),(text,state)=>{$('weather-layer-status').textContent=text;$('weather-layer-status').dataset.coverage=state.coverage;$('weather-layer-status').dataset.loading=state.loading;});
 $('weather-overlay-toggle').onchange=()=>{weatherOverlay=$('weather-overlay-toggle').checked;weatherLayer.setEnabled(photoMode&&weatherOverlay);saveHash();};
-function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value)requestWeather();saveHash();}
+function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value){loadTerrain();requestWeather();}saveHash();}
 function setLightTime(seconds){photoSeconds=Math.max(0,Math.min(86399,seconds));updateLightControls();renderEnvironment();weatherLayer.draw();if(lightFrame!==null)cancelAnimationFrame(lightFrame);lightFrame=requestAnimationFrame(()=>{lightFrame=null;routesLayer.draw();});}
 $('photo-mode').onclick=()=>setPhotoMode(!photoMode);
 $('photo-slider').oninput=()=>setLightTime(Number($('photo-slider').value));
 $('photo-slider').onchange=saveHash;
 $('photo-time').onchange=()=>{if(!$('photo-time').value)return;const [h,m]=$('photo-time').value.split(':').map(Number);setLightTime(h*3600+m*60);saveHash();};
-map.on('moveend zoomend',()=>{if(ready){if(photoMode){updateDaylight();requestWeather();}drawLegend();}});
+map.on('moveend zoomend',()=>{if(ready){recalc();if(photoMode){updateDaylight();loadTerrain();requestWeather();}drawLegend();}});
+function viewport(){const b=map.getBounds().pad(.08);return [b.getSouth(),b.getWest(),b.getNorth(),b.getEast()];}
 function showStatus(text,busy=false,error=false){$('map-status').hidden=!busy&&!error;$('map-status').innerHTML=(busy?'<span class="spinner"></span>':'')+escape(text);$('map-status').classList.toggle('error',error);}
 function filter(){const [start,end]=interval($('from').value||'00:00',$('to').value||'00:00',mapAllDay);return {date:$('date').value,start,end,allDay:mapAllDay,operation:operationValue($('operation').value),...Object.fromEntries(Object.entries(selected).map(([k,v])=>[k,[...v]]))};}
-function recalc(){if(!ready)return;clearTimeout(timer);timer=setTimeout(()=>{const f=filter(),key=timeFilterKey(f);if(photoMode&&lastTimeFilter!==null&&key!==lastTimeFilter)applyFilterLight();lastTimeFilter=key;$('range-label').textContent=f.allDay?'Celý den':`${clock(f.start)}–${clock(f.end)}${f.end>86400?' (do dalšího dne)':''}`;let note=`Platnost ${meta.startDate.slice(6)}. ${meta.startDate.slice(4,6)}. – ${meta.endDate.slice(6)}. ${meta.endDate.slice(4,6)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Bez pravidelné aktualizace.`;if(dateKey(f.date)===meta.startDate)note+=' Na prvním dni chybí případné dojezdy z předchozího dne.';if(dateKey(f.date)===meta.endDate&&f.end>86400)note+=' Část po půlnoci je mimo platnost: nové služby dalšího dne nejsou dostupné.';$('data-note').textContent=note;showStatus('Počítám intenzitu…',true);worker.postMessage({type:'counts',id:++countsRequest,filter:f});requestPoint();},120);}
+function recalc(){if(!ready)return;clearTimeout(timer);timer=setTimeout(()=>{const f=filter(),key=timeFilterKey(f);if(photoMode&&lastTimeFilter!==null&&key!==lastTimeFilter)applyFilterLight();lastTimeFilter=key;$('range-label').textContent=f.allDay?'Celý den':`${clock(f.start)}–${clock(f.end)}${f.end>86400?' (do dalšího dne)':''}`;let note=`Platnost ${meta.startDate.slice(6)}. ${meta.startDate.slice(4,6)}. – ${meta.endDate.slice(6)}. ${meta.endDate.slice(4,6)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Bez pravidelné aktualizace.`;if(dateKey(f.date)===meta.startDate)note+=' Na prvním dni chybí případné dojezdy z předchozího dne.';if(dateKey(f.date)===meta.endDate&&f.end>86400)note+=' Část po půlnoci je mimo platnost: nové služby dalšího dne nejsou dostupné.';$('data-note').textContent=note;showStatus('Počítám intenzitu…',true);worker.postMessage({type:'counts',id:++countsRequest,filter:f,bounds:viewport()});requestPoint();},120);}
 let legendResult=null,legendRouteIds=[];
 function drawLegend(){
   $('legend-scale').innerHTML=FREQUENCY_LABELS.map((label,category)=>`<span class="legend-step"><span class="legend-stroke" style="height:${width(category)}px;${!photoMode&&$('color').value==='intensity'?`background:${frequencyColor(category)}`:''}"></span>${label}</span>`).join('');
@@ -130,8 +132,8 @@ function renderPicker(kind,list){const key=kind==='route'?'routes':'agencies',qu
 }
 function renderRoutes(){renderPicker('route',visibleRoutes());}
 function renderAgencies(){renderPicker('agency',visibleAgencies());}
-function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
-function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();requestWeather();renderEnvironment();saveHash();}
+function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('export').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
+function choosePoint(lat,lon){point=[lat,lon];$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();requestWeather();renderEnvironment();saveHash();}
 function snapPoint(lat,lon){
  const f=filter();pointMode=f.start===0&&f.end===86400?'day':'from';pointStart=f.start;
  const candidates=(routesLayer.visibleEdges||[]).map(edge=>{const [a,b]=geometry.edges[edge];return project([lat,lon],geometry.points[a],geometry.points[b]);}).filter(p=>p.distance<=150).sort((a,b)=>a.distance-b.distance),nearest=candidates[0];
@@ -202,22 +204,35 @@ function renderFilters(){renderOperation();renderChips('modes',Object.entries(MO
 function saveHash(){if(!ready)return;const f=filter(),c=map.getCenter();const state={...f,routes:f.routes.map(i=>meta.routes[i][0]),agencies:f.agencies.map(i=>meta.agencies[i][0]),from:$('from').value,to:$('to').value,center:[+c.lat.toFixed(5),+c.lng.toFixed(5)],zoom:map.getZoom(),point,pointMode,pointStart,mapAllDay,thickness:Number($('thickness').value),photoMode,photoSeconds,weatherOverlay,color:$('color').value};history.replaceState(null,'','#'+encodeURIComponent(JSON.stringify(state)));}
 function loadHash(){try{const s=JSON.parse(decodeURIComponent(location.hash.slice(1)));$('operation').value=operationValue(s.operation);mapAllDay=s.mapAllDay??(s.start===0&&s.end===86400);if(s.date>=$('date').min&&s.date<=$('date').max)$('date').value=s.date;if(/^\d\d:\d\d$/.test(s.from))$('from').value=s.from;if(/^\d\d:\d\d$/.test(s.to))$('to').value=s.to;for(const id of s.routes||[]){const i=meta.routes.findIndex(r=>r[0]===id);if(i>=0)selected.routes.add(i);}for(const id of s.agencies||[]){const i=meta.agencies.findIndex(a=>a[0]===id);if(i>=0)selected.agencies.add(i);}for(const m of s.modes||[])if(m in MODES)selected.modes.add(m);for(const d of s.directions||[])if(DIRECTIONS.includes(d))selected.directions.add(d);if(['day','from','now'].includes(s.pointMode)&&Number.isFinite(s.pointStart))restoredPointState={mode:s.pointMode,start:s.pointStart};if(Number.isFinite(s.thickness))$('thickness').value=Math.max(.4,Math.min(2,s.thickness));if(Number.isFinite(s.photoSeconds))photoSeconds=Math.max(0,Math.min(86399,s.photoSeconds));photoMode=s.photoMode===true;weatherOverlay=s.weatherOverlay!==false;if(['mode','route','agency','intensity','single'].includes(s.color))$('color').value=s.color;if(s.center?.every(Number.isFinite))map.setView(s.center,Math.max(5,Math.min(19,s.zoom||11)));return s.point?.length===2&&s.point.every(Number.isFinite)?s.point:null;}catch{return null;}}
 map.on('moveend',saveHash);
-function readyData(data){meta=data.meta;geometry=data.geometry;edgeBearings=Float32Array.from(geometry.edges,([a,b])=>bearing(geometry.points[a],geometry.points[b]));const iso=d=>`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;$('date').min=iso(meta.startDate);$('date').max=iso(meta.endDate);const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Prague',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());$('date').value=today>=$('date').min&&today<=$('date').max?today:$('date').min;$('date').disabled=false;$('feed-label').textContent=`GTFS ${iso(meta.startDate)} – ${iso(meta.endDate)}`;$('data-note').textContent=`Platnost ${iso(meta.startDate)} až ${iso(meta.endDate)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Připraveno ${new Date(meta.builtAt).toLocaleDateString('cs')}. Bez pravidelné aktualizace.`;const restored=loadHash();setMapTime(mapAllDay);$('custom-color').hidden=$('color').value!=='single';renderFilters();ready=true;lastTimeFilter=timeFilterKey(filter());$('photo-mode').disabled=false;loadTerrain();setPhotoMode(photoMode,false);recalc();if(restored)pendingPoint=restored;}
+function readyData(data){meta=data.meta;const iso=d=>`${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;$('date').min=iso(meta.startDate);$('date').max=iso(meta.endDate);const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Prague',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());$('date').value=today>=$('date').min&&today<=$('date').max?today:$('date').min;$('date').disabled=false;$('feed-label').textContent=`GTFS ${iso(meta.startDate)} – ${iso(meta.endDate)}`;$('data-note').textContent=`Platnost ${iso(meta.startDate)} až ${iso(meta.endDate)}. ${meta.stats.trips.toLocaleString('cs')} spojů. Připraveno ${new Date(meta.builtAt).toLocaleDateString('cs')}. Bez pravidelné aktualizace.`;const restored=loadHash();setMapTime(mapAllDay);$('custom-color').hidden=$('color').value!=='single';renderFilters();ready=true;lastTimeFilter=timeFilterKey(filter());$('photo-mode').disabled=false;setPhotoMode(photoMode,false);recalc();if(restored)pendingPoint=restored;}
 try{worker=new Worker(new URL('./worker.js?v=p12-1',import.meta.url),{type:'module'});worker.onmessage=({data})=>{
   if(data.type==='ready')readyData(data);
-  else if(data.type==='counts'&&data.id===countsRequest){result=data;routesLayer.update();if(pendingPoint){const p=pendingPoint;pendingPoint=null;snapPoint(...p);if(restoredPointState){pointMode=restoredPointState.mode;pointStart=restoredPointState.start;restoredPointState=null;requestPoint();}}drawLegend();drawAgencyLegend();showStatus(`${data.journeys.toLocaleString('cs')} spojů · ${routesLayer.visibleEdges.length.toLocaleString('cs')} úseků`);saveHash();}
-  else if(data.type==='point'&&data.id===pointRequest){pointRows=data.passages;snapHighlight?.remove();snapHighlight=L.polyline((data.edges||[]).map(e=>geometry.edges[e].map(i=>geometry.points[i])),{color:'#163138',weight:6,opacity:.3,interactive:false}).addTo(map);renderPoint();}
-  else if(data.type==='error')showStatus(data.message,false,true);
+  else if(data.type==='counts'&&data.id===countsRequest){geometry=data.geometry;edgeBearings=Float32Array.from(geometry.edges,([a,b])=>bearing(geometry.points[a],geometry.points[b]));result=data;routesLayer.update();if(pendingPoint){const p=pendingPoint;pendingPoint=null;snapPoint(...p);if(restoredPointState){pointMode=restoredPointState.mode;pointStart=restoredPointState.start;restoredPointState=null;requestPoint();}}drawLegend();drawAgencyLegend();showStatus(routesLayer.visibleEdges.length?'':'V této oblasti a výběru nejsou žádné průjezdy.',false,!routesLayer.visibleEdges.length);saveHash();}
+  else if(data.type==='point'&&data.id===pointRequest){pointRows=data.passages;$('export').disabled=false;snapHighlight?.remove();snapHighlight=L.polyline(data.lines||[],{color:'#163138',weight:6,opacity:.3,interactive:false}).addTo(map);renderPoint();}
+  else if(data.type==='error'&&((data.request==='counts'&&data.id===countsRequest)||(data.request==='point'&&data.id===pointRequest)||!data.id)){showStatus('Data se nepodařilo načíst: '+data.message,false,true);if(data.request==='point'){$('point-now-status').textContent='Průjezdy se nepodařilo načíst.';$('passages').classList.remove('updating');$('passages').innerHTML='<p class="hint">Průjezdy se nepodařilo načíst. Zkus místo vybrat znovu.</p>';}}
 };worker.onerror=e=>showStatus(`Chyba aplikace: ${e.message}`,false,true);worker.postMessage({type:'init'});}catch(e){showStatus(e.message,false,true);}
 
+let terrainManifest,terrainCache,terrainGeneration=0,terrainPending;
 function profileAt(lat,lon){
-  if(!terrain)return null;
-  const a=Math.round(lat/terrain.cell[0]),b=Math.round(lon/terrain.cell[1]),i=terrainIndex.get(`${a},${b}`);
-  return i!==undefined&&terrain.valid[i]?terrain.horizons[i]:null;
+  const p=terrainIndex.get(`${Math.round(lat/.002)},${Math.round(lon/.004)}`);
+  return p?.[1]?p[0]:null;
 }
 async function loadTerrain(){
-  try{const r=await fetch('data/terrain.json.gz');if(!r.ok)throw Error();terrain=JSON.parse(await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text());terrain.keys.forEach((k,i)=>terrainIndex.set(k.join(','),i));edgeTerrain=Int32Array.from(geometry.edges,([a,b])=>{const p=geometry.points[a],q=geometry.points[b],i=terrainIndex.get(`${Math.round((p[0]+q[0])/2/terrain.cell[0])},${Math.round((p[1]+q[1])/2/terrain.cell[1])}`);return i!==undefined&&terrain.valid[i]?i:-1;});routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();}
-  catch{$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}
+  if(!photoMode&&!point)return;
+  const token=++terrainGeneration;
+  try{
+    if(!terrainPending)terrainPending=fetch('data/terrain-index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json();}).catch(e=>{terrainPending=null;throw e;});
+    terrainManifest=await terrainPending;
+    if(!terrainCache)terrainCache=new ChunkCache(id=>zipped('data/'+terrainManifest.chunks[id].path),{maxBytes:4*1024*1024,maxEntries:16});
+    const b=photoMode?viewport():[point[0],point[1],point[0],point[1]];
+    const bounds=[b[0]-.003,b[1]-.005,b[2]+.003,b[3]+.005];
+    const ids=new Set(selectChunks(terrainManifest,bounds));
+    if(point)for(const id of selectChunks(terrainManifest,[point[0]-.003,point[1]-.005,point[0]+.003,point[1]+.005]))ids.add(id);
+    const next=new Map();
+    for(const id of ids){if(token!==terrainGeneration)return;for(const [key,horizon,valid] of await terrainCache.get(id,terrainManifest.chunks[id].bytes))next.set(key.join(','),[horizon,valid]);}
+    if(token!==terrainGeneration)return;
+    terrainIndex=next;terrain=true;routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();
+  }catch{if(token===terrainGeneration){terrainIndex.clear();terrain=null;$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}}
 }
 function requestWeather(){
   clearTimeout(weatherTimer);weatherTimer=setTimeout(async()=>{

@@ -246,6 +246,8 @@ def main():
         source=Path('/tmp/sotofoto-PID_GTFS.zip')
         urllib.request.urlretrieve(URL,source)
     build(source,a.output/'data')
+    from chunk_data import write_chunks
+    write_chunks(a.output/'data')
     (a.output/'.nojekyll').touch()
 
 

@@ -13,7 +13,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 - Tloušťka tras se přizpůsobuje přiblížení, aby při oddálení nezakrývaly mapový podklad.
 - Barvy podle druhu dopravy, linky, dopravce, intenzity nebo jedna vlastní barva; průhlednost. Tlačítko ⓘ vedle režimu focení otevírá legendu četnosti a aktuálních barev; v režimu focení vysvětluje nasvícení. Zavření tlačítkem, křížkem, klepnutím mimo nebo Escape.
 - CSV export průjezdů a sdílení odkazu: URL uchovává datum, čas, filtry, pohled mapy, vybrané místo, režim focení, jeho nastavený čas a režim barev.
-- Responzivní ovládání pro mobil; výpočty ve Web Workeru.
+- Responzivní ovládání pro mobil; data podle výřezu mapy, omezené cache a výpočty ve Web Workeru. Při startu se nestahuje celý PID.
 
 ## Data a pravidla výpočtu
 
@@ -33,7 +33,7 @@ Výpočet slunce používá astronomickou aproximaci a časovou zónu `Europe/Pr
 
 Rozsah časové osy a značky východu/západu se počítají podle středu aktuálního výřezu mapy. Astronomický východ/západ používá výšku středu slunce −0,833° (běžná aproximace refrakce a horního okraje slunečního disku), takže šedá pro geometrický střed může přetrvat několik minut po značce východu. Jednotlivé úseky se barví podle své skutečné polohy. Posuvník jen překresluje nasvícení, nepřepočítává provozní filtr, intenzitu ani seznam průjezdů. Ruční zadání času mimo výchozí rozsah rozšíří osu, aby byl zvolený čas dosažitelný. Kliknutý seznam a jeho doporučení stále hodnotí **skutečný plánovaný čas každého spoje**, nikoliv okamžik z posuvníku.
 
-Jde o geometrické doporučení pro přímé slunce. Nezohledňuje počasí, stíny budov, terén, vegetaci, tunely ani fyzickou dostupnost místa. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
+Jde o geometrické doporučení pro přímé slunce. Počasí ukazuje samostatná předpovědní vrstva; dostupný terénní obzor může označit stín. Přesné stíny budov, vegetaci, tunely ani fyzickou dostupnost místa neověřuje. Ráno 5–10, poledne 10–14, odpoledne 14–20; noční spoje zůstávají v seznamu a hodinovém grafu.
 
 ## Spuštění a ruční aktualizace
 
@@ -42,12 +42,13 @@ Stačí Python 3.12+ a Node 22+ pro testy, žádné balíčky se neinstalují.
 ```bash
 npm test
 python scripts/build_data.py
+# Volitelný terén: pip install numpy rasterio; python scripts/build_terrain.py
 python -m http.server 8000 --directory dist
 ```
 
-Pro vlastní stažený balíček: `python scripts/build_data.py --input /cesta/PID_GTFS.zip`. Výstup je v `dist/`, surový ZIP ani generovaná data se necommitují. Komprimovaný dataset je zpracováván přímo v prohlížeči pomocí `DecompressionStream`; vyžaduje moderní Chrome, Firefox či Safari. První načtení přenáší přibližně 22 MB dat (velikost závisí na feedu).
+Pro vlastní stažený balíček: `python scripts/build_data.py --input /cesta/PID_GTFS.zip`. Výstup je v `dist/`, surový ZIP ani generovaná data se necommitují. Komprimovaný dataset je zpracováván přímo v prohlížeči pomocí `DecompressionStream`; vyžaduje moderní Chrome, Firefox či Safari. Start načítá pouze metadata a prostorový index (na feedu 6. 10. 2026 dohromady přibližně 0,71 MB), pak balíčky aktuální oblasti. Geometrie je JSON, zastávkové časy kompaktní uint32 buffer. Výchozí mapa má zoom 13; sdílené odkazy zachovávají svůj zoom. Podrobnosti: [technická dokumentace](docs/PROJEKT.md), [měření P2](docs/P2-MERENI.md).
 
-Workflow `.github/workflows/pages.yml` spouští testy, stáhne aktuální GTFS, zpracuje jej a nasadí na GitHub Pages při commitu na `main` nebo ručně pomocí **Actions → Build and publish Šotofoto → Run workflow**. Nemá časový plán. V nastavení repozitáře musí být **Pages → Source → GitHub Actions**. Pokud automatické zapnutí Pages nemá oprávnění, je nutné tento přepínač nastavit jednou ručně.
+Workflow `.github/workflows/pages.yml` spouští unit i produkční regresní testy, stáhne aktuální GTFS, zpracuje jej a nasadí na GitHub Pages při commitu na `main` nebo ručně pomocí **Actions → Build and publish Šotofoto → Run workflow**. Nemá časový plán. V nastavení repozitáře musí být **Pages → Source → GitHub Actions**. Pokud automatické zapnutí Pages nemá oprávnění, je nutné tento přepínač nastavit jednou ručně.
 
 Leaflet 1.9.4 je přibalen lokálně (BSD-2-Clause, viz `public/vendor/LICENSE`). Mapové dlaždice poskytuje OpenStreetMap, fonty Google Fonts; bez nich aplikace použije systémové písmo. Výpočty a filtry nepotřebují backend.
 
@@ -57,7 +58,7 @@ V režimu focení se načítá počasí pro vybraný bod, jinak pro střed mapy.
 
 `scripts/build_terrain.py` stáhne veřejné dlaždice Copernicus DEM GLO-30 z AWS a předpočítá obzory poblíž středů úseků. Výpočet používá raster zjednodušený na 3 obloukové sekundy (přibližně 90 m), sdílené buňky ~220 × 280 m, azimuty po 5° a vzorky do vzdálenosti 20 km. Výška cíle je 1,5 m nad modelem, zohledňuje se zakřivení Země. Nejde o přesný model stínů domů, stromů, zářezů nebo mostů; původní Copernicus je model povrchu včetně vegetace a staveb. Úseky se sluncem zakrytým obzorem jsou v režimu focení šedé, i když už nastal astronomický východ. Průjezdy a doporučení respektují dostupný terénní obzor; chybějící profil se nepovažuje za prokázaný stín. Detail výslovně ukazuje neověřený terén. Značky východu/západu na časové ose zůstávají astronomické.
 
-Terén je statický soubor `terrain.json.gz`; posuvník nepotřebuje výškové API. GitHub Actions instaluje `numpy` a `rasterio` a terén sestaví po GTFS. Výpadek počasí nebo načtení terénu neblokuje mapu. Zdroj výšek: Copernicus DEM, © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018; data upravena pro Šotofoto. Zdroj počasí: Open-Meteo / ČHMÚ, CC BY 4.0.
+Terén tvoří geografické balíčky s manifestem `terrain-index.json`; běžná mapa je nestahuje, focení načítá výřez a detail okolí bodu. Posuvník nepotřebuje výškové API ani další síťové požadavky. GitHub Actions instaluje `numpy` a `rasterio` a po GTFS sestaví pouze chybějící geografické profily; již spočítané výsledky zachovává Actions cache. Výpadek počasí nebo načtení terénu neblokuje mapu. Zdroj výšek: Copernicus DEM, © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018; data upravena pro Šotofoto. Zdroj počasí: Open-Meteo / ČHMÚ, CC BY 4.0.
 
 ### Plošná vrstva počasí
 

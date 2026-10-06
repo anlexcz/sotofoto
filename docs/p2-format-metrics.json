@@ -1,0 +1,15 @@
+{
+  "sample": "chunks/fine-2003_577.64221737b91c2928.schedule.bin.gz",
+  "note": "Same largest chunk; JSON serializes time views to plain numeric arrays; median of five decodes; decompression excluded",
+  "binary": {
+    "compressed": 438942,
+    "decoded": 2441624,
+    "decodeMs": 18.944581000000028
+  },
+  "json": {
+    "compressed": 517869,
+    "decoded": 2802714,
+    "decodeMs": 16.316840999999954
+  },
+  "timeValues": 274238
+}

@@ -1,0 +1,34 @@
+{
+  "mode": "legacy",
+  "environment": "Node v24.19.0; local files, no network or browser timings",
+  "files": {},
+  "bounds": [
+    50.06,
+    14.39,
+    50.1,
+    14.49
+  ],
+  "engineMs": 599.4665070000001,
+  "countsMs": 3043.1435039999997,
+  "totalMs": 5623.1499300000005,
+  "payloadBytes": 22633112,
+  "decodedBytes": 94392867,
+  "parseMs": 1487.972689,
+  "decompressMs": 476.36134600000014,
+  "structures": {
+    "points": 160703,
+    "edges": 171527,
+    "patterns": 7956,
+    "trips": 87279,
+    "activeEdges": 163127
+  },
+  "memory": {
+    "rss": 1628454912,
+    "heapTotal": 1500966912,
+    "heapUsed": 1411602656,
+    "external": 44971821,
+    "arrayBuffers": 41318065
+  },
+  "maxRssKiB": 1590288,
+  "geometryCloneMs": 182.2719589999997
+}

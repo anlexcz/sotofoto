@@ -1,0 +1,66 @@
+name: Build geographical terrain dataset
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: New immutable release tag (terrain-v1-YYYYMMDD-NN)
+        required: true
+        type: string
+      reserve_cells:
+        description: Geographic cell reserve around route cells (0..10)
+        default: '2'
+        type: string
+  push:
+    branches: [main]
+    paths: [config/terrain-build.json]
+permissions:
+  contents: read
+concurrency:
+  group: geographical-terrain
+  cancel-in-progress: false
+jobs:
+  terrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      RESERVE_CELLS: ${{ inputs.reserve_cells }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve and validate build parameters
+        run: |
+          python - <<'PY'
+          import json,os,sys
+          sys.path.insert(0,'scripts')
+          from terrain_dataset import valid_tag,expand_keys
+          cfg=json.load(open('config/terrain-build.json'))
+          tag=valid_tag(os.environ['RELEASE_TAG'] or cfg['tag'])
+          reserve=int(os.environ['RESERVE_CELLS'] or cfg['reserveCells'])
+          expand_keys([],reserve)
+          with open(os.environ['GITHUB_ENV'],'a') as out:
+              out.write(f'RELEASE_TAG={tag}\nRESERVE_CELLS={reserve}\n')
+          PY
+      - name: Refuse replacement of an existing release
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release already exists. Use a new tag; existing terrain is never overwritten."
+            exit 1
+          fi
+      - run: npm test
+      - run: pip install numpy==2.3.5 rasterio==1.5.2
+      - run: python scripts/build_data.py
+      - run: python scripts/terrain_dataset.py create --tag "$RELEASE_TAG" --reserve-cells "$RESERVE_CELLS"
+      - name: Publish verified dataset as a release
+        run: |
+          gh release create "$RELEASE_TAG" terrain-release/terrain.zip terrain-release/dataset.json terrain-release/terrain.sha256 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Šotofoto terrain $RELEASE_TAG" --notes "Versioned geographical Copernicus DEM horizon dataset. Parameters, DEM checksums, coverage, attribution and build measurements are included in dataset.json. Existing versions are retained for rollback." --latest=false
+          cat terrain-release/terrain.sha256 >> "$GITHUB_STEP_SUMMARY"
+          cat terrain-release/dataset.json >> "$GITHUB_STEP_SUMMARY"

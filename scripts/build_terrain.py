@@ -4,10 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
-def build(directory=Path('dist/data'), profile_cache=Path('.cache/terrain-v1.json')):
+def build(directory=Path('dist/data'), profile_cache=Path('.cache/terrain-v1.json'), keys=None, provenance=None):
     g=json.load(gzip.open(directory/'geometry.json.gz'))
     # Geographical cells are independent of feed-specific edge and shape IDs.
-    all_keys=geographic_keys(g)
+    all_keys=geographic_keys(g) if keys is None else sorted(set(keys))
     profile_cache.parent.mkdir(parents=True,exist_ok=True)
     saved=json.loads(profile_cache.read_text()) if profile_cache.exists() else {}
     missing=[k for k in all_keys if ','.join(map(str,k)) not in saved]
@@ -39,6 +39,8 @@ def build(directory=Path('dist/data'), profile_cache=Path('.cache/terrain-v1.jso
         return path
     with ThreadPoolExecutor(max_workers=4) as pool:
         paths=list(pool.map(download,tiles))
+    if provenance is not None:
+        provenance['demTiles']=[{'name':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(paths)]
     datasets=[rasterio.open(path) for path in paths]
     dem,transform=merge(datasets,bounds=(west,south,east,north),res=1/1200,nodata=-9999)
     dem=dem[0];[d.close() for d in datasets]

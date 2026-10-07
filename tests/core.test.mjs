@@ -59,7 +59,7 @@ test('Photography spectrum keeps lateral light orange and turns red just behind 
   const sun={altitude:20,azimuth:0};
   assert.equal(photographyLight(sun,0).color,'#23a455');
   assert.equal(photographyLight(sun,90).level,'okay');
-  assert.equal(photographyLight(sun,98).color,'#db3d31');
+  assert.equal(photographyLight(sun,105).color,'#db3d31');
   assert.equal(photographyLight(sun,180).level,'bad');
   assert.equal(photographyLight({altitude:-1,azimuth:0},0).color,'#8c959d');
   assert.equal(photographyLight(sun,350).color,photographyLight(sun,10).color);

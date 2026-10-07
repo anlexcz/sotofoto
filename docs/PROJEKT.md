@@ -215,3 +215,15 @@ Pro první experiment 6. → 7. října je dostupný starý kompletní compiled 
 ## Blok 3E: závěrečná kontrola 7. 10. 2026
 
 Technické kontroly, řízený přechod dvou ověřených původních archivů a živé UI jsou popsány v [reportu](BLOK3-ACCEPTANCE.md). Běžný raw import nyní stejně jako compiled bootstrap přebírá pouze aktivní předchozí tripy s arrival/departure >=24:00. Raw i compiled cesta mají integrační porovnání skutečných průjezdů přes parser a Engine. První skutečný časovač a přechod na nově publikovaný feed 8. října nelze 7. října označit za pozorované. Fyzická mobilní kontrola zůstává samostatná; blok 3 není definitivně uzavřen.
+
+## Blok A – nasvícení
+
+Škála v `photographyLight` používá absolutní úhel 0–180° a RGB interpolaci přes body 0 / 30 / 50 / 75 / 90 / 105 / 120 / 180°. Plateau 30–50° a 120–180°. Skóre směru je monotónní `1−úhel/180`, včetně zadních směrů; neklasifikuje levou/pravou stranu. Původní pravidla noci, terénu a nehodnoceného metra zůstávají.
+
+Canvas hodnotí pouze viditelné hrany jednou na kreslení, využívá současnou cache Slunce. Horší hrany kreslí první; shoda používá stabilní index. U ručně rozdělených směrů se lepší směr kreslí poslední. `surfaceForward` a `surfaceBackward` jsou již omezené aktivními provozními filtry. Předběžná geometrie nemá šipky ani hodnocení světla.
+
+`PHOTO_ARROWS` v `photo-light.js`: zoom 15, prostorová buňka 110 px, velikost 7 px, nejvýše 120 šipek. V každé obsazené buňce má přednost lépe nasvícená hrana. Jeden chevron u středu dostatečně dlouhého segmentu, bílý obrys pro čitelnost; žádné další Leaflet objekty ani síťové požadavky.
+
+`goodPassageLight` používá hodnocení každého průjezdu z `sunFor(row)` (Praha, `row.time`, včetně následujícího dne). Přesných 90° neprojde. Přepnutí pouze obnoví `listRows`, počet a dávkovaný DOM; nevolá worker ani výpočet jízdního řádu. CSV exportuje celé `listRows`, ne skryté výsledky mimo filtr ani jen aktuální dávku. Denní doporučení/statistiky zůstávají nezávislé a zachovávají dosavadní definici vhodného světla; tento přepínač mění pouze seznam a CSV. Chybějící terén stále výslovně neověřený, počasí není součástí filtru.
+
+Lokální automatické ověření: 105/105 testů `npm test`, včetně barevných bodů, spojitosti, striktní hranice 90°, vlastního civilního času, nezávislosti slideru, aktivních povrchových směrů, shody a zoomového prahu. Stav vizuální kontroly a nasazení se doplňuje po skutečném ověření.

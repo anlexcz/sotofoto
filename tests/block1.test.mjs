@@ -8,7 +8,7 @@ import {Engine} from '../src/engine.js';
 const noCall=()=>{throw Error('Metro must not evaluate sunlight or terrain');};
 test('Metro bypasses sun and terrain calculations with an explicit unrated result',()=>{
  assert.deepEqual(passageLight(1,noCall,noCall,0),{sun:null,light:METRO_LIGHT});
- assert.deepEqual(edgeLight(0,0,noCall,noCall,0),{forward:METRO_LIGHT.color,backward:METRO_LIGHT.color,combined:METRO_LIGHT.color});
+ assert.deepEqual(edgeLight(0,0,noCall,noCall,0),{forward:METRO_LIGHT.color,backward:METRO_LIGHT.color,combined:METRO_LIGHT.color,forwardScore:0,backwardScore:0});
 });
 test('Mixed edge uses only surface directions, including metro-only reverse direction',()=>{
  const sun=()=>({azimuth:0,altitude:40}),profile=()=>null;

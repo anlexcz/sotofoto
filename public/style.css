@@ -44,3 +44,5 @@
 .share-controls{margin-top:18px}.share-controls button{min-height:44px}.share-controls input{width:100%;min-height:44px}
 
 .intensity-control{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-weight:600}.intensity-control input{width:22px;height:22px;accent-color:#16877d}
+
+.passage-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.passage-total{display:flex;align-items:center;gap:4px;min-width:0}.passage-total h3{overflow-wrap:anywhere}#good-light{font-size:11px;min-height:44px;flex-shrink:0;border-radius:20px}#good-light[aria-pressed=true]{background:#e4f2d9;color:#245c29;border-color:#4b903b}#export{min-height:44px;white-space:nowrap}

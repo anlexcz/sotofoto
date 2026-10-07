@@ -25,5 +25,5 @@ export function mapEdgeLight(g,result,i,instant,getSun,getProfile){
    forward=worse(forward,fl);backward=worse(backward,bl);
    combined=worse(combined,f&&b?(fl.score>=bl.score?fl:bl):f?fl:bl);
  }
- return {forward:forward.color,backward:backward.color,combined:combined.color};
+ return {forward:forward.color,backward:backward.color,combined:combined.color,forwardScore:forward.score,backwardScore:backward.score};
 }

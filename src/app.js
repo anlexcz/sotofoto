@@ -1,7 +1,7 @@
 import {geometryLevel} from './render-view.js?v=preview-2';
 import {mapEdgeLight,MapLightCache} from './map-light.js?v=block2-2';
 import {passageCsv} from './passage-export.js';
-import {passageLight} from './photo-light.js';
+import {passageLight,goodPassageLight,preferredDirection,arrowDirection,PHOTO_ARROWS} from './photo-light.js';
 import {encodeLink,decodeLink,mapyLink} from './share.js';
 import {TerrainStore,terrainStatus} from './terrain-store.js?v=terrain-3c';
 import {operationLabel} from './operation-types.js';
@@ -19,6 +19,7 @@ let lastTimeFilter=null,intensities=false,snapRequest=0;
 let confirmedCoverage=null,countsTarget=null;
 const lightCache=new MapLightCache();
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};
+let goodLightOnly=false;
 let photoMode=false,photoSeconds=43200,solarDay=null,lightFrame=null;
 let weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
 const weatherCache=new Map();
@@ -55,22 +56,46 @@ const RoutesLayer=L.Layer.extend({
     c.style.display='block';L.DomUtil.setPosition(c,m.containerPointToLayerPoint([0,0]));c.width=size.x*ratio;c.height=size.y*ratio;c.style.width=`${size.x}px`;c.style.height=`${size.y}px`;
     const ctx=c.getContext('2d');ctx.scale(ratio,ratio);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=+$('opacity').value;this.labels=[];
     const bounds=m.getBounds().pad(.08),split=$('split').checked;
-    const projected=[];
+    const projected=[],arrowCells=new Set(),arrowCandidates=[];
     const instant=photoMode?pragueInstant(dateKey($('date').value),photoSeconds):null;
     let sliceStart=performance.now(),visited=0;
+    const lights=new Map(),ordered=[];
     for(const i of this.visibleEdges||[]){
+      const [a,b]=geometry.edges[i],p=geometry.points[a],q=geometry.points[b];
+      if(Math.max(p[0],q[0])<bounds.getSouth()||Math.min(p[0],q[0])>bounds.getNorth()||Math.max(p[1],q[1])<bounds.getWest()||Math.min(p[1],q[1])>bounds.getEast())continue;
+      ordered.push(i);if(photoMode)lights.set(i,mapEdgeLight(geometry,result,i,instant,(...args)=>lightCache.sun(...args),profileAt));
+      if(++visited%128===0&&performance.now()-sliceStart>=12){yield;sliceStart=performance.now();}
+    }
+    // Stable source order breaks ties; better light paints last even on distinct overlapping edges.
+    if(photoMode)ordered.sort((a,b)=>{
+      const score=i=>{const l=lights.get(i),d=preferredDirection(result.surfaceForward[i],result.surfaceBackward[i],l.forwardScore,l.backwardScore);return d==='forward'?l.forwardScore:d==='backward'?l.backwardScore:-1;};
+      return (score(a)-score(b))||a-b;
+    });
+    for(const i of ordered){
       if(++visited%128===0&&performance.now()-sliceStart>=12){yield;sliceStart=performance.now();}
       const [a,b]=geometry.edges[i],p=geometry.points[a],q=geometry.points[b];
       if(Math.max(p[0],q[0])<bounds.getSouth()||Math.min(p[0],q[0])>bounds.getNorth()||Math.max(p[1],q[1])<bounds.getWest()||Math.min(p[1],q[1])>bounds.getEast())continue;
       const u=projected[a]??(projected[a]=m.latLngToContainerPoint(p)),v=projected[b]??(projected[b]=m.latLngToContainerPoint(q));
       ctx.globalAlpha=+$('opacity').value*(highlightAgency!==null&&!(result.edgeAgencies?.[i]||[]).includes(highlightAgency)?.16:1);const normalColor=photoMode?null:edgeColor(i);
-      let forwardColor=normalColor,backwardColor=normalColor,combinedColor=normalColor;
+      let forwardColor=normalColor,backwardColor=normalColor,combinedColor=normalColor,light;
       if(photoMode){
-        const light=mapEdgeLight(geometry,result,i,instant,(...args)=>lightCache.sun(...args),profileAt);
+        light=lights.get(i);
         forwardColor=light.forward;backwardColor=light.backward;combinedColor=light.combined;
       }
       const line=(count,category,offset,color)=>{if(!count)return;ctx.strokeStyle=color;ctx.lineWidth=width(category);const dx=v.x-u.x,dy=v.y-u.y,len=Math.hypot(dx,dy)||1;ctx.beginPath();ctx.moveTo(u.x-dy/len*offset,u.y+dx/len*offset);ctx.lineTo(v.x-dy/len*offset,v.y+dx/len*offset);ctx.stroke();};
-      if(split){const f=result.forward[i],b=result.backward[i],fc=result.forwardCategories[i],bc=result.backwardCategories[i],offset=(width(fc)+width(bc))/4+.6;line(f,fc,offset,photoMode?forwardColor:edgeColor(i,fc));line(b,bc,-offset,photoMode?backwardColor:edgeColor(i,bc));}else line(result.counts[i],result.categories[i],0,combinedColor);
+      if(split){const f=result.forward[i],b=result.backward[i],fc=result.forwardCategories[i],bc=result.backwardCategories[i],offset=(width(fc)+width(bc))/4+.6;const front=()=>line(f,fc,offset,photoMode?forwardColor:edgeColor(i,fc)),back=()=>line(b,bc,-offset,photoMode?backwardColor:edgeColor(i,bc));if(photoMode&&preferredDirection(result.surfaceForward[i],result.surfaceBackward[i],light.forwardScore,light.backwardScore)==='forward'){back();front();}else{front();back();}}else line(result.counts[i],result.categories[i],0,combinedColor);
+      const direction=arrowDirection(photoMode,m.getZoom(),result.preliminary,result.surfaceForward?.[i]||0,result.surfaceBackward?.[i]||0,light);
+      if(direction)arrowCandidates.push({u,v,direction,light});
+    }
+    // Reserve sparse cells from best to worst so an overlapping reverse arrow cannot win.
+    for(const {u,v,direction,light} of arrowCandidates.reverse()){
+      if(arrowCells.size>=PHOTO_ARROWS.maxCount)break;
+      const x=(u.x+v.x)/2,y=(u.y+v.y)/2,key=Math.floor(x/PHOTO_ARROWS.spacing)+','+Math.floor(y/PHOTO_ARROWS.spacing),dx=v.x-u.x,dy=v.y-u.y,len=Math.hypot(dx,dy);
+      if(len>12&&x>10&&y>10&&x<size.x-10&&y<size.y-10&&!arrowCells.has(key)){
+        arrowCells.add(key);const sign=direction==='forward'?1:-1,ux=dx/len*sign,uy=dy/len*sign,n=PHOTO_ARROWS.size;
+        ctx.beginPath();ctx.moveTo(x-ux*n-uy*n*.65,y-uy*n+ux*n*.65);ctx.lineTo(x+ux*n,y+uy*n);ctx.lineTo(x-ux*n+uy*n*.65,y-uy*n-ux*n*.65);
+        ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=direction==='forward'?light.forward:light.backward;ctx.lineWidth=2.5;ctx.stroke();
+      }
     }
     const labelMode=$('color').value==='route',minZoom=selected.routes.size===1?12:14;
     if(labelMode&&m.getZoom()>=minZoom){if(!this.chains)this.buildChains();ctx.globalAlpha=1;ctx.font='600 11px system-ui';const boxes=[];
@@ -125,7 +150,7 @@ function drawLegend(){
   $('legend-scale').innerHTML=FREQUENCY_LABELS.map((label,category)=>`<span class="legend-step"><span class="legend-stroke" style="height:${width(category)}px;${!photoMode&&$('color').value==='intensity'?`background:${frequencyColor(category)}`:''}"></span>${label}</span>`).join('');
   const swatch=(color,label)=>`<span class="color-legend-row"><i style="background:${color}"></i>${escape(label)}</span>`,mode=$('color').value;
   let title='',content='';
-  if(photoMode){title='Nasvícení';content=[['#23a455','Čelo'],['#f4841f','Bok'],['#db3d31','Zezadu'],['#8c959d','Noc / stín'],['#8c959d','Metro — nasvícení se nehodnotí']].map(([color,label])=>swatch(color,label)).join('')+'<p class="hint">Sloučená čára ukazuje lepší z přítomných směrů. Rozdělené směry mají vlastní barvu. V oddáleném přehledu delší čára ukazuje horší nasvícení svých částí; detail místa hodnotí skutečný místní směr.</p>';}
+  if(photoMode){title='Nasvícení';content=[['#23a455','Čelo'],['#89cc50','Čelo + bok 30–50°'],['#f2cd35','75°'],['#f4841f','Bok 90°'],['#db3d31','105°'],['#911d28','Zezadu 120°+'],['#8c959d','Noc / stín'],['#8c959d','Metro — nasvícení se nehodnotí']].map(([color,label])=>swatch(color,label)).join('')+'<p class="hint">Sloučená čára ukazuje lepší z přítomných směrů. Rozdělené směry mají vlastní barvu. V oddáleném přehledu delší čára ukazuje horší nasvícení svých částí; detail místa hodnotí skutečný místní směr.</p>';}
   else if(mode==='mode'){title='Druh dopravy';content=Object.entries(MODES).filter(([id])=>meta?.routes.some(r=>r[3]===+id)).map(([id,name])=>swatch(MODE_COLORS[id],name)).join('');}
   else if(mode==='route'){
     if(legendResult!==result){legendResult=result;legendRouteIds=[...new Set(Object.values(result?.edgeRoutes||{}).flat())].sort((a,b)=>meta.routes[a][1].localeCompare(meta.routes[b][1],'cs',{numeric:true}));}
@@ -177,9 +202,10 @@ function renderPoint(){
  const periods=[['Ráno',5,10],['Poledne',10,14],['Odpoledne',14,20]];$('recommendation').insertAdjacentHTML('beforeend',`<div class="recommend-grid">${periods.map(([name,start,end])=>{const rows=dayRows.filter(r=>r.light.level!=='unrated'&&r.time>=start*3600&&r.time<end*3600);return `<div>${name}<strong>${rows.filter(r=>r.light.level==='good').length} / ${rows.length}</strong>vhodné / povrchové</div>`;}).join('')}</div>`);const max=Math.max(1,...hours.map(h=>h.all));$('hour-chart').innerHTML=hours.map(h=>`<button title="${h.h}:00 · ${h.all} průjezdů, ${h.good} vhodných" aria-label="Vybrat hodinu ${h.h}:00, ${h.all} průjezdů, ${h.good} vhodných" data-hour="${h.h}" style="--height:${Math.max(3,h.all/max*57)}px"><i style="height:${h.all?h.good/h.all*100:0}%"></i>${h.h%3===0?`<span>${h.h}</span>`:''}</button>`).join('');
  renderList();
 }
-function renderList(){$('passages').classList.remove('updating');$('point-scroll').scrollTop=0;listRows=pointRows.filter(r=>r.time>=(pointMode==='day'?0:pointStart)&&(pointMode!=='day'||r.time<86400));rendered=0;$('passages').innerHTML='';$('point-end').textContent='';$('export').disabled=!listRows.length;$('passage-count').textContent=pointMode==='day'?`${listRows.length.toLocaleString('cs')} průjezdů za den`:'Průjezdy';setPointMode();appendRows();}
+function renderList(){$('passages').classList.remove('updating');$('point-scroll').scrollTop=0;listRows=pointRows.filter(r=>r.time>=(pointMode==='day'?0:pointStart)&&(pointMode!=='day'||r.time<86400)&&(!goodLightOnly||goodPassageLight(r)));rendered=0;$('passages').innerHTML='';$('point-end').textContent='';$('export').disabled=!listRows.length;$('passage-count').textContent=pointMode==='day'?`${listRows.length.toLocaleString('cs')} průjezdů za den`:`${listRows.length.toLocaleString('cs')} průjezdů`;$('good-light').setAttribute('aria-pressed',String(goodLightOnly));setPointMode();appendRows();}
+$('good-light').onclick=()=>{goodLightOnly=!goodLightOnly;renderList();};
 function appendRows(){
- $('load-more')?.remove();if(!listRows.length){$('passages').innerHTML=`<p class="empty">${pointRows.length?'Od tohoto času už nejsou průjezdy. Zkus celý den nebo jiný den.':'V blízkosti bodu nejsou průjezdy podle aktuálních filtrů. Zkus jiné místo nebo rozšiř filtry.'}</p>`;endNote();return;}
+ $('load-more')?.remove();if(!listRows.length){$('passages').innerHTML=`<p class="empty">${goodLightOnly?'V tomto výběru nejsou průjezdy s dobrým světlem. Vypni filtr nebo změň čas či den.':pointRows.length?'Od tohoto času už nejsou průjezdy. Zkus celý den nebo jiný den.':'V blízkosti bodu nejsou průjezdy podle aktuálních filtrů. Zkus jiné místo nebo rozšiř filtry.'}</p>`;endNote();return;}
  const start=rendered,end=pageEnd(listRows,start,start?listRows[start]?.time:pointMode==='day'?0:pointStart),next=listRows.slice(start,end);
  let lastDay=start?Math.floor(listRows[start-1].time/86400):null;
  $('passages').insertAdjacentHTML('beforeend',next.map(row=>{const d=Math.floor(row.time/86400),dayHead=d!==lastDay?`<div class="day-divider">${dateForOffset(d)}</div>`:'';lastDay=d;const r=meta.routes[row.route],l=row.light;return dayHead+`<details class="passage compact-passage"><summary><div class="passage-top"><span class="passage-time">${row.estimated?'≈ ':''}${civilClock(row.time)}</span><span class="route-badge" style="--badge:${MODE_COLORS[r[3]]||'#586f78'}">${escape(r[1])}</span><span class="passage-destination">${escape(row.headsign)}</span><button type="button" class="light-icon" style="--light:${l.color}" title="${escape(l.label)}" aria-label="${escape(l.label)}">${l.level==='unrated'?'—':l.level==='night'?'◐':'☀'}</button></div><div class="passage-origin">Od ${escape(row.previousStop)} · ${civilClock(row.previousTime)}${Math.floor(row.previousTime/86400)!==d?' (předchozí den)':''}</div></summary><div class="passage-sub">${escape(meta.agencies[row.agency][1])} · směr ${row.direction}, ${Math.round(row.bearing)}°<br>${escape(l.label)}${row.sun?` · slunce ${compass(row.sun.azimuth)} ${Math.round(row.sun.azimuth)}°, výška ${Math.round(row.sun.altitude)}°`:''}${row.shortName?` · spoj ${escape(row.shortName)}`:''}${row.operationType!==1?`<br>${escape(operationLabel(row.operationType))}`:''}${row.fallback?'<br>Trasa chybí v GTFS, přímá spojnice zastávek.':''}</div></details>`;}).join(''));

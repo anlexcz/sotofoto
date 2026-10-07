@@ -39,10 +39,6 @@ Současná škála hodnotí použitelné boční světlo příliš přísně. C�
 
 ## Další funkční backlog
 
-### Zástavba a lokální stínění
-
-Prověřit a navrhnout statickou vrstvu budov / dalších vhodných překážek nad existujícím terénním horizontem. Geodata musí být oddělená od GTFS, aby se nepřepočítávala při každém feedu. Preferovaný princip: stabilní geografické vzorky přibližně po 25–50 m, předpočítaný lokální horizont a při změně času jen levné porovnání s polohou Slunce. Chybějící data nesmějí vypadat jako potvrzené dobré světlo.
-
 ### Detail místa a průjezdy
 
 - zachovat výběr okolí bodu a všechny relevantní směry i souběžné druhy dopravy,
@@ -72,9 +68,18 @@ Krátký odkaz na místo má zůstat omezený na polohu, zoom a provozní filtry
 - pan/zoom v již načtené oblasti má maximálně využívat existující RAM/HTTP cache a nemá bezdůvodně přepočítávat jízdní řád,
 - adaptivní omezení detailu pro slabá zařízení je možné až podle reálných měření, ne preventivně.
 
+## Nejnižší priorita / odložené experimenty
+
+### Zástavba a lokální stínění
+
+Definitivně odloženo na nejnižší prioritu, ale ponecháno v backlogu pro případ, že se v budoucnu zásadně zlepší dostupná data nebo metoda.
+
+Praktický experiment ukázal, že dostupná data neumožňují spolehlivě určit výšku většiny budov, významná část odhadnutelných výšek je pro fotografické plánování nepřesná a dostatečně spolehlivý stín lze určit jen přibližně u 3 % budov. Experimentální build byl navíc výpočetně příliš náročný. Současný projekt proto zůstává u terénního horizontu a zástavbu nepoužívá.
+
+Znovu otevírat pouze tehdy, pokud se objeví výrazně kvalitnější zdroj výšek / 3D zástavby nebo zásadně jednodušší a levnější metoda. Pokud by se téma někdy obnovilo, geografická data musí zůstat oddělená od GTFS a chybějící údaje se nesmějí prezentovat jako potvrzené dobré světlo.
+
 ## Později / výzkum
 
-- hlubší integrace zástavby a případně dalších statických překážek,
 - další práce s Mapy.com/Panoramou pouze pokud bude existovat spolehlivé a udržitelné řešení; současný obyčejný odkaz na souřadnice je hotový základ,
 - případná real-time data držet striktně oddělená od jízdního řádu a interpolovaného odhadu.
 
@@ -85,5 +90,5 @@ Krátký odkaz na místo má zůstat omezený na polohu, zoom a provozní filtry
 - výjezdy, zátahy a vzácné průjezdy zůstávají dostupné,
 - potlačení mapového popisku nesmí odstranit spoj z dat,
 - jízdní řád, interpolovaný odhad, počasí a případná real-time data musí být rozlišitelné,
-- chybějící terén, počasí nebo budoucí data zástavby se nesmějí prezentovat jako ověřené dobré podmínky,
+- chybějící terén, počasí nebo případná budoucí data zástavby se nesmějí prezentovat jako ověřené dobré podmínky,
 - priorita je mobilní použitelnost, nízké nároky na zařízení a řešení bez zbytečné infrastruktury.

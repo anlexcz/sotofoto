@@ -149,3 +149,9 @@ Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; 
 Kreslicí chunky celého výřezu se načtou nejvýše ve čtyřech souběžných požadavcích před výpočtem přesného provozu. Mapa přijme jeden kompletní náhled, ne postupně rostoucí sadu čtverců. Dosavadní canvas zůstává během čekání; při chybě kreslicího chunku se neúplný náhled nepublikuje, přesný výpočet může pokračovat. Potvrzený výsledek nahradí náhled až po dokončení všech potřebných provozních dat. Nová generace zastaví další plánování starého výřezu, ale úspěšně načtená data zůstávají v omezené cache.
 
 Přesné chunky se zpracovávají postupně (nejprve dostupné výsledky, potom bližší části), aby se nezvýšila paměťová zátěž. Paměťové limity ani politika HTTP cache se nemění. Velký výřez stále může dlouho počítat intenzitu; oprava odstraňuje čekání náhledu za každým přesným chunkem, neslibuje okamžitý výpočet celého PID. 82 automatických testů prošlo, včetně úplnosti náhledu před GTFS a potlačení neúplného náhledu. Starší acceptance/měření nelze považovat za měření této opravy.
+
+### Blok 3C – klientské načítání terénu
+
+Terénní cache používá celé hashované cesty, nikoli ID čtverců. Malá RAM LRU zůstává 4 MiB / 16 položek; profily aktuální oblasti se drží zvlášť a při opuštění oblasti se uvolní. Nejvýše dva chunky se načítají souběžně, stejné requesty sdílejí Promise. Chyba jednotlivého chunku nemaže již načtené okolní profily. Detail i legenda rozlišují načítání, chybu a neověřené místo; změna času světla chybu nezamaskuje.
+
+Manifest se revaliduje při prvním použití, zapnutí focení a návratu do aplikace; při pan/zoom a změně světla se znovu nestahuje. Selhání chunku umožní jednou ověřit změnu manifestu a přejít na nové hashe. Změna datasetu (včetně návratu na starší verzi) zneplatní aktivní profily a opožděné odpovědi předchozí verze. Další informace: [Blok 3C](docs/BLOK3-TEREN.md#blok-3c--klient).

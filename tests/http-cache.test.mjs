@@ -24,7 +24,7 @@ test('RAM eviction decodes again through HTTP cache; concurrent loads and cancel
 });
 
 test('Mutable deployment manifests revalidate in actual worker and terrain initialization',()=>{
- const worker=readFileSync(new URL('../src/worker.js',import.meta.url),'utf8'),app=readFileSync(new URL('../src/app.js',import.meta.url),'utf8');
+ const worker=readFileSync(new URL('../src/worker.js',import.meta.url),'utf8'),app=readFileSync(new URL('../src/terrain-store.js',import.meta.url),'utf8');
  assert.match(worker,/fetch\(new URL\(name,root\),\{cache:'no-cache'\}\)/);
  assert.match(worker,/json\('chunks.json.gz',true\)/);
  assert.match(app,/fetch\('data\/terrain-index.json',\{cache:'no-cache'\}\)/);

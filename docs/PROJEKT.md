@@ -126,7 +126,7 @@ P3 bylo 6. 10. 2026 na žádost uživatele odstraněno a projekt vrácen ke stav
 - Přepočet vyvolat jen změnou DEM, algoritmu, rozlišení, dosahu, výšky cíle nebo explicitním rozšířením pokrytí. Terén je relativně stálý, nikoli navždy neměnný; zachovat verzi zdroje.
 - Při návrhu vybrat trvalé úložiště a distribuční cestu bez zbytečného backendu; určit velikost a licenci. Při realizaci ověřit dvě různé GTFS aktualizace, ztrátu Actions cache a novou oblast. Výpočet polohy Slunce pro vybraný čas samozřejmě zůstává.
 
-O1 je implementované v bloku 2; O2 zůstává pro pozdější práci. P3 se neobnovuje.
+O1 je implementované v bloku 2; trvalý dataset O2 je implementovaný v bloku 3B a klientské načítání v bloku 3C. Historické návrhové body výše popisují původní stav. P3 se neobnovuje.
 
 
 ## Blok 2: rychlý náhled a kreslicí geometrie (6. 10. 2026)
@@ -162,3 +162,11 @@ Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; 
 Kreslicí chunky celého výřezu se načtou nejvýše ve čtyřech souběžných požadavcích před výpočtem přesného provozu. Mapa přijme jeden kompletní náhled, ne postupně rostoucí sadu čtverců. Dosavadní canvas zůstává během čekání; při chybě kreslicího chunku se neúplný náhled nepublikuje, přesný výpočet může pokračovat. Potvrzený výsledek nahradí náhled až po dokončení všech potřebných provozních dat. Nová generace zastaví další plánování starého výřezu, ale úspěšně načtená data zůstávají v omezené cache.
 
 Přesné chunky se zpracovávají postupně (nejprve dostupné výsledky, potom bližší části), aby se nezvýšila paměťová zátěž. Paměťové limity ani politika HTTP cache se nemění. Velký výřez stále může dlouho počítat intenzitu; oprava odstraňuje čekání náhledu za každým přesným chunkem, neslibuje okamžitý výpočet celého PID. 82 automatických testů prošlo, včetně úplnosti náhledu před GTFS a potlačení neúplného náhledu. Starší acceptance/měření nelze považovat za měření této opravy.
+
+## Blok 3C: klient terénu
+
+`terrain-store.js` spravuje manifest, omezenou LRU podle hashované cesty, sdílené Promise, aktivní chunky aktuálního výřezu a stavy chyb/načítání. Dva souběžné dekodéry maximálně. Nový výřez přestane plánovat staré chunky, ale již probíhající úspěšné requesty uloží do LRU. Profily překryvu se používají během načítání nových oblastí; selhání jednoho chunku ostatní nemaže. Uvolnění focení i bodu uvolní aktivní oblast, nikoli malou LRU. Při změně časového světla se store nenačítá ani nerevaliduje.
+
+Manifest používá `no-cache`; revalidace při prvním použití, zapnutí focení, návratu z pozadí a BFCache. Chyba chunku vyvolá jednu revalidaci; pokud se změnily hashe, požadavek se jednou obnoví. Bez změny se necyklí a zůstane explicitní chyba do dalšího pokusu. HTTP cache hashovaných gzip nadále používá `force-cache`. Změna signatury ID/cest/bounds/velikostí atomicky vyprázdní aktivní stav a invaliduje předchozí generaci; LRU zůstává bezpečná díky cestám. Staré odpovědi nemohou vstoupit do nového datasetu. Návrat na předchozí verzi má stejné pravidlo.
+
+`at()` rozlišuje `ready`, `loading`, `error`, `unverified`; chybějící a neplatný profil vrací `null`, nikdy nulový horizont. Chybová hláška přežije změnu světla či příchod počasí. Platný profil již načtené oblasti lze dál používat i při neúspěšné revalidaci; legenda přizná výpadek. Manifest a řádky profilů mají základní kontrolu formátu na klientu; plné kontrolní součty ověřuje build 3B. Testy pokrývají výřezy, sdílení requestů, eviction, novou verzi/návrat, pozdní odpověď, obnovu po deploymentu, částečný výpadek, stav po změně světla a chybějící pokrytí.

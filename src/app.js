@@ -3,7 +3,7 @@ import {mapEdgeLight,MapLightCache} from './map-light.js?v=block2-2';
 import {passageCsv} from './passage-export.js';
 import {passageLight} from './photo-light.js';
 import {encodeLink,decodeLink,mapyLink} from './share.js';
-import {selectChunks,ChunkCache,zipped} from './chunks.js?v=http-cache-2';
+import {TerrainStore,terrainStatus} from './terrain-store.js?v=terrain-3c';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=block1';
 import {timeFilterKey,roundedNow,filterLightTime,shiftLightTime} from './photo-time.js?v=block1';
@@ -20,7 +20,7 @@ let confirmedCoverage=null,countsTarget=null;
 const lightCache=new MapLightCache();
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};
 let photoMode=false,photoSeconds=43200,solarDay=null,lightFrame=null;
-let terrain=null,terrainIndex=new Map(),edgeTerrain,weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
+let weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
 const weatherCache=new Map();
 const weatherIcon=name=>`<svg class="weather-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${{eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',cloud:'<path d="M6 18a4 4 0 0 1-1-8 6 6 0 0 1 11-2 5 5 0 0 1 2 10Z"/>',thermo:'<path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><path d="M12 8v10"/>'}[name]}</svg>`;
 const selected={routes:new Set(),agencies:new Set(),modes:new Set(),directions:new Set()};
@@ -104,7 +104,7 @@ function updateLightControls(){
 function updateDaylight(){if(!ready)return;const c=map.getCenter();solarDay=daylightTimes(dateKey($('date').value),c.lat,c.lng);updateLightControls();}
 const weatherLayer=createWeatherLayer(map,()=>({instant:pragueInstant(dateKey($('date').value),photoSeconds),dayAt:(lat,lon)=>sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),lat,lon).altitude>0,label:clock(photoSeconds)}),(text,state)=>{$('weather-layer-status').textContent=text;$('weather-layer-status').dataset.coverage=state.coverage;$('weather-layer-status').dataset.loading=state.loading;});
 $('weather-overlay-toggle').onchange=()=>{weatherOverlay=$('weather-overlay-toggle').checked;weatherLayer.setEnabled(photoMode&&weatherOverlay);saveHash();};
-function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value){loadTerrain();requestWeather();}saveHash();}
+function setPhotoMode(value,followFilter=true){const opening=value&&!photoMode;photoMode=value;if(opening&&followFilter&&ready)applyFilterLight();document.body.classList.toggle('photo-active',value);$('photo-mode').setAttribute('aria-pressed',value);$('photo-mode').classList.toggle('active',value);$('photo-timeline').hidden=!value;$('weather-overlay-toggle').checked=weatherOverlay;$('weather-map-legend').hidden=!value;weatherLayer.setEnabled(value&&weatherOverlay);updateDaylight();drawAgencyLegend();drawLegend();routesLayer.draw();if(value){loadTerrain(opening);requestWeather();}else loadTerrain();saveHash();}
 function setLightTime(seconds){if(!Number.isFinite(seconds))return;photoSeconds=Math.max(0,Math.min(86399,seconds));updateLightControls();renderEnvironment();weatherLayer.draw();if(lightFrame!==null)cancelAnimationFrame(lightFrame);lightFrame=requestAnimationFrame(()=>{lightFrame=null;routesLayer.draw();});}
 $('photo-mode').onclick=()=>setPhotoMode(!photoMode);
 $('photo-slider').oninput=()=>setLightTime(Number($('photo-slider').value));
@@ -199,7 +199,7 @@ $('hour-chart').onclick=e=>{const b=e.target.closest('[data-hour]');if(b)showFro
 function setExpanded(value){expanded=value;$('point-panel').classList.toggle('expanded',value);$('point-expand').setAttribute('aria-expanded',value);$('point-expand').setAttribute('aria-label',value?'Zmenšit panel':'Zvětšit panel');$('point-expand').textContent=value?'↧':'↥';map.invalidateSize();if(!value)ensurePointVisible();}
 $('point-expand').onclick=()=>setExpanded(!expanded);let dragY=null;$('point-drag').addEventListener('pointerdown',e=>{if(e.target.closest('button,a'))return;dragY=e.clientY;$('point-drag').setPointerCapture(e.pointerId);});$('point-drag').addEventListener('pointerup',e=>{if(dragY!==null&&Math.abs(e.clientY-dragY)>35)setExpanded(e.clientY<dragY);dragY=null;});$('point-drag').addEventListener('pointercancel',()=>dragY=null);
 for(const id of ['weather-fold','photo-fold'])$(id).addEventListener('toggle',()=>{if($(id).open)setExpanded(true);});
-$('close-point').onclick=()=>{point=null;pointRows=[];listRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;if(photoMode)requestWeather();saveHash();};
+$('close-point').onclick=()=>{point=null;pointRows=[];listRows=[];$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;loadTerrain();if(photoMode)requestWeather();saveHash();};
 $('toggle-filters').onclick=()=>{const open=$('filters').classList.toggle('open');$('toggle-filters').setAttribute('aria-expanded',open);};
 function renderOperation(){const value=operationValue($('operation').value);for(const b of $('operation-chips').querySelectorAll('button')){const active=value==='all'||b.dataset.operation===value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}}
 function setOperation(value){$('operation').value=operationValue(value);renderOperation();if(ready){renderRoutes();recalc();}}
@@ -236,28 +236,16 @@ try{worker=new Worker(new URL('./worker.js?v=preview-2',import.meta.url),{type:'
   else if(data.type==='error'&&((data.request==='counts'&&data.id===countsRequest)||(data.request==='point'&&data.id===pointRequest)||(data.request==='snap'&&data.id===snapRequest)||!data.id)){showStatus('Data se nepodařilo načíst: '+data.message,false,true);if(data.request==='point'){$('point-now-status').textContent='Průjezdy se nepodařilo načíst.';$('passages').classList.remove('updating');$('passages').innerHTML='<p class="hint">Průjezdy se nepodařilo načíst. Zkus místo vybrat znovu.</p>';}}
 };worker.onerror=e=>showStatus(`Chyba aplikace: ${e.message}`,false,true);worker.postMessage({type:'init'});}catch(e){showStatus(e.message,false,true);}
 
-let terrainManifest,terrainCache,terrainGeneration=0,terrainPending;
-function profileAt(lat,lon){
-  const p=terrainIndex.get(`${Math.round(lat/.002)},${Math.round(lon/.004)}`);
-  return p?.[1]?p[0]:null;
+const terrainStore=new TerrainStore({onChange:()=>{routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();}});
+function profileAt(lat,lon){return terrainStore.at(lat,lon).profile;}
+async function loadTerrain(revalidate=false){
+  if(!photoMode&&!point){terrainStore.cancel();return;}
+  const b=photoMode?viewport():[point[0],point[1],point[0],point[1]];
+  await terrainStore.load([b[0]-.003,b[1]-.005,b[2]+.003,b[3]+.005],point,{revalidate});
 }
-async function loadTerrain(){
-  if(!photoMode&&!point)return;
-  const token=++terrainGeneration;
-  try{
-    if(!terrainPending)terrainPending=fetch('data/terrain-index.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error(`HTTP ${r.status}`);return r.json();}).catch(e=>{terrainPending=null;throw e;});
-    terrainManifest=await terrainPending;
-    if(!terrainCache)terrainCache=new ChunkCache(id=>zipped('data/'+terrainManifest.chunks[id].path),{maxBytes:4*1024*1024,maxEntries:16});
-    const b=photoMode?viewport():[point[0],point[1],point[0],point[1]];
-    const bounds=[b[0]-.003,b[1]-.005,b[2]+.003,b[3]+.005];
-    const ids=new Set(selectChunks(terrainManifest,bounds));
-    if(point)for(const id of selectChunks(terrainManifest,[point[0]-.003,point[1]-.005,point[0]+.003,point[1]+.005]))ids.add(id);
-    const next=new Map();
-    for(const id of ids){if(token!==terrainGeneration)return;for(const [key,horizon,valid] of await terrainCache.get(id,terrainManifest.chunks[id].bytes))next.set(key.join(','),[horizon,valid]);}
-    if(token!==terrainGeneration)return;
-    terrainIndex=next;terrain=true;routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();
-  }catch{if(token===terrainGeneration){terrainIndex.clear();terrain=null;$('terrain-status').textContent='Terén se nepodařilo načíst — stíny nejsou ověřené.';}}
-}
+// Revalidate on return to the app, not on every map move or light-time change.
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(photoMode||point))loadTerrain(true);});
+window.addEventListener('pageshow',e=>{if(e.persisted&&(photoMode||point))loadTerrain(true);});
 function requestWeather(){
   clearTimeout(weatherTimer);weatherTimer=setTimeout(async()=>{
     if(!point&&!photoMode)return;
@@ -272,8 +260,9 @@ function renderEnvironment(){
   if(!ready)return;
   const loc=point||[map.getCenter().lat,map.getCenter().lng],sun=sunPosition(pragueInstant(dateKey($('date').value),photoSeconds),...loc),profile=profileAt(...loc),shadow=terrainLight(sun,profile);
   $('point-light-time').value=civilClock(photoSeconds);if(point)renderWeatherChart();
-  $('terrain-status').textContent=!terrain?'Načítám terénní obzory…':!profile?'Terén v tomto bodě není ověřený.':sun.altitude<=0?'Slunce pod obzorem.':shadow?`Stín terénu · slunce ${sun.altitude.toFixed(1)}°, obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`:`Slunce nad terénem · obzor ${horizonHeight(profile,sun.azimuth).toFixed(1)}°.`;
-  $('map-terrain').textContent=terrain?'Šedá = noc nebo odhad stínu kopců. Přesné stíny domů a stromů nejsou zahrnuté.':'Terén není načtený — stíny kopců nejsou ověřené.';
+  const terrainAt=terrainStore.at(...loc);
+  $('terrain-status').textContent=terrainStatus(terrainAt.state,profile,sun,profile?horizonHeight(profile,sun.azimuth):0,shadow);
+  $('map-terrain').textContent=terrainStore.state==='error'?'Část terénu se nepodařilo načíst — chybějící stíny nejsou ověřené.':terrainStore.state==='loading'?'Načítám terénní obzory — chybějící stíny zatím nejsou ověřené.':'Šedá = noc nebo odhad stínu kopců. Místa bez profilu jsou neověřená; přesné stíny domů a stromů nejsou zahrnuté.';
   const w=weatherAt(weatherData,pragueInstant(dateKey($('date').value),photoSeconds));
   const summary=weatherError||(!weatherData?'Načítám počasí…':!w?'Pro tento den / čas není předpověď dostupná.':`${w.visibility===null?'Dohlednost neznámá':`Dohlednost ${(w.visibility/1000).toLocaleString('cs',{maximumFractionDigits:1})} km`} · oblačnost ${w.cloud??'—'} %${w.visibility!==null&&w.visibility<1000?' · ⚠ Možná mlha':''}`);
   $('weather-quick').innerHTML=w?`<span title="Dohlednost">${weatherIcon('eye')} ${visibilityLabel(w.visibility)}</span><span title="Oblačnost">${weatherIcon('cloud')} ${w.cloud??'—'} %</span><span title="Teplota">${weatherIcon('thermo')} ${w.temperature==null?'—':Math.round(w.temperature)+' °C'}</span><span class="weather-time">${civilClock(photoSeconds)}</span>`:weatherError?'Nedostupné':weatherData?'Bez předpovědi':'Načítám…';$('weather-summary').textContent=`Počasí v ${civilClock(photoSeconds)} · ${summary}`;$('map-weather').textContent=summary;

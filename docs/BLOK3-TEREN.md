@@ -30,4 +30,12 @@ Návrat znamená commit předchozího tagu a SHA-256 do `config/terrain.json` a 
 
 Automatické testy ověřují dva různé feedy nad stejnými geografickými klíči bez DEM a cache, chybějící oblast, SHA-256/verzi, poškozený a nebezpečný archiv, jediný Release request a zachování předchozích dat při selhání. Kontrolují také hashe instalovaných souborů. Standardní Pages workflow zachovává kompletní unit testy i produkční GTFS regrese.
 
-3B neobsahuje plánovanou denní aktualizaci GTFS (3D), další klientské úpravy (3C), zástavbu ani širší samostatnou acceptance (3E).
+3B neobsahuje plánovanou denní aktualizaci GTFS (3D), zástavbu ani širší samostatnou acceptance (3E).
+
+## Blok 3C – klient
+
+Implementace odděluje aktivní výřez od LRU a klíčuje dekomprimované chunky celou hashovanou cestou. Nejvýše dva souběžné požadavky; zastaralý výřez neplánuje další práci, dokončená data zůstávají použitelná. Pan/zoom používá překryv již načtených profilů, chybějící oblasti jsou během čekání neověřené. Jednotlivý výpadek zachová ostatní profily a explicitní chybu. Čas světla nepřistupuje k síti.
+
+Revalidace probíhá při prvním použití, zapnutí focení a návratu do aplikace; ne při každém pohybu mapy. Při selhání chunku se manifest jednou zkontroluje a při změně signatury se jednou obnoví výřez. Nová verze i rollback vymažou aktivní staré profily; opožděné odpovědi je nemohou vrátit. LRU 4 MiB / 16 položek a browser HTTP cache zůstávají oddělené. Současné profily širokého výřezu jsou další paměť nad LRU, stejně jako před touto změnou; limit LRU není limit celé JS haldy.
+
+Testy nově ověřují obnovu po odstranění starých hashů při deploymentu, změnu verze i návrat během probíhajícího requestu, zachování správného překryvu při výpadku, sdílení Promise, eviction a trvalou chybovou hlášku při změně světla. Širší společná acceptance a denní GTFS automatizace zůstávají samostatné kroky.

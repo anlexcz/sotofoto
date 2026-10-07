@@ -14,9 +14,12 @@ def load(directory):
     return [json.loads(gzip.decompress((directory/n).read_bytes()) if n.endswith('.gz') else (directory/n).read_bytes()) for n in FILES]
 def checksums(directory):
     m,g,s=load(directory)
-    return {n:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest() for n,value in zip(FILES,[{k:m[k] for k in META_KEYS},g,s])}
+    # Node recovery can assign different point IDs; exact oriented coordinates,
+    # global edge order, shape refs/distances and schedules must still agree.
+    geometry={'edges':[[g['points'][a],g['points'][b]] for a,b in g['edges']], 'shapes':[v[:2] for v in g['shapes']]}
+    return {n:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest() for n,value in zip(FILES,[{k:m[k] for k in META_KEYS},geometry,s])}
 def verify(directory,spec):
-    if checksums(directory)!=spec['checksums']:raise ValueError('Compiled previous snapshot checksum mismatch')
+    if (actual:=checksums(directory))!=spec['checksums']:raise ValueError('Compiled previous snapshot checksum mismatch: '+json.dumps(actual))
     m,_,_=load(directory)
     if not m['startDate']<=spec['day']<=m['endDate']:raise ValueError('Compiled snapshot does not cover preceding day')
 def pack(directory,path):
@@ -30,11 +33,18 @@ def acquire(spec,directory):
         if e.code!=404:raise
         artifact=directory/'previous-pages.zip'
         with artifact.open('wb') as f:subprocess.run(['gh','api',f'repos/{REPO}/actions/artifacts/{int(spec["artifactId"])}/zip'],stdout=f,check=True)
+        if hashlib.sha256(artifact.read_bytes()).hexdigest()!=spec['artifactSha256']:raise ValueError('Original Pages artifact checksum mismatch')
         with zipfile.ZipFile(artifact) as z,tarfile.open(fileobj=io.BytesIO(z.read('artifact.tar'))) as t:
-            for n in FILES:
-                members=[m for m in t.getmembers() if m.isfile() and m.name.endswith('/data/'+n)]
-                if len(members)!=1:raise ValueError('Missing/ambiguous previous compiled file '+n)
-                (out/n).write_bytes(t.extractfile(members[0]).read())
+            members={m.name.removeprefix('./'):m for m in t.getmembers() if m.isfile()}
+            for n in ['meta.json','chunks.json']:
+                (out/n).write_bytes(t.extractfile(members['data/'+n]).read())
+            index=json.loads((out/'chunks.json').read_text());(out/'chunks').mkdir(exist_ok=True)
+            for chunk in index['chunks'].values():
+                for kind in ['geometry','schedule']:
+                    name=chunk[kind]
+                    if not name.startswith('chunks/') or '/' in name[7:]:raise ValueError('Invalid artifact chunk path')
+                    (out/name).write_bytes(t.extractfile(members['data/'+name]).read())
+        subprocess.run(['node','--max-old-space-size=6144','scripts/recover_compiled.mjs',str(out)],check=True)
         verify(out,spec);pack(out,archive)
     else:
         with zipfile.ZipFile(archive) as z:

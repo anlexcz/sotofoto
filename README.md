@@ -16,6 +16,7 @@ Interaktivní mapa PID pro plánování focení dopravy. **Web:** https://anlexc
 - Řídké směrové šipky v režimu focení od zoomu 15: jen aktivní povrchový provoz, při obou směrech lepší nasvícení, při shodě stabilně dopředný směr hrany. Barva odpovídá trase. Lépe nasvícené překrývající se hrany se kreslí nahoře.
 - CSV export všech vybraných průjezdů včetně metra; u metra jsou sluneční údaje prázdné a světlo výslovně nehodnocené. Krátký odkaz na místo zachovává polohu, zoom a provozní filtry a otevře výchozí datum / celý den. Samostatný odkaz na plán zachovává i datum, provozní čas a nezávislý čas světla. Nové odkazy neukládají vzhled; staré serializované odkazy se dál načítají.
 - Detail bodu nabízí ikonu mapy napravo od souřadnic v hlavičce („Otevřít v Mapy.com“) jako obyčejný odkaz na přesné souřadnice se značkou, bez API klíče. Jemné bílé zastření podkladu zlepšuje čitelnost tras.
+- Při posunu a změně zoomu zůstávají potvrzené trasy se stejným provozním filtrem barevné až do nového přesného výsledku, také v režimu focení. Nově odkrytá oblast se může doplnit až po ověření provozu.
 - Responzivní ovládání pro mobil; data podle výřezu mapy, omezené cache a výpočty ve Web Workeru. Při startu se nestahuje celý PID.
 
 ## Data a pravidla výpočtu

@@ -247,9 +247,12 @@ def main():
         urllib.request.urlretrieve(URL,source)
     build(source,a.output/'data')
     if a.provenance:
-        provenance=json.loads(a.provenance.read_text());path=a.output/'data/meta.json';meta=json.loads(path.read_text());meta.update(provenance)
+        provenance=json.loads(a.provenance.read_text());compiled=provenance.pop('_compiledPreviousInput',None);path=a.output/'data/meta.json';meta=json.loads(path.read_text());meta.update(provenance)
         if provenance['continuity']['complete']:meta['serviceStartDate']=provenance['continuity']['day']
         write_json(path,meta)
+        if compiled:
+            from compiled_previous import merge
+            merge(a.output/'data',Path(compiled),provenance['continuity']['day'])
     from chunk_data import write_chunks
     write_chunks(a.output/'data')
     (a.output/'.nojekyll').touch()

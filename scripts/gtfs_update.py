@@ -1,5 +1,5 @@
 """Pin raw GTFS snapshots and merge only a missing preceding service day."""
-import csv,hashlib,io,json,os,re,urllib.request,zipfile,argparse
+import csv,hashlib,io,json,os,re,urllib.request,urllib.error,zipfile,argparse,time,http.client
 from datetime import datetime,timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -14,7 +14,18 @@ def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def read(z,name):
     if name not in z.namelist():return iter(())
     return csv.DictReader(io.TextIOWrapper(z.open(name),encoding='utf-8-sig'))
+def retry(operation):
+    for attempt in range(3):
+        try:return operation()
+        except (urllib.error.URLError,TimeoutError,ConnectionError,http.client.IncompleteRead) as e:
+            if isinstance(e,urllib.error.HTTPError) and e.code not in [408,429,500,502,503,504]:raise
+            if attempt==2:raise
+            time.sleep([5,20][attempt])
 def download(url,path):
+    try:return retry(lambda:download_once(url,path))
+    except Exception:
+        path.unlink(missing_ok=True);raise
+def download_once(url,path):
     with urllib.request.urlopen(urllib.request.Request(url,headers={'Cache-Control':'no-cache'}),timeout=120) as r,open(path,'wb') as f:
         total=0
         while b:=r.read(1024*1024):
@@ -103,7 +114,7 @@ def prepare(directory,site=SITE,current=None,production=None,today=None):
     preceding=(datetime.strptime(snap['startDate'],'%Y%m%d')-timedelta(days=1)).strftime('%Y%m%d')
     continuity={'day':preceding,'complete':False,'reason':'Previous snapshot unavailable','previousSnapshot':None,'importedTrips':0}
     if production is None:
-        try:production=json.load(urllib.request.urlopen(urllib.request.Request(site,headers={'Cache-Control':'no-cache'}),timeout=60))
+        try:production=retry(lambda:json.load(urllib.request.urlopen(urllib.request.Request(site,headers={'Cache-Control':'no-cache'}),timeout=60)))
         except urllib.error.HTTPError as e:
             if e.code!=404:raise
             production={}
@@ -115,7 +126,14 @@ def prepare(directory,site=SITE,current=None,production=None,today=None):
         if verified!=candidate:raise ValueError('Previous GTFS snapshot checksum/metadata mismatch')
         count=merge(raw,prev,directory/'merged.zip',preceding)
         continuity.update(complete=True,reason=None,previousSnapshot=candidate,importedTrips=count);break
-    info={'sourceSnapshot':snap,'continuity':continuity,'automaticUpdate':{'timezone':'Europe/Prague','time':'04:07','frequency':'daily'}}
+    info={'sourceSnapshot':snap,'continuity':continuity,'automaticUpdate':{'timezone':'Europe/Prague','time':'04:07','frequency':'daily','retryTimes':['05:07','06:07']}}
+    if current is None and not continuity['complete'] and (config:=Path('config/gtfs-bootstrap.json')).exists():
+        from compiled_previous import acquire
+        spec=json.loads(config.read_text())
+        if preceding==spec['day']:
+            previous=acquire(spec,directory)
+            info['_compiledPreviousInput']=str(previous)
+            continuity['previousCompiledSnapshot']={k:v for k,v in spec.items() if k!='artifactId'}
     (directory/'provenance.json').write_text(json.dumps(info,indent=2))
     (directory/'snapshot.json').write_text(json.dumps(snap,indent=2))
     (directory/'PID_GTFS.sha256').write_text(snap['sha256']+'  PID_GTFS.zip\n')

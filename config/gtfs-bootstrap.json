@@ -1,0 +1,12 @@
+{
+  "repository": "anlexcz/sotofoto",
+  "kind": "compiled-pages",
+  "day": "20261006",
+  "tag": "compiled-v1-20261006-79d85d86dc31bb019794b164c3a6b99fa60432610d94b68c2ab7e415ed84cb20",
+  "artifactId": 11447317103,
+  "checksums": {
+    "meta.json": "c3f1e55a728f47b11eb317d9428bf83789b692e0c13795b115015e8f72a576e0",
+    "geometry.json.gz": "643ef18fd12acdc9fb5cfd1f520860dbcf5f07aacfaec6b398f7a1eac7011861",
+    "schedule.json.gz": "9b1414078c3a51c2d9f8aa00ba347aeaec3d5d80cc36fcd7a9b08da5dcea5ec0"
+  }
+}

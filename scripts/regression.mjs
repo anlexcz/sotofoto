@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';import {gunzipSync} from 'node:zlib';import
 import {Engine} from '../src/engine.js';import {selectChunks,mergeChunks,decodeSchedule} from '../src/chunks.js';
 const root=process.argv[2]||'dist/data',load=p=>{const c=p.endsWith('.gz')?gunzipSync(readFileSync(root+'/'+p)):readFileSync(root+'/'+p);return p.endsWith('.bin.gz')?decodeSchedule(c.buffer.slice(c.byteOffset,c.byteOffset+c.byteLength)):JSON.parse(c);};
 const meta=load('meta.json'),g=load('geometry.json.gz'),s=load('schedule.json.gz'),index=load('chunks.json'),full=new Engine(meta,g,s);
-const base={date:'2026-10-06',start:0,end:86400,allDay:true,operation:'all',routes:[],agencies:[],modes:[],directions:[]};
+const base={date:meta.startDate.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'),start:0,end:86400,allDay:true,operation:'all',routes:[],agencies:[],modes:[],directions:[]};
 const areas=[['centrum',50.075,14.418],['okraj',50.128,14.471],['primestsky',50.355,14.475],['zeleznice',50.041,14.323],['ridky',50.195,14.582],['vozovna',50.135,14.465],['noc',50.082,14.423]];
 const signature=rows=>rows.map(({edge,key,...r})=>r).sort((a,b)=>a.trip.localeCompare(b.trip)||a.serviceDay.localeCompare(b.serviceDay)||a.time-b.time||a.bearing-b.bearing);
 for(const [name,lat,lon] of areas){

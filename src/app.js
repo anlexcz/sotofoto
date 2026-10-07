@@ -182,7 +182,7 @@ function renderPicker(kind,list){const key=kind==='route'?'routes':'agencies',qu
 }
 function renderRoutes(){renderPicker('route',visibleRoutes());}
 function renderAgencies(){renderPicker('agency',visibleAgencies());}
-function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('export').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
+function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('export').disabled=true;$('good-light').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
 function choosePoint(lat,lon){point=[lat,lon];$('open-mapy').href=mapyLink(point);$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();requestWeather();renderEnvironment();saveHash();}
 function snapPoint(lat,lon){
  const f=filter();pointMode=f.start===0&&f.end===86400?'day':'from';pointStart=f.start;
@@ -192,6 +192,7 @@ $('point-coordinates').onclick=async()=>{if(!point)return;const text=point.map(v
 map.on('click',e=>{if(ready){const label=routesLayer.labels?.find(l=>Math.abs(e.containerPoint.x-l.x)<=l.w/2&&Math.abs(e.containerPoint.y-l.y)<=l.h/2);snapPoint(label?.lat??e.latlng.lat,label?.lon??e.latlng.lng);}});
 function sunFor(row){return sunPosition(pragueInstant(dateKey($('date').value),row.time),row.lat,row.lon);}
 function renderPoint(){
+ $('good-light').disabled=false;
  for(const row of pointRows)Object.assign(row,passageLight(meta.routes[row.route][3],()=>sunFor(row),()=>profileAt(row.lat,row.lon),row.bearing));
  dayRows=pointRows.filter(r=>r.time>=0&&r.time<86400);windows=photoWindows(dayRows);
  $('point-title').textContent='Tady to projede';

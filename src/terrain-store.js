@@ -20,7 +20,7 @@ export class TerrainStore {
       return rows;
     },{maxBytes,maxEntries});
     this.manifest=null;this.signature='';this.pendingManifest=null;
-    this.active=new Map();this.errors=new Set();this.loading=new Set();
+    this.active=new Map();this.profiles=new Map();this.errors=new Set();this.loading=new Set();
     this.generation=0;this.manifestError=false;this.request=null;
   }
   notify(){this.onChange();}
@@ -31,13 +31,13 @@ export class TerrainStore {
         const m=await this.fetchManifest();
         const signature=JSON.stringify([m.dataset?.id,Object.entries(m.chunks).map(([id,c])=>[id,c.path,c.bounds,c.bytes])]);
         const changed=signature!==this.signature;
-        if(changed){++this.generation;this.active.clear();this.errors.clear();this.loading.clear();this.manifest=m;this.signature=signature;}
+        if(changed){++this.generation;this.active.clear();this.profiles.clear();this.errors.clear();this.loading.clear();this.manifest=m;this.signature=signature;}
         this.manifestError=false;this.notify();return changed;
       }catch(e){this.manifestError=true;this.notify();throw e;}
     })().finally(()=>{this.pendingManifest=null;});
     return this.pendingManifest;
   }
-  cancel(){++this.generation;this.request=null;this.loading.clear();this.active.clear();this.errors.clear();}
+  cancel(){++this.generation;this.request=null;this.loading.clear();this.active.clear();this.profiles.clear();this.errors.clear();}
   selection(bounds,point){
     const ids=new Set(selectChunks(this.manifest,bounds));
     if(point)for(const id of selectChunks(this.manifest,[point[0]-.003,point[1]-.005,point[0]+.003,point[1]+.005]))ids.add(id);
@@ -48,13 +48,13 @@ export class TerrainStore {
     const request=this.request;
     if(!this.manifest||revalidate){try{await this.refresh();}catch{return;}if(request!==this.request)return;}
     const token=++this.generation,selected=this.selection(bounds,point),paths=new Set(selected.map(c=>c.path));
-    for(const path of this.active.keys())if(!paths.has(path))this.active.delete(path);
+    for(const [path,rows] of this.active)if(!paths.has(path)){for(const [key] of rows)this.profiles.delete(key.join(','));this.active.delete(path);}
     this.errors.clear();this.loading=new Set(selected.filter(c=>!this.active.has(c.path)).map(c=>c.path));this.notify();
     let cursor=0,failed=false;
     // Two decoders at most; obsolete consumers stop scheduling, not caching.
     const run=async()=>{while(cursor<selected.length&&token===this.generation){
       const c=selected[cursor++];if(this.active.has(c.path))continue;
-      try{const rows=await this.cache.get(c.path,c.bytes);if(token!==this.generation)return;this.active.set(c.path,new Map(rows.map(([key,horizon,valid])=>[key.join(','),[horizon,valid]])));}
+      try{const rows=await this.cache.get(c.path,c.bytes);if(token!==this.generation)return;this.active.set(c.path,rows);for(const row of rows)this.profiles.set(row[0].join(','),row);}
       catch{if(token!==this.generation)return;this.errors.add(c.path);failed=true;}
       this.loading.delete(c.path);
     }};
@@ -66,7 +66,7 @@ export class TerrainStore {
   }
   at(lat,lon){
     const key=`${Math.round(lat/.002)},${Math.round(lon/.004)}`;
-    for(const rows of this.active.values())if(rows.has(key)){const [profile,valid]=rows.get(key);return {state:valid?'ready':'unverified',profile:valid?profile:null};}
+    const row=this.profiles.get(key);if(row)return {state:row[2]?'ready':'unverified',profile:row[2]?row[1]:null};
     if(this.manifestError)return {state:'error',profile:null};
     if(!this.manifest)return {state:'loading',profile:null};
     const y=Math.round(lat/.002)*.002,x=Math.round(lon/.004)*.004;

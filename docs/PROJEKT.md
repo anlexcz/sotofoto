@@ -173,9 +173,9 @@ Manifest používá `no-cache`; revalidace při prvním použití, zapnutí foce
 
 ## Doplnění zadání – 7. 10. 2026
 
-### Blok 3D: pravidelné GTFS a úplný první občanský den – k implementaci
+### Blok 3D: pravidelné GTFS a úplný první občanský den – implementace 7. 10. 2026
 
-- Zavést pravidelnou aktualizaci GTFS standardním Pages workflow. Návrh výchozí frekvence: jednou denně v noci; konkrétní čas není dosud sjednaný. Ruční spuštění ponechat. Testy a ověření dat musí projít před nahrazením produkce; výpadek zdroje zachová poslední úspěšnou verzi.
+- Zavést pravidelnou aktualizaci GTFS standardním Pages workflow. Spouštění denně ve 4:07 `Europe/Prague`, včetně letního/zimního času; GitHub může běh zpozdit. Ruční spuštění ponechat. Testy a ověření dat musí projít před nahrazením produkce; výpadek zdroje zachová poslední úspěšnou verzi.
 - Trvale zachovat ověřený předchozí vstupní GTFS snapshot, nezávisle na dočasné Actions cache. Při novém feedu převzít z předchozího snapshotu předchozí **provozní den** potřebný pro úplnost prvního občanského dne nového feedu. Jde zejména o dojezdy s GTFS časy nad 24:00. Samotné prodloužení data platnosti bez dat není řešení.
 - Zachovat související kalendář a výjimky, spoje, zastávkové časy, geometrie, směry, dopravce a klasifikaci typů provozu ze stejného snapshotu; nepřiřazovat staré časy k nové geometrii jen podle shodného ID. Sloučení musí ošetřit kolize ID, výběr autoritativního feedu pro jednotlivé provozní dny a deduplikaci při překryvu platnosti. Nový feed má přednost pro dny, které pokrývá; starý doplňuje chybějící předchozí den.
 - Nejde o úplný historický archiv všech zobrazitelných minulých dnů. Úplnost lze slíbit jen tam, kde uložený předchozí feed skutečně pokrývá potřebný den; při prvním spuštění, delším výpadku nebo chybějícím snapshotu přiznat neúplnost. Nepublikovat falešnou informaci o úplném prvním dni.
@@ -187,3 +187,5 @@ Manifest používá `no-cache`; revalidace při prvním použití, zapnutí foce
 - **Teď** zachovává zachycený okamžik (včetně dosavadní rezervy pěti minut), nikoli nový čas při každém kliknutí na mapu. Nové zachycení až dalším stiskem Teď. Výběr Celý den v detailu tuto volbu výslovně zruší.
 - Nenastavovat kvůli tomu časový filtr mapy a nespojovat začátek seznamu s nezávislým časem světla. Zachovat existující pravidla při skutečně aktivním mapovém časovém filtru; změna data nesmí ponechat časový údaj vztažený k nesprávnému dni.
 - Potvrzená příčina v současném kódu: `snapPoint()` při každém výběru přepisuje `pointMode` a `pointStart` výchozími hodnotami filtru mapy. Opravit odděleně od datového buildu 3D a přidat testy bod A → B, ruční čas/datum, Teď, návrat na Celý den, půlnoc a aktivní filtr mapy.
+
+Implementace 3D: `gtfs_update.py` připravuje zdroj a provenienci (`sourceSnapshot`, `continuity`, `automaticUpdate`), kontroluje aktuální pražský den a ZIP. Sloučení streamuje tabulky; importované služby mají jedinou explicitní calendar_dates výjimku pro předchozí den, nové kalendáře se omezí na začátek nového feedu. `serviceStartDate` povoluje engine předchozí den bez rozšíření výběru data v UI. ZIPy jsou v Release s úplným SHA-256 v tagu; metadata odkazují na aktuální i případný předchozí snapshot. Při chybě zůstává poslední produkce. Běhy nasazení se nepřerušují navzájem. Zdrojový archiv vzniká až po testech/regresích a před deployem. První archiv nelze použít k rekonstrukci období před jeho platností; příznak `complete` zůstane false. U2 je stále samostatný neimplementovaný úkol.

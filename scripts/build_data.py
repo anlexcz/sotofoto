@@ -236,7 +236,7 @@ def build(source, out):
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--input',type=Path);p.add_argument('--output',type=Path,default=Path('dist'));a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--input',type=Path);p.add_argument('--provenance',type=Path);p.add_argument('--output',type=Path,default=Path('dist'));a=p.parse_args()
     a.output.mkdir(parents=True,exist_ok=True)
     for file in ['index.html','style.css']:shutil.copyfile(Path('public')/file,a.output/file)
     shutil.copytree('src',a.output/'src',dirs_exist_ok=True)
@@ -246,6 +246,10 @@ def main():
         source=Path('/tmp/sotofoto-PID_GTFS.zip')
         urllib.request.urlretrieve(URL,source)
     build(source,a.output/'data')
+    if a.provenance:
+        provenance=json.loads(a.provenance.read_text());path=a.output/'data/meta.json';meta=json.loads(path.read_text());meta.update(provenance)
+        if provenance['continuity']['complete']:meta['serviceStartDate']=provenance['continuity']['day']
+        write_json(path,meta)
     from chunk_data import write_chunks
     write_chunks(a.output/'data')
     (a.output/'.nojekyll').touch()

@@ -19,7 +19,7 @@ export function dayContexts(meta,key,end=86400) {
   const result=[];
   for(const offset of [-1,0,...(end>86400?[1]:[])]) {
     const day=addDays(key,offset);
-    if(day>=meta.startDate&&day<=meta.endDate)result.push({day,offset:offset*86400,active:activeServices(meta,day)});
+    if(day>=(meta.serviceStartDate||meta.startDate)&&day<=meta.endDate)result.push({day,offset:offset*86400,active:activeServices(meta,day)});
   }
   return result;
 }

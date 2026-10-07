@@ -75,6 +75,7 @@ def install(archive,directory,expected_sha,expected_id):
     index['dataset']={k:dataset[k] for k in ['id','builtAt','parameters','source','coverage']}
     index['coverageCheck']={'requiredProfiles':len(needed),'missingProfiles':len(missing),'missingExamples':[list(k) for k in missing[:20]]}
     data['terrain-index.json']=encode(index)
+    dataset={**dataset,'archiveSha256':expected_sha,'sourceIndexSha256':dataset['files']['terrain-index.json']['sha256'],'files':{**dataset['files'],'terrain-index.json':{'sha256':sha(data['terrain-index.json']),'bytes':len(data['terrain-index.json'])}}}
     with tempfile.TemporaryDirectory(dir=directory.parent) as tmp:
         stage=Path(tmp)
         for name,blob in data.items():p=stage/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(blob)

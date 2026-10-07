@@ -8,7 +8,7 @@ Statická aplikace na GitHub Pages. Leaflet 1.9.4, vlastní Canvas tras, ES modu
 2. `chunk_data.py` rozdělí síť do buněk 0,05°; buňky s více než 2 MB binárního jízdního řádu před kompresí rozdělí na čtyři buňky 0,025°. Velikost není fyzicky stejná v obou osách. Index nese skutečné bounds každého balíčku.
 3. Hrana patří do všech buněk, které protíná její bounding box. Je to konzervativní výběr, včetně dlouhých hran a přesných hranic. Prázdné buňky se nevytvářejí.
 4. Geometrie obsahuje globální ID hrany, její koncové souřadnice a místní segmenty shapes. Každý segment si uchovává původní pořadí i GTFS vzdálenosti. Jízdní řád obsahuje všechny relevantní patterny a spoje, ale jen potřebný rozsah zastávek a časů. Původní zastávkový offset umožňuje bezeztrátové spojení sousedních balíčků.
-5. `regression.mjs` porovnává výsledky s enginem nad úplným mezivýsledkem. Potom vzniká terén; `finalize_data.py` odstraní monolity před uploadem Pages.
+5. `regression.mjs` porovnává výsledky s enginem nad úplným mezivýsledkem. Potom se ověřuje a přebírá připnutý terénní Release; `finalize_data.py` odstraní monolity před uploadem Pages.
 
 ## Publikované soubory
 
@@ -57,9 +57,9 @@ Limity nejsou tvrdý strop skutečné JS RAM: objekty, právě zpracovávaný ba
 
 ## Terén oddělený od feedu
 
-`.cache/terrain-v1.json` ukládá výsledky podle dvojice zaokrouhlených geografických indexů v buňce 0,002° × 0,004°. Klíč neobsahuje ID hrany ani feedu. Nový GTFS určí potřebné středy buněk; známé profily pouze převezme. DEM a horizonty se počítají jen pro chybějící klíče. Změna modelu, rozlišení, poloměru, výšky nebo algoritmu vyžaduje novou verzi cache.
+Blok 3B odděluje trvalý geografický dataset od GTFS i dočasné Actions cache. `config/terrain.json` připíná GitHub Release tagem a SHA-256 archivu. `terrain_dataset.py install` používá pouze standardní Python knihovnu, ověří archiv, všechny soubory, formát, parametry, hashované chunky a profily. Poté přebírá hotové chunky a porovnává geografické klíče nového GTFS s pokrytím. Chybějící buňky zaznamená v `coverageCheck`; nevytváří nulové horizonty ani nestahuje DEM. Selhání ověření/stažení zastaví build před nasazením, takže poslední produkce zůstává dostupná.
 
-Actions zachovává profily přes `actions/cache` s unikátním klíčem běhu a společným prefixem. Chybějící cache může způsobit celý výpočet, nikoliv chybný výsledek. Neplatný DEM profil se označí jako neověřený. Původní rasterové dlaždice mají navíc místní cache `/tmp/sotofoto-dem`; není to klientská cache.
+Samostatný `terrain.yml` s oprávněním `contents: write` vytváří novou verzi z čerstvého DEM, nikoli z Actions cache. Ukládá ZIP, manifest a SHA-256 do Release; existující tag odmítá přepsat. Manifest zaznamenává zdroj, licenci, parametry, kontrolní součty DEM dlaždic, commit algoritmu, pokrytí a měření. Rezerva dvou buněk obklopuje aktuální geografické klíče; nejde o úplné pokrytí obdélníku PID. Podrobný postup aktualizace a návratu: [Blok 3B](BLOK3-TEREN.md).
 
 Na klientu běžná mapa terén nestahuje. Detail bodu načítá okolí bodu; focení výřez a případný vybraný bod. Profily potřebné pro současný výřez se drží samostatně; chybějící buňka zůstává neověřená. Posuvník jen porovnává sluneční výšku s uloženým profilem. Počasí zachovává dosavadní geografické cache, debounce a nejvýše 64 vzorků aktuálního výřezu; slider pouze přepočítá dostupné hodinové hodnoty. Výpadek počasí/terénu neblokuje GTFS.
 

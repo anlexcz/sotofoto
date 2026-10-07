@@ -43,7 +43,7 @@ Stačí Python 3.12+ a Node 22+ pro testy, žádné balíčky se neinstalují.
 ```bash
 npm test
 python scripts/build_data.py
-# Volitelný terén: pip install numpy rasterio; python scripts/build_terrain.py
+python scripts/terrain_dataset.py install  # hotový verzovaný terén, bez DEM
 python -m http.server 8000 --directory dist
 ```
 
@@ -59,7 +59,7 @@ V režimu focení se načítá počasí pro vybraný bod, jinak pro střed mapy.
 
 `scripts/build_terrain.py` stáhne veřejné dlaždice Copernicus DEM GLO-30 z AWS a předpočítá obzory poblíž středů úseků. Výpočet používá raster zjednodušený na 3 obloukové sekundy (přibližně 90 m), sdílené buňky ~220 × 280 m, azimuty po 5° a vzorky do vzdálenosti 20 km. Výška cíle je 1,5 m nad modelem, zohledňuje se zakřivení Země. Nejde o přesný model stínů domů, stromů, zářezů nebo mostů; původní Copernicus je model povrchu včetně vegetace a staveb. Úseky se sluncem zakrytým obzorem jsou v režimu focení šedé, i když už nastal astronomický východ. Průjezdy a doporučení respektují dostupný terénní obzor; chybějící profil se nepovažuje za prokázaný stín. Detail výslovně ukazuje neověřený terén. Značky východu/západu na časové ose zůstávají astronomické.
 
-Terén tvoří geografické balíčky s manifestem `terrain-index.json`; běžná mapa je nestahuje, focení načítá výřez a detail okolí bodu. Posuvník nepotřebuje výškové API ani další síťové požadavky. GitHub Actions instaluje `numpy` a `rasterio` a po GTFS sestaví pouze chybějící geografické profily; již spočítané výsledky zachovává Actions cache. Výpadek počasí nebo načtení terénu neblokuje mapu. Zdroj výšek: Copernicus DEM, © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018; data upravena pro Šotofoto. Zdroj počasí: Open-Meteo / ČHMÚ, CC BY 4.0.
+Terén tvoří geografické balíčky s manifestem `terrain-index.json`; běžná mapa je nestahuje, focení načítá výřez a detail okolí bodu. Posuvník nepotřebuje výškové API ani další síťové požadavky. Běžný Pages build přebírá neměnný geografický dataset z GitHub Release, připnutý tagem a SHA-256 v `config/terrain.json`. Nestahuje DEM, nepočítá horizonty a nepotřebuje Actions cache ani `numpy`/`rasterio`. Samostatný workflow `terrain.yml` vytváří nové verze na ruční požadavek; postup, rezervu pokrytí a obnovu popisuje [Blok 3B](docs/BLOK3-TEREN.md). Výpadek počasí nebo načtení terénu neblokuje mapu. Zdroj výšek: Copernicus DEM, © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018; data upravena pro Šotofoto. Zdroj počasí: Open-Meteo / ČHMÚ, CC BY 4.0.
 
 ### Plošná vrstva počasí
 

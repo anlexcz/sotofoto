@@ -20,6 +20,10 @@ class TerrainDatasetTest(unittest.TestCase):
             with patch('urllib.request.urlopen',side_effect=AssertionError('No network/DEM')):
                 self.assertEqual(install(self.out/'terrain.zip',self.data,self.digest,'terrain-v1-test'),[])
             self.assertFalse((self.root/'.cache').exists())
+            installed=json.loads((self.data/'terrain-dataset.json').read_text())
+            self.assertEqual(installed['archiveSha256'],self.digest)
+            for name,entry in installed['files'].items():
+                self.assertEqual(sha((self.data/name).read_bytes()),entry['sha256'])
             self.assertEqual(json.loads((self.data/'terrain-index.json').read_text())['coverageCheck']['missingProfiles'],0)
     def test_new_area_remains_missing_not_zero(self):
         self.geometry({'points':[[51,15]],'edges':[[0,0]]})

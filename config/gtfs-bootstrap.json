@@ -2,11 +2,12 @@
   "repository": "anlexcz/sotofoto",
   "kind": "compiled-pages",
   "day": "20261006",
-  "tag": "compiled-v1-20261006-79d85d86dc31bb019794b164c3a6b99fa60432610d94b68c2ab7e415ed84cb20",
+  "tag": "compiled-v1-20261006-a60f71aaabeb68315789f1a060b8b8415748cd0656841438de0c3b9f1301e01a",
   "artifactId": 11447317103,
   "checksums": {
     "meta.json": "c3f1e55a728f47b11eb317d9428bf83789b692e0c13795b115015e8f72a576e0",
-    "geometry.json.gz": "643ef18fd12acdc9fb5cfd1f520860dbcf5f07aacfaec6b398f7a1eac7011861",
-    "schedule.json.gz": "9b1414078c3a51c2d9f8aa00ba347aeaec3d5d80cc36fcd7a9b08da5dcea5ec0"
-  }
+    "geometry.json.gz": "17fe9e48c763ac728d7cbae5672f13683123dd32c92821b4df8dc63db7a9822e",
+    "schedule.json.gz": "afe360118858b172622eacc6746a42de009cc7c51a3a9289566b6a87c09ee1d1"
+  },
+  "artifactSha256": "f3b42e8566c36f440b67089559dbcb2ca8f6a8810588044dc291ee6768caa8df"
 }

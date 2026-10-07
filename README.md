@@ -172,3 +172,6 @@ Aktuální feed je autoritativní pro vlastní platnost; z předchozího snapsho
 ### Blok 3E – závěrečná verifikace
 
 Závěrečné kontroly a jejich omezení popisuje [report 3E](docs/BLOK3-ACCEPTANCE.md). Import původního předchozího GTFS zachovává jen aktivní spoje dosahující alespoň 24:00; spoje ukončené dříve první zobrazitelný občanský den neovlivní a nezvětšují mobilní jízdní řády.
+
+
+Přepínač „☀ Dobré světlo“ pouze skrývá již vykreslené nevhodné průjezdy; nemaže seznam ani rozbalené detaily, neresetuje scroll a nespouští worker. Dávkování zůstává nad nefiltrovanými průjezdy, CSV a počet nad celým filtrovaným seznamem. Přepnutí samo nespouští automatickou další dávku.

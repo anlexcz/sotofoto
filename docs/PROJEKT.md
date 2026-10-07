@@ -189,3 +189,21 @@ Manifest používá `no-cache`; revalidace při prvním použití, zapnutí foce
 - Potvrzená příčina v současném kódu: `snapPoint()` při každém výběru přepisuje `pointMode` a `pointStart` výchozími hodnotami filtru mapy. Opravit odděleně od datového buildu 3D a přidat testy bod A → B, ruční čas/datum, Teď, návrat na Celý den, půlnoc a aktivní filtr mapy.
 
 Implementace 3D: `gtfs_update.py` připravuje zdroj a provenienci (`sourceSnapshot`, `continuity`, `automaticUpdate`), kontroluje aktuální pražský den a ZIP. Sloučení streamuje tabulky; importované služby mají jedinou explicitní calendar_dates výjimku pro předchozí den, nové kalendáře se omezí na začátek nového feedu. `serviceStartDate` povoluje engine předchozí den bez rozšíření výběru data v UI. ZIPy jsou v Release s úplným SHA-256 v tagu; metadata odkazují na aktuální i případný předchozí snapshot. Při chybě zůstává poslední produkce. Běhy nasazení se nepřerušují navzájem. Zdrojový archiv vzniká až po testech/regresích a před deployem. První archiv nelze použít k rekonstrukci období před jeho platností; příznak `complete` zůstane false. U2 je stále samostatný neimplementovaný úkol.
+
+### U3: filtr pouze dobře nasvícených autobusových průjezdů – k návrhu a implementaci
+
+- V detailu vybraného místa nabídnout zaškrtávací volbu „Pouze autobusy s dobrým světlem“. Vyjasnit při návrhu, jak spolupracuje s existujícím výběrem druhů dopravy; uživatel požaduje autobusové průjezdy.
+- Hodnotit každý spoj podle jeho skutečného času průjezdu, místního směru jízdy a polohy Slunce v daném bodu, nikoli podle nezávislého času světelného posuvníku.
+- Kritérium „dobré světlo“ navázat na novou škálu U4. Lehké čelo a boční světlo mohou být vhodné; současná oranžová automaticky neznamená špatné světlo.
+- Rozlišit nevhodný směr světla, noc, potvrzený terénní stín a neověřený stav. Neověřený stav nevydávat za jistě dobré nebo špatné světlo; způsob jeho zobrazení rozhodnout při návrhu.
+- Jde o filtr seznamu v detailu: zachovat provozní výběr mapy a původní data. Výslovně určit návaznost na počet zobrazených průjezdů, stránkování a CSV, aby seznam a export nepůsobily rozporně.
+- Přidat testy obou směrů, různých časů stejného spoje/místa, hranic vhodnosti, noci a terénního stínu. Nevytvářet nové síťové požadavky pouze kvůli zaškrtnutí filtru.
+
+### U4: barevná škála směru světla odpovídající fotografické použitelnosti – k návrhu a implementaci
+
+- Přepracovat barevnou škálu: současná oranžová může označovat stále dobře fotitelné lehké čelo nebo bok a působí příliš varovně.
+- Návrh uživatele: přímé čelní nasvícení tmavě zelené; s rostoucím úhlem světle zelené přibližně do 60°, potom přechod přes žlutou a oranžovou až k červené. Červená má znamenat převážně nasvícený zadek vozidla / světlo zezadu.
+- Úhel jednoznačně definovat jako nejmenší rozdíl místního směru jízdy a azimutu Slunce: 0° = Slunce před vozidlem (čelní nasvícení), 90° = boční, 180° = Slunce za vozidlem (nasvícený zadek). Nezaměnit směr ke Slunci se směrem dopadu paprsků.
+- Přibližných 60° je návrhový orientační bod, nikoli schválená finální hranice. Přesné přechody, rozsah fotitelného boku a hranici „dobré světlo“ pro U3 doladit před implementací; červenou nepoužít předčasně pro ještě vhodné boční světlo.
+- Sjednotit mapu, směrové zobrazení, značky průjezdů, legendu, textová hodnocení a doporučení. Noční/stínové a nehodnocené stavy zůstanou oddělené od škály směru.
+- Zachovat přesné místní azimuty, skutečný čas jednotlivých průjezdů a pravidla agregace kreslicích LODů. Barevná změna nesmí měnit intenzity, počty ani jízdní řády.

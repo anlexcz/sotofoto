@@ -65,6 +65,10 @@ def merge(current,previous,output,previous_day):
         new_start=next(read(new,'feed_info.txt'))['feed_start_date']
         services=active(old,previous_day)
         selected={r['trip_id']:r for r in read(old,'trips.txt') if r['service_id'] in services}
+        # Earlier previous-day trips cannot affect the first selectable civil
+        # day. Do not duplicate a whole day's schedules on mobile clients.
+        carryovers={r['trip_id'] for r in read(old,'stop_times.txt') if r['trip_id'] in selected and any(r.get(k) and int(r[k].split(':')[0])>=24 for k in ['arrival_time','departure_time'])}
+        selected={tid:r for tid,r in selected.items() if tid in carryovers}
         shapes={r.get('shape_id','') for r in selected.values()}
         stops={r['stop_id'] for r in read(old,'stop_times.txt') if r['trip_id'] in selected}
         routes={r['route_id'] for r in selected.values()}

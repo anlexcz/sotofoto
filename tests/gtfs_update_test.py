@@ -46,4 +46,10 @@ class TestUpdate(unittest.TestCase):
     with zipfile.ZipFile(self.old) as z,zipfile.ZipFile(source,'w') as out:
         for name in z.namelist():out.writestr(name,b'service_id,date,exception_type\ns,20261006,2\n' if name=='calendar_dates.txt' else z.read(name))
     self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),0)
+ def test_previous_daytime_schedule_is_not_duplicated_on_mobile(self):
+    source=self.root/'daytime.zip'
+    with zipfile.ZipFile(self.old) as z,zipfile.ZipFile(source,'w') as out:
+        for name in z.namelist():out.writestr(name,z.read(name).replace(b'25:15:00',b'12:15:00') if name=='stop_times.txt' else z.read(name))
+    self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),0)
+    with zipfile.ZipFile(self.root/'merged.zip') as z:self.assertEqual(len(list(read(z,'trips.txt'))),1)
 if __name__=='__main__':unittest.main()

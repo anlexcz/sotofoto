@@ -211,3 +211,7 @@ Pro první experiment 6. → 7. října je dostupný starý kompletní compiled 
 - Přibližných 60° je návrhový orientační bod, nikoli schválená finální hranice. Přesné přechody, rozsah fotitelného boku a hranici „dobré světlo“ pro U3 doladit před implementací; červenou nepoužít předčasně pro ještě vhodné boční světlo.
 - Sjednotit mapu, směrové zobrazení, značky průjezdů, legendu, textová hodnocení a doporučení. Noční/stínové a nehodnocené stavy zůstanou oddělené od škály směru.
 - Zachovat přesné místní azimuty, skutečný čas jednotlivých průjezdů a pravidla agregace kreslicích LODů. Barevná změna nesmí měnit intenzity, počty ani jízdní řády.
+
+## Blok 3E: závěrečná kontrola 7. 10. 2026
+
+Technické kontroly, řízený přechod dvou ověřených původních archivů a živé UI jsou popsány v [reportu](BLOK3-ACCEPTANCE.md). Běžný raw import nyní stejně jako compiled bootstrap přebírá pouze aktivní předchozí tripy s arrival/departure >=24:00. Raw i compiled cesta mají integrační porovnání skutečných průjezdů přes parser a Engine. První skutečný časovač a přechod na nově publikovaný feed 8. října nelze 7. října označit za pozorované. Fyzická mobilní kontrola zůstává samostatná; blok 3 není definitivně uzavřen.

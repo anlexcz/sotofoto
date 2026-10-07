@@ -1,11 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';import {mkdtempSync,readFileSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {gunzipSync} from 'node:zlib';import {Engine} from '../src/engine.js';
-test('Compiled recovery preserves actual midnight passages and leaves new-day service authoritative',()=>{
+for(const kind of ['compiled','raw'])test(`${kind} recovery preserves actual midnight passages and leaves new-day service authoritative`,()=>{
  const dir=mkdtempSync(join(tmpdir(),'sotofoto-compiled-'));
  try{
-  const r=spawnSync('python',['tests/compiled_fixture.py',dir],{encoding:'utf8'});assert.equal(r.status,0,r.stdout+r.stderr);
+  const r=spawnSync('python',['tests/compiled_fixture.py',dir,...(kind==='raw'?['--raw']:[])],{encoding:'utf8'});assert.equal(r.status,0,r.stdout+r.stderr);
   const engine=name=>{const load=f=>JSON.parse(f.endsWith('.gz')?gunzipSync(readFileSync(join(dir,name,f))):readFileSync(join(dir,name,f)));return new Engine(load('meta.json'),load('geometry.json.gz'),load('schedule.json.gz'));};
   const old=engine('old'),fresh=engine('new'),merged=engine('merged');
-  const signature=rows=>rows.map(({edge,key,trip,...r})=>({...r,trip:trip.replace(/^previous_compiled_/, '')}));
+  const signature=rows=>rows.map(({edge,key,trip,...r})=>({...r,trip:trip.replace(/^previous_(?:compiled|[a-f0-9]{64})_/, '')}));
   const base={date:'2026-10-05',start:0,end:14400,allDay:false,operation:'all',routes:[],agencies:[],modes:[],directions:[]};
   for(const f of [base,{...base,directions:['S']},{...base,modes:[0]},{...base,operation:'night'},{...base,agencies:[0]}]){
    assert.deepEqual(signature(merged.passages([50.0015,14],150,f).passages),signature(old.passages([50.0015,14],150,f).passages));

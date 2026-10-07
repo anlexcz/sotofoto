@@ -22,7 +22,7 @@ Zdroj: [PID GTFS](https://data.pid.cz/PID_GTFS.zip), dokumentace a licence: [Ote
 
 Dopravce se bere z `trips.sub_agency_id`, název z rozšíření PID `route_sub_agencies.txt`; obecné `agency.txt` uvádí společný PID. Kalendář respektuje `calendar.txt` i přidání/odebrání služeb v `calendar_dates.txt`.
 
-Datum je **občanský den v Praze**, nikoliv pouze GTFS provozní den. Spoje předchozího dne s časy nad 24:00 se započtou do časů po půlnoci. U rozsahu přes půlnoc se načítají i služby následujícího dne. Na začátku platnosti feedu nelze rekonstruovat předchozí den; na konci následující den. Tyto hranice aplikace zobrazuje. Na dni změny letního času samotné GTFS wall-clock časy nerozlišují opakovanou hodinu.
+Datum je **občanský den v Praze**, nikoliv pouze GTFS provozní den. Spoje předchozího dne s časy nad 24:00 se započtou do časů po půlnoci. U rozsahu přes půlnoc se načítají i služby následujícího dne. Předchozí den na začátku platnosti se doplňuje z ověřeného archivu, pokud je dostupný; bez něj aplikace přizná neúplnost. Na konci platnosti chybí následující den. Na dni změny letního času samotné GTFS wall-clock časy nerozlišují opakovanou hodinu.
 
 Společný úsek je shodná dvojice po sobě jdoucích bodů trasy po zaokrouhlení. Jsou-li dvě téměř shodné trasy v GTFS digitalizovány odlišně, mohou zůstat samostatné. Průjezdy pro intenzitu úseku se počítají **v jeho středu** v intervalu `[od, do)`; u dlouhých úseků se přesný čas ve vybraném bodě může lišit. Překrývající se úsek má v režimu linka/dopravce barvu prvního přispívajícího spoje, nikoliv směs barev; podrobnosti poskytne seznam průjezdů.
 
@@ -165,3 +165,7 @@ Jednorázový bootstrap 6. → 7. října využívá kompletní **zkompilovaná*
 Standardní Pages workflow stahuje a kontroluje aktuální GTFS, připravuje případné doplnění předchozího provozního dne, spouští testy a regrese, instaluje připnutý terén bez DEM a publikuje web. Původní ZIP, jeho SHA-256 a metadata se před deployem uloží do neměnně pojmenovaného Release `gtfs-v1-<začátek>-<sha256>`. Existující archiv se porovná, nepřepisuje. Chyba stahování, checksumu, testů nebo archivace zastaví deploy a ponechá poslední produkci. Archiv není závislý na Actions cache.
 
 Aktuální feed je autoritativní pro vlastní platnost; z předchozího snapshotu se importují pouze služby chybějícího předchozího dne. Staré tripy, shapes, stops a services mají oddělená ID. Linky/dopravci sdílejí ID pouze při shodě údajů. První zobrazitelný občanský den zůstává začátkem nového feedu, ale výpočet může zahrnout jeho dojezdy z předchozího dne. Při opakované aktualizaci stejného začátku platnosti se zachová odkaz na potřebný starší snapshot. Výpadek delší než jeho pokrytí nebo první spuštění bez snapshotu zůstává přiznaně neúplné. Nejde o historické prohlížení všech minulých dnů.
+
+### Blok 3E – závěrečná verifikace
+
+Závěrečné kontroly a jejich omezení popisuje [report 3E](docs/BLOK3-ACCEPTANCE.md). Import původního předchozího GTFS zachovává jen aktivní spoje dosahující alespoň 24:00; spoje ukončené dříve první zobrazitelný občanský den neovlivní a nezvětšují mobilní jízdní řády.

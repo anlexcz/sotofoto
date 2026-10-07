@@ -66,3 +66,10 @@ test('Cancellation retains successful pending data and malformed profile is an e
  await s.refresh();const abandoned=s.load(A);s.cancel();d.resolve();await abandoned;assert.equal(s.active.size,0);await s.load(A);assert.equal(n,1);assert.equal(s.at(50,14).state,'ready');
  const bad=new TerrainStore({manifest:async()=>manifest(),chunk:async()=>[[[25000,3500],[0],1]]});await bad.load(A);assert.equal(bad.at(50,14).state,'error');assert.equal(bad.cache.items.size,0);
 });
+
+test('Rapid viewport requests share a global two-slot limit and skip obsolete waiting chunks',async()=>{
+ const d=defer();let running=0,peak=0;const calls=[];
+ const s=new TerrainStore({manifest:async()=>manifest(),chunk:async p=>{calls.push(p);peak=Math.max(peak,++running);await d.promise;--running;return rows(p);}});
+ await s.refresh();const first=s.load(ALL),obsolete=s.load(B),latest=s.load(A);assert.equal(peak,2);
+ d.resolve();await Promise.all([first,obsolete,latest]);assert.equal(peak,2);assert.equal(s.inflight,0);assert.equal(s.waiters.length,0);assert.equal(calls.length,2);assert.equal(s.at(50,14).state,'ready');assert.equal(s.active.size,1);
+});

@@ -21,9 +21,10 @@ export class TerrainStore {
     },{maxBytes,maxEntries});
     this.manifest=null;this.signature='';this.pendingManifest=null;
     this.active=new Map();this.profiles=new Map();this.errors=new Set();this.loading=new Set();
-    this.generation=0;this.manifestError=false;this.request=null;
+    this.generation=0;this.manifestError=false;this.request=null;this.inflight=0;this.waiters=[];
   }
   notify(){this.onChange();}
+  release(){if(this.waiters.length)this.waiters.shift()();else --this.inflight;}
   async refresh(){
     if(this.pendingManifest)return this.pendingManifest;
     this.pendingManifest=(async()=>{
@@ -54,8 +55,11 @@ export class TerrainStore {
     // Two decoders at most; obsolete consumers stop scheduling, not caching.
     const run=async()=>{while(cursor<selected.length&&token===this.generation){
       const c=selected[cursor++];if(this.active.has(c.path))continue;
+      if(this.inflight>=2)await new Promise(resolve=>this.waiters.push(resolve));else ++this.inflight;
+      if(token!==this.generation){this.release();return;}
       try{const rows=await this.cache.get(c.path,c.bytes);if(token!==this.generation)return;this.active.set(c.path,rows);for(const row of rows)this.profiles.set(row[0].join(','),row);}
       catch{if(token!==this.generation)return;this.errors.add(c.path);failed=true;}
+      finally{this.release();}
       this.loading.delete(c.path);
     }};
     await Promise.all([run(),run()]);if(token!==this.generation)return;

@@ -1,6 +1,6 @@
-import {renderView,previewView,geometryLevel} from './render-view.js?v=viewport-1';
+import {renderView,previewView,geometryLevel} from './render-view.js?v=preview-2';
 import {project} from './core.js';
-import {ViewportEngine} from './chunk-engine.js?v=viewport-1';
+import {ViewportEngine} from './chunk-engine.js?v=preview-2';
 import {Engine} from './engine.js?v=block1';
 import {selectChunks,mergeChunks,ChunkCache,zipped,scheduleFile} from './chunks.js?v=http-cache-2';
 let meta,index,cache,renderCache,view,exactView,generation=0,retained=null;
@@ -23,7 +23,7 @@ self.onmessage=async ({data})=>{
     }else if(data.type==='cancel'){
       generation++;
     }else if(data.type==='counts'){
-      const token=++generation,previews=[];let last=0;
+      const token=++generation;
       const ids=selectChunks(index,data.bounds,data.filter),key=JSON.stringify([ids,data.filter]),level=geometryLevel(data.zoom);
       let raw;
       if(retained?.key===key){
@@ -32,8 +32,7 @@ self.onmessage=async ({data})=>{
       }else {
       retained=null;view.countCache.maxBytes=8*1024*1024;
       raw=await view.counts(data.bounds,data.filter,()=>token!==generation,render=>{
-        previews.push(render);const now=Date.now();if(now-last<100)return;last=now;
-        const result=previewView(previews,meta,data.filter,data.zoom,data.bounds);
+        const result=previewView([render],meta,data.filter,data.zoom,data.bounds);
         if(token===generation)self.postMessage({type:'preview',id:data.id,...result},buffers(result));
       },data.zoom);
       if(raw&&token===generation)retain(key,raw,level);

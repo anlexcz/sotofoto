@@ -156,3 +156,9 @@ Malý posun uvnitř potvrzené oblasti se stejným filtrem a LOD neodesílá nov
 Aktuální LOD: regional do z9 / 320 m, overview z10–11 / 80 m, medium z12–14 / 10 m, detail od z15 / přesná geometrie. Při rozdílném provozu se segment rozdělí na souvislé části se stejnými hodnotami; zjednodušují se jednotlivé části, nikoli přes hranice počtů či identit. Původní hrany a vzorky světla zůstávají zachované.
 
 Jeden uchovaný výsledek a LRU výsledků sdílejí původní rozpočet 8 MiB; počet malých LRU položek je nejvýše 256. Kreslicí/datová/terénní RAM a HTTP politika se nemění. Rozpočet je odhad paměti, nikoli tvrdý limit celé JS haldy. Samostatná funkční a výkonová acceptance tohoto dodatku je na žádost uživatele odložená; starší označení DONE a měření níže patří předchozí verzi.
+
+### Oprava skládání náhledu po čtvercích (7. 10. 2026)
+
+Kreslicí chunky celého výřezu se načtou nejvýše ve čtyřech souběžných požadavcích před výpočtem přesného provozu. Mapa přijme jeden kompletní náhled, ne postupně rostoucí sadu čtverců. Dosavadní canvas zůstává během čekání; při chybě kreslicího chunku se neúplný náhled nepublikuje, přesný výpočet může pokračovat. Potvrzený výsledek nahradí náhled až po dokončení všech potřebných provozních dat. Nová generace zastaví další plánování starého výřezu, ale úspěšně načtená data zůstávají v omezené cache.
+
+Přesné chunky se zpracovávají postupně (nejprve dostupné výsledky, potom bližší části), aby se nezvýšila paměťová zátěž. Paměťové limity ani politika HTTP cache se nemění. Velký výřez stále může dlouho počítat intenzitu; oprava odstraňuje čekání náhledu za každým přesným chunkem, neslibuje okamžitý výpočet celého PID. 82 automatických testů prošlo, včetně úplnosti náhledu před GTFS a potlačení neúplného náhledu. Starší acceptance/měření nelze považovat za měření této opravy.

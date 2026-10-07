@@ -72,3 +72,16 @@ test('Cancelled viewport keeps successfully downloaded chunks for next generatio
  assert.equal(await view.counts(bounds,f,()=>cancelled),null);const downloaded=[...view.cache.items.keys()];assert.ok(downloaded.length);
  cancelled=false;await view.counts(bounds,f);assert.equal(reads,selectChunks(index,bounds).length);
 });
+
+test('Complete preview loads with bounded concurrency before any exact GTFS work',async()=>{
+ const ids=selectChunks(index,bounds),events=[];let active=0,peak=0;
+ const view=new ViewportEngine(fixture.meta,index,async id=>{events.push('exact');return read(id);},async id=>{active++;peak=Math.max(peak,active);await new Promise(r=>setTimeout(r,5));const render=load(index.chunks[id].render.overview.path);active--;events.push('render');return render;});
+ let previews=0;await view.counts(bounds,f,()=>false,render=>{previews++;events.push('preview');assert.equal(events.filter(x=>x==='render').length,ids.length);assert.equal(events.includes('exact'),false);assert.ok(render.segments.length);},10);
+ assert.equal(previews,1);assert.ok(peak<=4);assert.ok(peak>1);assert.ok(events.indexOf('preview')<events.indexOf('exact'));
+});
+
+test('Incomplete preview never replaces the previous canvas; exact data can still finish',async()=>{
+ const ids=selectChunks(index,bounds);let previews=0;
+ const view=new ViewportEngine(fixture.meta,index,async id=>read(id),async id=>{if(id===ids[0])throw Error('render offline');return load(index.chunks[id].render.overview.path);});
+ const result=await view.counts(bounds,f,()=>false,()=>previews++,10);assert.equal(previews,0);assert.ok(result.counts.some(Boolean));
+});

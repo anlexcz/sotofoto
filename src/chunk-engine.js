@@ -6,21 +6,34 @@ export class ViewportEngine {
   async counts(bounds,filter,cancelled=()=>false,onPreview=null,zoom=19){
   const {meta,index,cache,countCache}=this;
   const ids=selectChunks(index,bounds,filter),edges=new Map(),journeys=new Set(),display=[];
-  // Keep the confirmed canvas during a warm pan/zoom/filter result.
-  // Replacing it by partial static previews would briefly erase known routes.
+  // Fetch the complete lightweight view before any expensive GTFS work.
+  // Four lanes bound decompression and requests; never publish a partial tile set.
   const warm=ids.every(id=>countCache.items.has(id+'|'+JSON.stringify(filter)));
-  for(const id of ids){
+  if(this.renderLoad){
+    let next=0,complete=true;
+    await Promise.all(Array.from({length:Math.min(4,ids.length)},async()=>{
+      while(next<ids.length&&!cancelled()){
+        const id=ids[next++];
+        const render=await this.renderLoad(id,zoom).catch(()=>null);
+        if(cancelled())return;
+        if(render)display.push(...render.segments);else complete=false;
+      }
+    }));
+    if(cancelled())return null;
+    if(!warm&&complete&&display.length)onPreview?.({segments:display});
+    // Deliver the full preview and process a pending pan before counting.
+    await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  const center=[(bounds[0]+bounds[2])/2,(bounds[1]+bounds[3])/2];
+  const distance=id=>{const b=index.chunks[id].bounds;return ((b[0]+b[2])/2-center[0])**2+((b[1]+b[3])/2-center[1])**2;};
+  const ordered=[...ids].sort((a,b)=>Number(countCache.items.has(b+'|'+JSON.stringify(filter)))-Number(countCache.items.has(a+'|'+JSON.stringify(filter)))||distance(a)-distance(b));
+  for(const id of ordered){
     if(cancelled())return null;
     const c=index.chunks[id],key=id+'|'+JSON.stringify(filter);
-    // Kick both requests off together; the small render-only file can win.
-    const renderPromise=this.renderLoad?this.renderLoad(id,zoom):null;
-    let loadPromise=countCache.items.has(key)?null:cache.get(id,c.geometryDecodedBytes+c.scheduleDecodedBytes);
-    loadPromise?.catch(()=>{});
-    if(renderPromise){const render=await renderPromise.catch(()=>null);if(cancelled())return null;if(render){for(const segment of render.segments)display.push(segment);if(!warm)onPreview?.(render,id);}}
     let entry=countCache.items.get(key)?.value;
     if(entry){await countCache.get(key);}
     else {
-      const chunk=await loadPromise;
+      const chunk=await cache.get(id,c.geometryDecodedBytes+c.scheduleDecodedBytes);
       if(cancelled())return null;
       const local=mergeChunks([chunk]),e=new Engine(meta,local.geometry,local.schedule,{pointIndex:false}),counts=e.counts(filter,true);
       entry={edges:chunk.geometry.edges,counts};

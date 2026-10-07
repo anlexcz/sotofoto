@@ -1,7 +1,7 @@
 import {geometryLevel} from './render-view.js?v=preview-2';
-import {mapEdgeLight,MapLightCache} from './map-light.js?v=block2-2';
+import {mapEdgeLight,MapLightCache} from './map-light.js?v=blocka';
 import {passageCsv} from './passage-export.js';
-import {passageLight,goodPassageLight,preferredDirection,arrowDirection,PHOTO_ARROWS} from './photo-light.js';
+import {passageLight,goodPassageLight,preferredDirection,arrowDirection,PHOTO_ARROWS} from './photo-light.js?v=blocka';
 import {encodeLink,decodeLink,mapyLink} from './share.js';
 import {TerrainStore,terrainStatus} from './terrain-store.js?v=terrain-3c';
 import {operationLabel} from './operation-types.js';
@@ -12,7 +12,7 @@ import {normalize,queryTokens,matchesQuery,interval,operationValue,matchesOperat
 import {civilClock,pageEnd,photoWindows,visibilityLabel} from './point-utils.js?v=block1';
 import {createWeatherLayer} from './weather-layer.js?v=overlay-2';
 import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js?v=block1';
-import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js';
+import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js?v=blocka';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,timer,ready=false;
 let lastTimeFilter=null,intensities=false,snapRequest=0;

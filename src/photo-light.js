@@ -1,4 +1,4 @@
-import {photographyLight} from './core.js';
+import {photographyLight} from './core.js?v=blocka';
 import {terrainLight} from './environment.js';
 export const METRO_LIGHT=Object.freeze({score:0,color:'#8c959d',level:'unrated',label:'Metro — nasvícení se nehodnotí'});
 // Lazy suppliers ensure metro never computes sun or terrain profiles.

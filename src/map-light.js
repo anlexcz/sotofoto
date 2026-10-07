@@ -1,6 +1,6 @@
-import {sunPosition,bearing,photographyLight} from './core.js';
+import {sunPosition,bearing,photographyLight} from './core.js?v=blocka';
 import {terrainLight} from './environment.js';
-import {METRO_LIGHT,edgeLight} from './photo-light.js';
+import {METRO_LIGHT,edgeLight} from './photo-light.js?v=blocka';
 // Exact coordinate keys; one instant only. Bounded by current view's source samples.
 export class MapLightCache {
  constructor(){this.instant=null;this.suns=new Map();}

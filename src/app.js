@@ -185,7 +185,7 @@ function renderPicker(kind,list){const key=kind==='route'?'routes':'agencies',qu
 }
 function renderRoutes(){renderPicker('route',visibleRoutes());}
 function renderAgencies(){renderPicker('agency',visibleAgencies());}
-function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('passage-empty').hidden=true;$('point-end').textContent='';$('export').disabled=true;$('good-light').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:0,end:Math.max(86400,filter().end)},allDay:false});}
+function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('passage-empty').hidden=true;$('point-end').textContent='';$('export').disabled=true;$('good-light').disabled=true;$('passages-at-light').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:0,end:Math.max(86400,filter().end)},allDay:false});}
 function choosePoint(lat,lon){point=[lat,lon];$('open-mapy').href=mapyLink(point);$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();requestWeather();renderEnvironment();saveHash();}
 function snapPoint(lat,lon){
  const f=filter();
@@ -196,7 +196,7 @@ $('point-coordinates').onclick=async()=>{if(!point)return;const text=point.map(v
 map.on('click',e=>{if(ready){const label=routesLayer.labels?.find(l=>Math.abs(e.containerPoint.x-l.x)<=l.w/2&&Math.abs(e.containerPoint.y-l.y)<=l.h/2);snapPoint(label?.lat??e.latlng.lat,label?.lon??e.latlng.lng);}});
 function sunFor(row){return sunPosition(pragueInstant(dateKey($('date').value),row.time),row.lat,row.lon);}
 function renderPoint(preserve=false){
- $('good-light').disabled=false;
+ $('good-light').disabled=false;$('passages-at-light').disabled=false;
  for(const row of pointRows)Object.assign(row,passageLight(meta.routes[row.route][3],()=>sunFor(row),()=>profileAt(row.lat,row.lon),row.bearing));
  dayRows=pointRows.filter(r=>r.time>=0&&r.time<86400);windows=photoWindows(dayRows);
  $('point-title').textContent='Tady to projede';
@@ -388,7 +388,7 @@ function refreshDate(){updateDaylight();requestWeather();renderEnvironment();wea
 function applyFilterLight(){setLightTime(filterLightTime(filter(),currentPrague()));}
 $('photo-filter').onclick=()=>{applyFilterLight();saveHash();};
 $('photo-now').onclick=()=>{setLightTime(roundedNow(currentPrague().seconds));saveHash();};
-$('point-now').onclick=()=>{const n=useToday();if(!n)return;pointMode='now';pointStart=n.seconds;closeTimeEditor();if(listPeriod?.startsWith(n.date+':')){renderList();saveHash();}else refreshDate();};
+$('point-now').onclick=()=>{const n=useToday();if(!n)return;pointMode='now';pointStart=n.seconds;closeTimeEditor();if(listPeriod?.startsWith(n.date+':')&&!$('passages').classList.contains('updating')){renderList();saveHash();}else refreshDate();};
 const gpsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg>';
 const Locate=L.Control.extend({options:{position:'topright'},onAdd(){const box=L.DomUtil.create('div','leaflet-bar gps-control'),b=L.DomUtil.create('button','locate-button',box);b.innerHTML=gpsIcon;b.title='Moje poloha';b.setAttribute('aria-label','Najít moji GPS polohu');L.DomEvent.disableClickPropagation(box);b.onclick=()=>{if(!navigator.geolocation){alert('Prohlížeč nepodporuje lokalizaci.');return;}b.disabled=true;b.classList.add('loading');navigator.geolocation.getCurrentPosition(pos=>{b.disabled=false;b.classList.remove('loading');b.classList.add('located');const loc=[pos.coords.latitude,pos.coords.longitude];gpsMarker?.remove();gpsAccuracy?.remove();gpsMarker=L.circleMarker(loc,{radius:7,color:'#fff',weight:3,fillColor:'#2479c9',fillOpacity:1}).addTo(map);gpsAccuracy=L.circle(loc,{radius:pos.coords.accuracy,color:'#2479c9',weight:1,fillOpacity:.08,interactive:false}).addTo(map);map.setView(loc,16);},err=>{b.disabled=false;b.classList.remove('loading');alert(err.code===1?'Povol přístup k poloze v nastavení prohlížeče.':'Polohu se nepodařilo zjistit. Zkus to znovu.');},{enableHighAccuracy:true,timeout:15000,maximumAge:30000});};return box;}});new Locate().addTo(map);
 function renderWeatherChart(){

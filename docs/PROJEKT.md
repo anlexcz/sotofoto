@@ -263,4 +263,8 @@ Výchozí dnešek začíná u aktuálního času bez pětiminutové rezervy, jin
 
 Načítání a pozdní odpovědi dál používají ID požadavků. Příchod terénního profilu zachová pozici a rozbalení; během nové bodové odpovědi nemůže obnovit starý seznam. Prázdný celý výběr s filtrem nabízí jeho vypnutí. Žádné další GTFS požadavky při scrollování či přepnutí světelného filtru.
 
-Lokální ověření: 116/116 testů, včetně obousměrného průchodu 2 000 řádků s limitem DOM, řídkých průjezdů, půlnoci, prázdného světelného výběru a CSV. Staré testy časového dávkování byly nahrazeny. Produkční nasazení a browser acceptance budou zaznamenány po dokončení. Skutečný telefon zůstává samostatná acceptance.
+Lokální ověření: 116/116 testů, včetně obousměrného průchodu 2 000 řádků s limitem DOM, řídkých průjezdů, půlnoci, prázdného světelného výběru a CSV. Staré testy časového dávkování byly nahrazeny. Finální kód `1ed6f6dca4edb6c9d02bb94dbd1b3c4f8910b767` byl úspěšně nasazen přes [workflow 37764416274](https://github.com/anlexcz/sotofoto/actions/runs/37764416274); unit testy, produkční regrese, build a deploy prošly.
+
+Produkční desktop Chrome 1363 × 936: první okno 30 řádků kolem Teď, scroll dolů i nahoru zpřístupnil další průjezdy a DOM zůstal nejvýše 120 řádků. Dobré světlo ukázalo přímo vhodné povrchové průjezdy; vypnutí zachovalo rozbalený detail. Ruční 08:00, Zpět na teď a Průjezdy v čase světla změnily kotvu, čas světla zůstal 12:00. Přímý přechod mezi dvěma místy zachoval ruční 08:00 i světlo 12:00. Verze app i CSS byla ověřena s `continuous-4`, sticky ovladače zůstaly dostupné.
+
+Body 6–9 a 19 jsou implementované a nasazené. Skutečný telefon, hlášení tlačítka Teď na zařízení testera a stažení/porovnání CSV zůstávají samostatné ověření. Mobilní fullscreen a grafické zpřehlednění detailu nejsou tímto dokončené. Bod 1 dál čeká na ranní autorun.

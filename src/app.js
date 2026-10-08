@@ -6,7 +6,7 @@ import {encodeLink,decodeLink,mapyLink} from './share.js';
 import {TerrainStore,terrainStatus} from './terrain-store.js?v=terrain-3c';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=block1';
-import {roundedNow,filterLightTime,shiftLightTime} from './photo-time.js?v=block1';
+import {timeFilterKey,roundedNow,filterLightTime,shiftLightTime} from './photo-time.js?v=block1';
 import {mainRoutes,labelChains,chainSamples} from './route-labels.js?v=labels-1';
 import {normalize,queryTokens,matchesQuery,interval,operationValue,matchesOperation,toggleOperation} from './filter-utils.js?v=operation-2';
 import {civilClock,photoWindows,visibilityLabel} from './point-utils.js?v=continuous-1';
@@ -16,7 +16,7 @@ import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.j
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js?v=blocka';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],countsRequest=0,pointRequest=0,timer,ready=false;
-let intensities=false,snapRequest=0;
+let lastTimeFilter=null,intensities=false,snapRequest=0;
 let confirmedCoverage=null,countsTarget=null;
 const lightCache=new MapLightCache();
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};

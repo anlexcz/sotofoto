@@ -1,4 +1,12 @@
-# VPS GTFS scheduler (staged, not yet deployed)
+# VPS GTFS scheduler
+
+Deployed on `metrobus-srv` on 2026-10-08. VPS verification dispatched
+[run 37751244689](https://github.com/anlexcz/sotofoto/actions/runs/37751244689):
+build and deploy succeeded, and the VPS verified new production metadata
+(`builtAt=2026-10-08T08:40:53.366663+00:00`). The normal sandboxed service then
+correctly skipped today's updated data. The user enabled the timer; its next
+activation is 2026-10-09 04:07 CEST. GitHub schedule has been removed.
+The first unattended morning activation has not yet been observed.
 
 Python 3.12+ standard library and systemd; no web server, database, npm or GTFS
 dataset on the VPS. The server checks Pages metadata and dispatches the existing
@@ -9,7 +17,8 @@ The installer pins and verifies the scheduler's source SHA-256, asks for a
 fine-grained PAT via hidden terminal input, and stores it root-only in
 `/etc/sotofoto-gtfs/github-token`. Limit the PAT to `anlexcz/sotofoto` with
 Actions read/write and automatic Metadata read. No Contents write is needed.
-Record the expiration date and replace the token before expiration. The service
+If the token has an expiration date, record it and replace it before expiration.
+The initially configured token has no expiration. The service
 uses DynamicUser and LoadCredential; the token is never passed in arguments,
 environment variables, Pages requests or logs.
 
@@ -60,5 +69,6 @@ schedule before removing the VPS trigger if automatic updates must continue.
 No reinstall/overwrite is attempted automatically.
 
 Local validation: `python3 -m unittest discover -s ops -p 'test_*.py'` and
-`bash -n ops/install_gtfs_scheduler.sh`. VPS network/authentication, the systemd
-credential sandbox and a real API dispatch still need user-terminal validation.
+`bash -n ops/install_gtfs_scheduler.sh`. VPS network/authentication, the normal systemd credential sandbox and a real API
+dispatch were verified in the user terminal on 2026-10-08. Scheduled morning
+activation and failure notification delivery have not been verified.

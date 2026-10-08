@@ -2,11 +2,6 @@ name: Build and publish Šotofoto
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: '7 4 * * *'
-      timezone: Europe/Prague
-    - cron: '7 5,6 * * *'
-      timezone: Europe/Prague
   workflow_dispatch:
   pull_request:
 permissions:

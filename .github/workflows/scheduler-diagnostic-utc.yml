@@ -1,0 +1,19 @@
+name: Temporary UTC scheduler diagnostic
+on:
+  schedule:
+    - cron: '*/5 7,8 8 10 *'
+permissions:
+  contents: read
+jobs:
+  record-trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Record UTC scheduler event
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          echo "event=$EVENT_NAME"
+          echo "schedule=$SCHEDULE"
+          date -u '+UTC=%Y-%m-%dT%H:%M:%SZ'

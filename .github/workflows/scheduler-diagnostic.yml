@@ -1,0 +1,22 @@
+name: Temporary scheduler diagnostic
+on:
+  schedule:
+    - cron: '*/5 9,10 8 10 *'
+      timezone: Europe/Prague
+    - cron: '1-59/5 7,8 8 10 *'
+permissions:
+  contents: read
+jobs:
+  record-trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Record scheduler event and clocks
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          echo "event=$EVENT_NAME"
+          echo "schedule=$SCHEDULE"
+          date -u '+UTC=%Y-%m-%dT%H:%M:%SZ'
+          TZ=Europe/Prague date '+Prague=%Y-%m-%dT%H:%M:%S%z'

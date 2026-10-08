@@ -238,3 +238,12 @@ Lokální automatické ověření: 105/105 testů `npm test`, včetně barevnýc
 Přepínač „☀ Dobré světlo“ pouze skrývá již vykreslené nevhodné průjezdy; nemaže seznam ani rozbalené detaily, neresetuje scroll a nespouští worker. Dávkování zůstává nad nefiltrovanými průjezdy, CSV a počet nad celým filtrovaným seznamem. Přepnutí samo nespouští automatickou další dávku.
 
 Tlačítko „☀ Dobré světlo“ má minimální výšku 30 px a svislé odsazení 4 px; šířka zůstává podle textu a původního vodorovného odsazení.
+
+
+## Bod 5 – dokončení filtru Dobré světlo (8. 10. 2026)
+
+Aktuální pravidla nahrazují starší popis počtu nad seznamem: řádek obsahuje jen CSV a Dobré světlo. Celkové statistiky zůstávají v rozbalovacím přehledu. CSV exportuje celý filtrovaný výběr, nikoli jen vykreslené dávky; tlačítko má vysvětlující tooltip.
+
+Detail rozlišuje prázdné vykreslené období (uvede poslední zkontrolovaný civilní čas a nabídne další dávku) a celý výběr bez vhodného průjezdu (nabídne vypnout filtr, další dávky v tomto stavu skrývá). Při zapnutém filtru se dávky přidávají výhradně na tlačítko; text „Prohledáno do“ označuje hranici zkontrolovaných nefiltrovaných průjezdů. Bez filtru zůstává původní automatické stránkování. Výpočet a hranice vhodnosti se nemění.
+
+Přímý výběr jiného bodu zachová filtr, zavření detailu jej vypne a invaliduje probíhající výběr bodu. Přepnutí filtru zachová DOM řádky, rozbalení i scroll; další dávka připojuje řádky a zachová scroll. Žádný nový síťový požadavek kvůli přepínači. Limity původního dávkování se nemění (body 7–9 nejsou tímto celé vyřešeny).

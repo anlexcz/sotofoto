@@ -6,20 +6,23 @@ import {encodeLink,decodeLink,mapyLink} from './share.js';
 import {TerrainStore,terrainStatus} from './terrain-store.js?v=terrain-3c';
 import {operationLabel} from './operation-types.js';
 import {FREQUENCY_LABELS,FREQUENCY_WIDTHS,frequencyColor} from './intensity.js?v=block1';
-import {timeFilterKey,roundedNow,filterLightTime,shiftLightTime} from './photo-time.js?v=block1';
+import {roundedNow,filterLightTime,shiftLightTime} from './photo-time.js?v=block1';
 import {mainRoutes,labelChains,chainSamples} from './route-labels.js?v=labels-1';
 import {normalize,queryTokens,matchesQuery,interval,operationValue,matchesOperation,toggleOperation} from './filter-utils.js?v=operation-2';
-import {civilClock,pageEnd,photoWindows,visibilityLabel} from './point-utils.js?v=block1';
+import {civilClock,photoWindows,visibilityLabel} from './point-utils.js?v=continuous-1';
+import {passageIndex,passageWindow,shiftPassageWindow} from './passage-window.js?v=continuous-1';
 import {createWeatherLayer} from './weather-layer.js?v=overlay-2';
 import {horizonHeight,terrainLight,weatherAt,fetchWeather} from './environment.js?v=block1';
 import {MODES,MODE_COLORS,DIRECTIONS,timeRange,clock,dateKey,pragueInstant,sunPosition,photographyLight,daylightTimes,bearing,compass,project} from './core.js?v=blocka';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],rendered=0,countsRequest=0,pointRequest=0,timer,ready=false;
-let lastTimeFilter=null,intensities=false,snapRequest=0;
+let meta,geometry={points:[],edges:[]},result,worker,point,pointRows=[],countsRequest=0,pointRequest=0,timer,ready=false;
+let intensities=false,snapRequest=0;
 let confirmedCoverage=null,countsTarget=null;
 const lightCache=new MapLightCache();
 let weatherOverlay=true,mapAllDay=true,highlightAgency=null;const showAll={route:false,agency:false};
 let goodLightOnly=false;
+let listStart=0,listEnd=0,listPeriod=null,listUserScroll=false,listFrame=null,listLastTop=0;
+const openPassages=new Set();
 let photoMode=false,photoSeconds=43200,solarDay=null,lightFrame=null;
 let weatherData=null,weatherKey='',weatherError='',weatherGeneration=0,weatherTimer;
 const weatherCache=new Map();
@@ -29,7 +32,7 @@ const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([50.075,14.
 L.control.zoom({position:'topright'}).addTo(map);
 const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · GTFS: <a href="https://pid.cz/o-systemu/opendata/">ROPID / PID</a>, upraveno pro Šotofoto'}).addTo(map);
 let tileError=false;tiles.on('tileerror',()=>{if(!tileError){tileError=true;$('map-help').textContent='Mapový podklad se nepodařilo načíst. Trasy a průjezdy zůstávají dostupné.';}});
-let marker,halo,gpsMarker,gpsAccuracy,snapHighlight,pendingPoint,pointStart=0,pointMode="day",restoredPointState=null,listRows=[],baseListRows=[],dayRows=[],windows=[],pointRadius=40,expanded=false;
+let marker,halo,gpsMarker,gpsAccuracy,snapHighlight,pendingPoint,pointStart=0,pointMode="now",restoredPointState=null,listRows=[],baseListRows=[],dayRows=[],windows=[],pointRadius=40,expanded=false;
 const width=category=>{const zoom=map.getZoom(),scale=Math.max(.45,Math.min(1.5,.65+(zoom-11)*.14));return (intensities&&!result?.preliminary?FREQUENCY_WIDTHS[category]:3.4)*scale*Number($("thickness").value);};
 const palette=i=>`hsl(${(i*137.508)%360} 61% 43%)`;
 function edgeColor(i,category=result.categories[i]) {
@@ -141,7 +144,7 @@ function showStatus(text,busy=false,error=false){$('map-status').hidden=!busy&&!
 function filter(){const [start,end]=interval($('from').value||'00:00',$('to').value||'00:00',mapAllDay);return {date:$('date').value,start,end,allDay:mapAllDay,operation:operationValue($('operation').value),...Object.fromEntries(Object.entries(selected).map(([k,v])=>[k,[...v]]))};}
 function recalc(movement=false){if(!ready)return;
 if(movement&&confirmedCoverage&&!result?.preliminary){const b=viewport(),c=confirmedCoverage;if(c.filter===JSON.stringify(filter())&&c.level===geometryLevel(map.getZoom())&&b[0]>=c.bounds[0]&&b[1]>=c.bounds[1]&&b[2]<=c.bounds[2]&&b[3]<=c.bounds[3]){clearTimeout(timer);++countsRequest;worker.postMessage({type:'cancel'});showStatus('');return;}}
-clearTimeout(timer);++countsRequest;++snapRequest;++pointRequest;worker.postMessage({type:'cancel'});timer=setTimeout(()=>{const f=filter(),key=timeFilterKey(f);if(photoMode&&lastTimeFilter!==null&&key!==lastTimeFilter)applyFilterLight();lastTimeFilter=key;$('range-label').textContent=f.allDay?'Celý den':`${clock(f.start)}–${clock(f.end)}${f.end>86400?' (do dalšího dne)':''}`;let note=`Platnost ${meta.startDate.slice(6)}. ${meta.startDate.slice(4,6)}. – ${meta.endDate.slice(6)}. ${meta.endDate.slice(4,6)}. ${meta.stats.trips.toLocaleString('cs')} spojů. ${meta.automaticUpdate?`Aktualizace denně kolem 4:00 · sestaveno ${new Date(meta.builtAt).toLocaleString('cs',{timeZone:'Europe/Prague'})}.`:'Bez pravidelné aktualizace.'}`;if(dateKey(f.date)===meta.startDate&&!meta.continuity?.complete)note+=' Na prvním dni chybí případné dojezdy z předchozího dne.';if(dateKey(f.date)===meta.endDate&&f.end>86400)note+=' Část po půlnoci je mimo platnost: nové služby dalšího dne nejsou dostupné.';$('data-note').textContent=note;showStatus('Počítám intenzitu…',true);const b=map.getBounds().pad(.16);countsTarget={bounds:[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()],filter:JSON.stringify(f),level:geometryLevel(map.getZoom())};worker.postMessage({type:'counts',id:countsRequest,filter:f,bounds:countsTarget.bounds,zoom:map.getZoom()});if(!movement)requestPoint();},120);}
+clearTimeout(timer);++countsRequest;++snapRequest;++pointRequest;worker.postMessage({type:'cancel'});timer=setTimeout(()=>{const f=filter();$('range-label').textContent=f.allDay?'Celý den':`${clock(f.start)}–${clock(f.end)}${f.end>86400?' (do dalšího dne)':''}`;let note=`Platnost ${meta.startDate.slice(6)}. ${meta.startDate.slice(4,6)}. – ${meta.endDate.slice(6)}. ${meta.endDate.slice(4,6)}. ${meta.stats.trips.toLocaleString('cs')} spojů. ${meta.automaticUpdate?`Aktualizace denně kolem 4:00 · sestaveno ${new Date(meta.builtAt).toLocaleString('cs',{timeZone:'Europe/Prague'})}.`:'Bez pravidelné aktualizace.'}`;if(dateKey(f.date)===meta.startDate&&!meta.continuity?.complete)note+=' Na prvním dni chybí případné dojezdy z předchozího dne.';if(dateKey(f.date)===meta.endDate&&f.end>86400)note+=' Část po půlnoci je mimo platnost: nové služby dalšího dne nejsou dostupné.';$('data-note').textContent=note;showStatus('Počítám intenzitu…',true);const b=map.getBounds().pad(.16);countsTarget={bounds:[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()],filter:JSON.stringify(f),level:geometryLevel(map.getZoom())};worker.postMessage({type:'counts',id:countsRequest,filter:f,bounds:countsTarget.bounds,zoom:map.getZoom()});if(!movement)requestPoint();},120);}
 let legendResult=null,legendRouteIds=[];
 $('intensity-toggle').onchange=()=>{intensities=$('intensity-toggle').checked;routesLayer.draw();drawLegend();};
 function drawLegend(){
@@ -182,16 +185,17 @@ function renderPicker(kind,list){const key=kind==='route'?'routes':'agencies',qu
 }
 function renderRoutes(){renderPicker('route',visibleRoutes());}
 function renderAgencies(){renderPicker('agency',visibleAgencies());}
-function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('passage-empty').hidden=true;$('point-end').textContent='';$('export').disabled=true;$('good-light').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:Math.min(0,pointStart),end:172800},allDay:false});}
+function requestPoint(){if(!point||!ready)return;setPointMode();const id=++pointRequest;$('passages').classList.add('updating');$('passages').innerHTML='<p class="hint">Načítám průjezdy v okolí…</p>';$('passage-empty').hidden=true;$('point-end').textContent='';$('export').disabled=true;$('good-light').disabled=true;$('point-now-status').textContent='Aktualizuji průjezdy…';worker.postMessage({type:'point',id,point,radius:pointRadius,filter:{...filter(),start:0,end:Math.max(86400,filter().end)},allDay:false});}
 function choosePoint(lat,lon){point=[lat,lon];$('open-mapy').href=mapyLink(point);$('point-panel').hidden=false;document.body.classList.add('point-open');$('map-help').hidden=true;$('point-coordinates').textContent=`${lat.toFixed(5)}, ${lon.toFixed(5)} ⧉`;marker?.remove();halo?.remove();marker=L.marker(point,{icon:L.divIcon({className:'map-point',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);halo=L.circle(point,{radius:pointRadius,color:'#16877d',weight:1,fillOpacity:.06,interactive:false}).addTo(map);map.invalidateSize();ensurePointVisible();requestPoint();loadTerrain();requestWeather();renderEnvironment();saveHash();}
 function snapPoint(lat,lon){
- const f=filter();pointMode=f.start===0&&f.end===86400?'day':'from';pointStart=f.start;
+ const f=filter();
+ if(!point&&!restoredPointState){listPeriod=null;pointMode=f.allDay&&f.date===currentPrague().date?'now':'from';pointStart=f.allDay&&f.date===currentPrague().date?currentPrague().seconds:f.start;}
  worker.postMessage({type:'snap',id:++snapRequest,point:[lat,lon],filter:f});
 }
 $('point-coordinates').onclick=async()=>{if(!point)return;const text=point.map(v=>v.toFixed(5)).join(', ');try{await navigator.clipboard.writeText(text);$('point-coordinates').textContent='Zkopírováno ✓';setTimeout(()=>{if(point)$('point-coordinates').textContent=point.map(v=>v.toFixed(5)).join(', ')+' ⧉';},1500);}catch{$('point-coordinates').textContent=text;}};
 map.on('click',e=>{if(ready){const label=routesLayer.labels?.find(l=>Math.abs(e.containerPoint.x-l.x)<=l.w/2&&Math.abs(e.containerPoint.y-l.y)<=l.h/2);snapPoint(label?.lat??e.latlng.lat,label?.lon??e.latlng.lng);}});
 function sunFor(row){return sunPosition(pragueInstant(dateKey($('date').value),row.time),row.lat,row.lon);}
-function renderPoint(){
+function renderPoint(preserve=false){
  $('good-light').disabled=false;
  for(const row of pointRows)Object.assign(row,passageLight(meta.routes[row.route][3],()=>sunFor(row),()=>profileAt(row.lat,row.lon),row.bearing));
  dayRows=pointRows.filter(r=>r.time>=0&&r.time<86400);windows=photoWindows(dayRows);
@@ -201,57 +205,108 @@ function renderPoint(){
  $('recommendation').innerHTML=best?`<h3>${civilClock(best.start)}–${civilClock(best.end)}</h3><p>${best.good} z ${best.all} povrchových průjezdů má vhodné světlo.</p>`:'<p class="hint">V tomto dni a výběru není vhodně nasvícený průjezd.</p>';
  $('photo-windows').innerHTML=windows.slice(0,5).map((w,i)=>`<button data-window="${i}">${civilClock(w.start)}–${civilClock(w.end)} · ${w.good}/${w.all} povrchových vhodných · Ukázat průjezdy</button>`).join('');
  const periods=[['Ráno',5,10],['Poledne',10,14],['Odpoledne',14,20]];$('recommendation').insertAdjacentHTML('beforeend',`<div class="recommend-grid">${periods.map(([name,start,end])=>{const rows=dayRows.filter(r=>r.light.level!=='unrated'&&r.time>=start*3600&&r.time<end*3600);return `<div>${name}<strong>${rows.filter(r=>r.light.level==='good').length} / ${rows.length}</strong>vhodné / povrchové</div>`;}).join('')}</div>`);const max=Math.max(1,...hours.map(h=>h.all));$('hour-chart').innerHTML=hours.map(h=>`<button title="${h.h}:00 · ${h.all} průjezdů, ${h.good} vhodných" aria-label="Vybrat hodinu ${h.h}:00, ${h.all} průjezdů, ${h.good} vhodných" data-hour="${h.h}" style="--height:${Math.max(3,h.all/max*57)}px"><i style="height:${h.all?h.good/h.all*100:0}%"></i>${h.h%3===0?`<span>${h.h}</span>`:''}</button>`).join('');
- renderList();
+ renderList(preserve);
+}
+function listViewportTop(){return $('point-scroll').getBoundingClientRect().top+$('passage-heading').getBoundingClientRect().height;}
+function listAnchor(){
+ const top=listViewportTop();
+ const el=[...$('passages').querySelectorAll('[data-passage-index]')].find(el=>el.getBoundingClientRect().bottom>top);
+ return el?{row:baseListRows[+el.dataset.passageIndex],offset:el.getBoundingClientRect().top-top}:null;
+}
+function rebuildSelection(){
+ const f=filter();baseListRows=pointRows.filter(r=>r.time>=f.start&&r.time<f.end);
+ baseListRows.forEach((r,i)=>r.listIndex=i);
+ listRows=baseListRows.filter(r=>!goodLightOnly||goodPassageLight(r));
+ $('export').disabled=!listRows.length;$('good-light').setAttribute('aria-pressed',String(goodLightOnly));
+ $('passage-empty').hidden=!!listRows.length;
+ $('passage-empty-text').textContent=baseListRows.length?'V celém vybraném období nejsou průjezdy s dobrým světlem. Vypni filtr nebo změň období.':'V tomto období a okolí bodu nejsou průjezdy podle aktuálních filtrů. Zkus jiné období, místo nebo rozšiř filtry.';
+ $('clear-good-light').hidden=!goodLightOnly||!!listRows.length||!baseListRows.length;
 }
 function updateLightVisibility(){
- const scroll=$('point-scroll'),top=scroll.scrollTop;
- listRows=baseListRows.filter(r=>!goodLightOnly||goodPassageLight(r));
- for(const el of $('passages').querySelectorAll('[data-passage-index]'))el.hidden=goodLightOnly&&!goodPassageLight(baseListRows[Number(el.dataset.passageIndex)]);
- for(const el of $('passages').querySelectorAll('.day-divider')){let next=el.nextElementSibling,visible=false;while(next&&!next.classList.contains('day-divider')){if(next.matches('[data-passage-index]')&&!next.hidden)visible=true;next=next.nextElementSibling;}el.hidden=!visible;}
- $('export').disabled=!listRows.length;
- const visible=baseListRows.slice(0,rendered).some(r=>!goodLightOnly||goodPassageLight(r));
- const notice=$('passage-empty');notice.hidden=visible;
- if(!visible){
-  $('passage-empty-text').textContent=!baseListRows.length
-   ?(pointRows.length?'Od tohoto času už nejsou průjezdy. Zkus celý den nebo jiný den.':'V blízkosti bodu nejsou průjezdy podle aktuálních filtrů. Zkus jiné místo nebo rozšiř filtry.')
-   :!listRows.length?'V celém vybraném období nejsou průjezdy s dobrým světlem. Vypni filtr nebo změň čas či den.'
-   :`☀ V zobrazeném období do ${dateForOffset(Math.floor(baseListRows[rendered-1].time/86400))} ${civilClock(baseListRows[rendered-1].time)} nejsou průjezdy s dobrým světlem. Zkus další období.`;
+ const anchor=listAnchor();rebuildSelection();
+ const time=anchor?.row.time??pointStart;
+ [listStart,listEnd]=passageWindow(listRows,time);
+ drawPassageWindow(anchor);if(!anchor&&listRows.length)scrollToListTime();
+}
+function renderList(preserve=false){
+ const anchor=preserve?listAnchor():null;
+ $('passages').classList.remove('updating');
+ const f=filter(),period=`${f.date}:${f.start}:${f.end}`;
+ if(listPeriod!==period){
+  listPeriod=period;
+  if(!f.allDay){pointMode='from';pointStart=f.start;}
+  else if(pointMode==='now'){pointStart=f.date===currentPrague().date?currentPrague().seconds:0;}
+  pointStart=Math.max(f.start,Math.min(f.end,pointStart));
  }
- $('clear-good-light').hidden=!goodLightOnly||visible||!baseListRows.length;
- const more=$('load-more');if(more&&rendered>0){more.hidden=goodLightOnly&&!listRows.length;more.textContent=`${goodLightOnly?'Prohledáno':'Zobrazeno'} do ${dateForOffset(Math.floor(baseListRows[rendered-1].time/86400))} ${civilClock(baseListRows[rendered-1].time)} · Další průjezdy`;}
- $('good-light').setAttribute('aria-pressed',String(goodLightOnly));
- scroll.scrollTop=top;
+ rebuildSelection();[listStart,listEnd]=passageWindow(listRows,anchor?.row.time??pointStart);
+ drawPassageWindow(anchor,true);setPointMode();if(!anchor)scrollToListTime();
 }
-function renderList(){lightTogglePaging=false;$('passages').classList.remove('updating');$('point-scroll').scrollTop=0;baseListRows=pointRows.filter(r=>r.time>=(pointMode==='day'?0:pointStart)&&(pointMode!=='day'||r.time<86400));rendered=0;$('passages').innerHTML='';$('point-end').textContent='';setPointMode();appendRows();}
-let lightTogglePaging=false;
-$('point-scroll').addEventListener('wheel',()=>{lightTogglePaging=false;},{passive:true});
-$('point-scroll').addEventListener('touchmove',()=>{lightTogglePaging=false;},{passive:true});
-$('point-scroll').addEventListener('keydown',()=>{lightTogglePaging=false;});
-$('good-light').onclick=()=>{goodLightOnly=!goodLightOnly;lightTogglePaging=true;updateLightVisibility();};
-$('clear-good-light').onclick=()=>{goodLightOnly=false;lightTogglePaging=true;updateLightVisibility();};
-function appendRows(){
- const top=$('point-scroll').scrollTop;
- $('load-more')?.remove();if(!baseListRows.length){endNote();updateLightVisibility();return;}
- const start=rendered,end=pageEnd(baseListRows,start,start?baseListRows[start]?.time:pointMode==='day'?0:pointStart),next=baseListRows.slice(start,end);
- let lastDay=start?Math.floor(baseListRows[start-1].time/86400):null;
- $('passages').insertAdjacentHTML('beforeend',next.map((row,index)=>{const d=Math.floor(row.time/86400),dayHead=d!==lastDay?`<div class="day-divider">${dateForOffset(d)}</div>`:'';lastDay=d;const r=meta.routes[row.route],l=row.light;return dayHead+`<details class="passage compact-passage" data-passage-index="${start+index}"><summary><div class="passage-top"><span class="passage-time">${row.estimated?'≈ ':''}${civilClock(row.time)}</span><span class="route-badge" style="--badge:${MODE_COLORS[r[3]]||'#586f78'}">${escape(r[1])}</span><span class="passage-destination">${escape(row.headsign)}</span><button type="button" class="light-icon" style="--light:${l.color}" title="${escape(l.label)}" aria-label="${escape(l.label)}">${l.level==='unrated'?'—':l.level==='night'?'◐':'☀'}</button></div><div class="passage-origin">Od ${escape(row.previousStop)} · ${civilClock(row.previousTime)}${Math.floor(row.previousTime/86400)!==d?' (předchozí den)':''}</div></summary><div class="passage-sub">${escape(meta.agencies[row.agency][1])} · směr ${row.direction}, ${Math.round(row.bearing)}°<br>${escape(l.label)}${row.sun?` · slunce ${compass(row.sun.azimuth)} ${Math.round(row.sun.azimuth)}°, výška ${Math.round(row.sun.altitude)}°`:''}${row.shortName?` · spoj ${escape(row.shortName)}`:''}${row.operationType!==1?`<br>${escape(operationLabel(row.operationType))}`:''}${row.fallback?'<br>Trasa chybí v GTFS, přímá spojnice zastávek.':''}</div></details>`;}).join(''));
- rendered=end;if(rendered<baseListRows.length){$('passages').insertAdjacentHTML('beforeend',`<button class="load-more" id="load-more">Zobrazeno do ${dateForOffset(Math.floor(baseListRows[rendered-1].time/86400))} ${civilClock(baseListRows[rendered-1].time)} · Další průjezdy</button>`);$('load-more').onclick=appendRows;}else endNote();updateLightVisibility();$('point-scroll').scrollTop=top;
+function passageMarkup(row){
+ const d=Math.floor(row.time/86400),r=meta.routes[row.route],l=row.light;return `<details class="passage compact-passage" data-passage-index="${row.listIndex}"><summary><div class="passage-top"><span class="passage-time">${row.estimated?'≈ ':''}${civilClock(row.time)}</span><span class="route-badge" style="--badge:${MODE_COLORS[r[3]]||'#586f78'}">${escape(r[1])}</span><span class="passage-destination">${escape(row.headsign)}</span><button type="button" class="light-icon" style="--light:${l.color}" title="${escape(l.label)}" aria-label="${escape(l.label)}">${l.level==='unrated'?'—':l.level==='night'?'◐':'☀'}</button></div><div class="passage-origin">Od ${escape(row.previousStop)} · ${civilClock(row.previousTime)}${Math.floor(row.previousTime/86400)!==d?' (předchozí den)':''}</div></summary><div class="passage-sub">${escape(meta.agencies[row.agency][1])} · směr ${row.direction}, ${Math.round(row.bearing)}°<br>${escape(l.label)}${row.sun?` · slunce ${compass(row.sun.azimuth)} ${Math.round(row.sun.azimuth)}°, výška ${Math.round(row.sun.altitude)}°`:''}${row.shortName?` · spoj ${escape(row.shortName)}`:''}${row.operationType!==1?`<br>${escape(operationLabel(row.operationType))}`:''}${row.fallback?'<br>Trasa chybí v GTFS, přímá spojnice zastávek.':''}</div></details>`;
 }
+function drawPassageWindow(anchor=null,refresh=false){
+ listUserScroll=false;
+ const container=$('passages'),existing=new Map([...container.querySelectorAll('[data-passage-index]')].map(el=>[+el.dataset.passageIndex,el]));
+ for(const [index,el] of existing){if(el.open)openPassages.add(baseListRows[index]);else openPassages.delete(baseListRows[index]);}
+ const fragment=document.createDocumentFragment(),boundary=passageIndex(listRows,pointStart);
+ let lastDay=null;
+ for(let i=listStart;i<listEnd;i++){
+  const row=listRows[i],day=Math.floor(row.time/86400);
+  if(day!==lastDay){const divider=document.createElement('div');divider.className='day-divider';divider.textContent=dateForOffset(day);fragment.append(divider);lastDay=day;}
+  if(i===boundary)fragment.append(timeDivider());
+  let node=refresh?null:existing.get(row.listIndex);
+  if(!node){const template=document.createElement('template');template.innerHTML=passageMarkup(row);node=template.content.firstElementChild;node.open=openPassages.has(row);}
+  fragment.append(node);
+ }
+ if(listRows.length&&boundary===listEnd)fragment.append(timeDivider());
+ container.replaceChildren(fragment);
+ $('point-end').textContent=listEnd===listRows.length&&listRows.length?'Konec vybraného období.':'';
+ $('list-start-note').textContent=listStart===0&&listRows.length?'Začátek vybraného období.':'';
+ if(anchor){const node=[...container.querySelectorAll('[data-passage-index]')].find(el=>baseListRows[+el.dataset.passageIndex]===anchor.row)
+  ||[...container.querySelectorAll('[data-passage-index]')].find(el=>baseListRows[+el.dataset.passageIndex].time>=anchor.row.time)
+  ||container.lastElementChild;
+  if(node)$('point-scroll').scrollTop+=node.getBoundingClientRect().top-listViewportTop()-anchor.offset;
+ }
+ listLastTop=$('point-scroll').scrollTop;
+}
+function timeDivider(){const el=document.createElement('div');el.className='time-divider';el.id='list-time-marker';el.textContent=`${pointMode==='now'?'Teď':pointMode==='day'?'Začátek dne':'Zvolený čas'} · ${civilClock(pointStart)}`;return el;}
+function scrollToListTime(){
+ listUserScroll=false;const scroll=$('point-scroll'),el=$('list-time-marker')||$('passages').lastElementChild;
+ if(el)scroll.scrollTop+=el.getBoundingClientRect().top-listViewportTop();
+ else scroll.scrollTop=0;listLastTop=scroll.scrollTop;
+}
+function pagePassages(direction){
+ const anchor=listAnchor(),range=shiftPassageWindow(listRows.length,listStart,listEnd,direction);
+ if(range[0]===listStart&&range[1]===listEnd)return;
+ [listStart,listEnd]=range;drawPassageWindow(anchor);listUserScroll=true;
+}
+function checkPassageScroll(){
+ if(!listUserScroll||!point||$('passages').classList.contains('updating')||!listRows.length)return;
+ const scroll=$('point-scroll'),top=scroll.getBoundingClientRect().top,bottom=scroll.getBoundingClientRect().bottom;
+ const direction=scroll.scrollTop>=listLastTop?1:-1;listLastTop=scroll.scrollTop;
+ const rows=$('passages').querySelectorAll('[data-passage-index]');
+ if(direction<0&&listStart>0&&rows[0]?.getBoundingClientRect().top>top-200)pagePassages(-1);
+ else if(direction>0&&listEnd<listRows.length&&rows[rows.length-1]?.getBoundingClientRect().bottom<bottom+200)pagePassages(1);
+}
+$('point-scroll').addEventListener('scroll',()=>{if(listFrame!==null)return;listFrame=requestAnimationFrame(()=>{listFrame=null;checkPassageScroll();});},{passive:true});
+for(const event of ['wheel','touchmove','keydown','pointerdown'])$('point-scroll').addEventListener(event,()=>{listUserScroll=true;},{passive:true});
+$('passages').addEventListener('toggle',e=>{const el=e.target;if(!el.matches('[data-passage-index]'))return;const row=baseListRows[+el.dataset.passageIndex];if(el.open)openPassages.add(row);else openPassages.delete(row);},true);
+$('good-light').onclick=()=>{goodLightOnly=!goodLightOnly;updateLightVisibility();};
+$('clear-good-light').onclick=()=>{goodLightOnly=false;updateLightVisibility();};
 function dateForOffset(d){const date=new Date($('date').value+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+d);return date.toLocaleDateString('cs',{weekday:'short',day:'numeric',month:'numeric',timeZone:'UTC'});}
-function endNote(){$('point-end').textContent=dateKey($('date').value)>=meta.endDate?'Tady končí platnost stažených jízdních řádů.':'Další průjezdy do konce následujícího dne nejsou v tomto výběru. Zvol jiný den nebo čas.';}
-let paging=false;new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)&&$('page-sentinel').getBoundingClientRect().top<=$('point-scroll').getBoundingClientRect().bottom+100&&rendered>0&&rendered<baseListRows.length&&!paging&&!lightTogglePaging&&!goodLightOnly){paging=true;requestAnimationFrame(()=>{if(point&&!goodLightOnly&&!lightTogglePaging&&!$('passages').classList.contains('updating'))appendRows();paging=false;});}},{root:$('point-scroll'),rootMargin:'0px 0px 100px 0px'}).observe($('page-sentinel'));
 function closeTimeEditor(){$('point-time-editor').hidden=true;$('point-filtered').setAttribute('aria-expanded','false');}
-function setPointMode(){const today=currentPrague().date,label=$('date').value===today?'dnes':$('date').value.split('-').reverse().join('.');const text=`Průjezdy · ${label} ${pointMode==='day'?'celý den':`od ${civilClock(pointStart)}${pointStart<0?' (včera)':''}`}`;$('point-filtered').textContent=text+' ⌄';$('point-now-status').textContent=text;}
+function setPointMode(){const today=currentPrague().date,label=$('date').value===today?'dnes':$('date').value.split('-').reverse().join('.');const text=`Průjezdy · ${label} ${pointMode==='day'?'celý den':`kolem ${civilClock(pointStart)}`}`;$('point-filtered').textContent=text+' ⌄';$('point-now-status').textContent=text;}
 $('point-filtered').onclick=()=>{if(!$('point-time-editor').hidden){closeTimeEditor();return;}$('point-time-editor').hidden=false;$('point-filtered').setAttribute('aria-expanded','true');$('point-date').min=$('date').min;$('point-date').max=$('date').max;$('point-date').value=$('date').value;$('point-day').checked=pointMode==='day';$('point-from-wrap').hidden=$('point-day').checked;$('point-from').value=civilClock(pointMode==='day'?photoSeconds:pointStart);};
 $('point-day').onchange=()=>{$('point-from-wrap').hidden=$('point-day').checked;};
 $('point-time-cancel').onclick=closeTimeEditor;
-$('point-time-apply').onclick=()=>{if(!$('point-date').value||!$('point-date').checkValidity()||(!$('point-day').checked&&!$('point-from').value)){$('point-date').reportValidity();return;}const [h,m]=$('point-from').value.split(':').map(Number);pointMode=$('point-day').checked?'day':'from';pointStart=pointMode==='day'?0:h*3600+m*60;$('date').value=$('point-date').value;closeTimeEditor();refreshDate();};
-function showFrom(seconds){closeTimeEditor();pointMode='from';pointStart=seconds;setLightTime(seconds);renderList();$('point-scroll').scrollTop=0;saveHash();}
+$('point-time-apply').onclick=()=>{if(!$('point-date').value||!$('point-date').checkValidity()||(!$('point-day').checked&&!$('point-from').value)){$('point-date').reportValidity();return;}const [h,m]=$('point-from').value.split(':').map(Number);pointMode=$('point-day').checked?'day':'from';pointStart=pointMode==='day'?0:h*3600+m*60;$('date').value=$('point-date').value;const f=filter();listPeriod=`${f.date}:${f.start}:${f.end}`;closeTimeEditor();refreshDate();};
+function showFrom(seconds,changeLight=true){closeTimeEditor();pointMode='from';pointStart=seconds;if(changeLight)setLightTime(seconds);renderList();saveHash();}
+$('passages-at-light').onclick=()=>showFrom(photoSeconds,false);
 $('hour-chart').onclick=e=>{const b=e.target.closest('[data-hour]');if(b)showFrom(+b.dataset.hour*3600);};$('photo-windows').onclick=e=>{const b=e.target.closest('[data-window]');if(b)showFrom(windows[+b.dataset.window].start);};
 function setExpanded(value){expanded=value;$('point-panel').classList.toggle('expanded',value);$('point-expand').setAttribute('aria-expanded',value);$('point-expand').setAttribute('aria-label',value?'Zmenšit panel':'Zvětšit panel');$('point-expand').textContent=value?'↧':'↥';map.invalidateSize();if(!value)ensurePointVisible();}
 $('point-expand').onclick=()=>setExpanded(!expanded);let dragY=null;$('point-drag').addEventListener('pointerdown',e=>{if(e.target.closest('button,a'))return;dragY=e.clientY;$('point-drag').setPointerCapture(e.pointerId);});$('point-drag').addEventListener('pointerup',e=>{if(dragY!==null&&Math.abs(e.clientY-dragY)>35)setExpanded(e.clientY<dragY);dragY=null;});$('point-drag').addEventListener('pointercancel',()=>dragY=null);
 for(const id of ['weather-fold','photo-fold'])$(id).addEventListener('toggle',()=>{if($(id).open)setExpanded(true);});
-$('close-point').onclick=()=>{goodLightOnly=false;lightTogglePaging=false;$('good-light').setAttribute('aria-pressed','false');++snapRequest;point=null;pointRows=[];baseListRows=[];listRows=[];rendered=0;$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;loadTerrain();if(photoMode)requestWeather();saveHash();};
+$('close-point').onclick=()=>{goodLightOnly=false;listUserScroll=false;listPeriod=null;openPassages.clear();$('good-light').setAttribute('aria-pressed','false');++snapRequest;point=null;pointRows=[];baseListRows=[];listRows=[];listStart=listEnd=0;$('point-panel').hidden=true;document.body.classList.remove('point-open');marker?.remove();halo?.remove();snapHighlight?.remove();map.invalidateSize();++pointRequest;loadTerrain();if(photoMode)requestWeather();saveHash();};
 $('toggle-filters').onclick=()=>{const open=$('filters').classList.toggle('open');$('toggle-filters').setAttribute('aria-expanded',open);};
 function renderOperation(){const value=operationValue($('operation').value);for(const b of $('operation-chips').querySelectorAll('button')){const active=value==='all'||b.dataset.operation===value;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));}}
 function setOperation(value){$('operation').value=operationValue(value);renderOperation();if(ready){renderRoutes();recalc();}}
@@ -288,11 +343,11 @@ try{worker=new Worker(new URL('./worker.js?v=preview-2',import.meta.url),{type:'
     if(data.type==='preview'&&result&&!result.preliminary&&confirmedCoverage?.filter===countsTarget?.filter)return;
     if(data.type==='counts')confirmedCoverage=countsTarget;geometry=data.geometry;result=data;lightCache.clear();routesLayer.update();if(pendingPoint&&data.type==='counts'){const p=pendingPoint;pendingPoint=null;snapPoint(...p);}drawLegend();drawAgencyLegend();showStatus(data.type==='preview'?'Předběžné trasy — ověřuji provoz…':routesLayer.visibleEdges.length?'':'V této oblasti a výběru nejsou žádné průjezdy.',data.type==='preview',data.type!=='preview'&&!routesLayer.visibleEdges.length);saveHash();}
   else if(data.type==='snap'&&data.id===snapRequest){pointRadius=data.radius;if(restoredPointState){pointMode=restoredPointState.mode;pointStart=restoredPointState.start;restoredPointState=null;}$('point-scroll').scrollTop=0;choosePoint(...data.point);}
-  else if(data.type==='point'&&data.id===pointRequest){pointRows=data.passages;$('export').disabled=false;snapHighlight?.remove();snapHighlight=L.polyline(data.lines||[],{color:'#163138',weight:6,opacity:.3,interactive:false}).addTo(map);renderPoint();}
+  else if(data.type==='point'&&data.id===pointRequest){openPassages.clear();pointRows=data.passages;$('export').disabled=false;snapHighlight?.remove();snapHighlight=L.polyline(data.lines||[],{color:'#163138',weight:6,opacity:.3,interactive:false}).addTo(map);renderPoint();}
   else if(data.type==='error'&&((data.request==='counts'&&data.id===countsRequest)||(data.request==='point'&&data.id===pointRequest)||(data.request==='snap'&&data.id===snapRequest)||!data.id)){showStatus('Data se nepodařilo načíst: '+data.message,false,true);if(data.request==='point'){$('point-now-status').textContent='Průjezdy se nepodařilo načíst.';$('passages').classList.remove('updating');$('passages').innerHTML='<p class="hint">Průjezdy se nepodařilo načíst. Zkus místo vybrat znovu.</p>';}}
 };worker.onerror=e=>showStatus(`Chyba aplikace: ${e.message}`,false,true);worker.postMessage({type:'init'});}catch(e){showStatus(e.message,false,true);}
 
-const terrainStore=new TerrainStore({onChange:()=>{routesLayer.draw();if(pointRows.length)renderPoint();renderEnvironment();}});
+const terrainStore=new TerrainStore({onChange:()=>{routesLayer.draw();if(pointRows.length&&!$('passages').classList.contains('updating'))renderPoint(true);renderEnvironment();}});
 function profileAt(lat,lon){return terrainStore.at(lat,lon).profile;}
 async function loadTerrain(revalidate=false){
   if(!photoMode&&!point){terrainStore.cancel();return;}
@@ -333,7 +388,7 @@ function refreshDate(){updateDaylight();requestWeather();renderEnvironment();wea
 function applyFilterLight(){setLightTime(filterLightTime(filter(),currentPrague()));}
 $('photo-filter').onclick=()=>{applyFilterLight();saveHash();};
 $('photo-now').onclick=()=>{setLightTime(roundedNow(currentPrague().seconds));saveHash();};
-$('point-now').onclick=()=>{const n=useToday();if(!n)return;pointMode='now';pointStart=n.seconds-300;setLightTime(Math.min(86100,Math.round(n.seconds/300)*300));closeTimeEditor();$('point-scroll').scrollTop=0;refreshDate();};
+$('point-now').onclick=()=>{const n=useToday();if(!n)return;pointMode='now';pointStart=n.seconds;closeTimeEditor();if(listPeriod?.startsWith(n.date+':')){renderList();saveHash();}else refreshDate();};
 const gpsIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg>';
 const Locate=L.Control.extend({options:{position:'topright'},onAdd(){const box=L.DomUtil.create('div','leaflet-bar gps-control'),b=L.DomUtil.create('button','locate-button',box);b.innerHTML=gpsIcon;b.title='Moje poloha';b.setAttribute('aria-label','Najít moji GPS polohu');L.DomEvent.disableClickPropagation(box);b.onclick=()=>{if(!navigator.geolocation){alert('Prohlížeč nepodporuje lokalizaci.');return;}b.disabled=true;b.classList.add('loading');navigator.geolocation.getCurrentPosition(pos=>{b.disabled=false;b.classList.remove('loading');b.classList.add('located');const loc=[pos.coords.latitude,pos.coords.longitude];gpsMarker?.remove();gpsAccuracy?.remove();gpsMarker=L.circleMarker(loc,{radius:7,color:'#fff',weight:3,fillColor:'#2479c9',fillOpacity:1}).addTo(map);gpsAccuracy=L.circle(loc,{radius:pos.coords.accuracy,color:'#2479c9',weight:1,fillOpacity:.08,interactive:false}).addTo(map);map.setView(loc,16);},err=>{b.disabled=false;b.classList.remove('loading');alert(err.code===1?'Povol přístup k poloze v nastavení prohlížeče.':'Polohu se nepodařilo zjistit. Zkus to znovu.');},{enableHighAccuracy:true,timeout:15000,maximumAge:30000});};return box;}});new Locate().addTo(map);
 function renderWeatherChart(){

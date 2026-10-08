@@ -1,12 +1,5 @@
 // Helpers shared by the point panel and meaningful regression tests.
 export const civilClock=s=>{const m=Math.floor(((s%86400)+86400)%86400/60);return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;};
-export function pageEnd(rows,start,from){
- if(start>=rows.length)return start;
- const windowEnd=from+7200,extendedEnd=from+21600;
- let end=start;while(end<rows.length&&end-start<50&&rows[end].time<windowEnd)end++;
- if(end-start<10)while(end<rows.length&&end-start<50&&rows[end].time<extendedEnd)end++;
- return Math.max(end,Math.min(rows.length,start+1));
-}
 // Merge occupied five-minute bins, permitting at most a fifteen-minute gap.
 // Rank by actual useful passages, then by useful share and shorter duration.
 export function photoWindows(rows){

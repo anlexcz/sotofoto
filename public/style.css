@@ -48,3 +48,7 @@
 .passage-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.passage-total{display:flex;align-items:center;gap:4px;min-width:0}.passage-total h3{overflow-wrap:anywhere}#good-light{font-size:11px;min-height:30px;padding-top:4px;padding-bottom:4px;flex-shrink:0;border-radius:20px}#good-light[aria-pressed=true]{background:#e4f2d9;color:#245c29;border-color:#4b903b}#export{min-height:44px;white-space:nowrap}
 
 #passage-empty[hidden],#clear-good-light[hidden],#load-more[hidden]{display:none}#passage-empty{padding:8px 0}#passage-empty p{margin:4px 0 8px}#clear-good-light{font-size:12px}
+
+/* Continuous passages: native scrolling with a bounded, bidirectional DOM window. */
+.point-panel>.point-time-controls{padding:4px 14px 8px;flex-shrink:0}.point-scroll{overflow-anchor:none}.passage-heading{position:sticky;top:0;background:#fff;z-index:2;flex-wrap:wrap;padding:4px 0}.time-divider{font-size:11px;font-weight:700;color:#16877d;border-top:1px solid #a9d3ce;padding:7px 0;margin:3px 0}.point-time-row #point-now{white-space:nowrap}#list-start-note:empty,#point-end:empty{display:none}
+@media(max-width:700px){.point-panel>.point-time-controls{padding:4px 12px 6px}.passage-heading{gap:4px 10px}#passages-at-light{font-size:11px}}

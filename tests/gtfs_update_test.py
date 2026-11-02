@@ -52,4 +52,14 @@ class TestUpdate(unittest.TestCase):
         for name in z.namelist():out.writestr(name,z.read(name).replace(b'25:15:00',b'12:15:00') if name=='stop_times.txt' else z.read(name))
     self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),0)
     with zipfile.ZipFile(self.root/'merged.zip') as z:self.assertEqual(len(list(read(z,'trips.txt'))),1)
+ def test_orphan_previous_route_is_skipped_instead_of_crashing(self):
+    source=self.root/'orphan-route.zip'
+    with zipfile.ZipFile(self.old) as z,zipfile.ZipFile(source,'w') as out:
+        for name in z.namelist():
+            if name=='routes.txt':
+                out.writestr(name,b'route_id,route_short_name,route_long_name,route_type\nother,2,other,0\n')
+            else:
+                out.writestr(name,z.read(name))
+    self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),0)
+    with zipfile.ZipFile(self.root/'merged.zip') as z:self.assertEqual(len(list(read(z,'trips.txt'))),1)
 if __name__=='__main__':unittest.main()

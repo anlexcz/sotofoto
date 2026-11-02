@@ -74,4 +74,18 @@ class TestUpdate(unittest.TestCase):
     with zipfile.ZipFile(self.root/'merged.zip') as z:
         rows=list(read(z,'stop_times.txt'))
         self.assertEqual(rows[-1]['route_id'],'L308')
+ def test_changed_previous_route_metadata_prefixes_route_and_trip_together(self):
+    source=self.root/'changed-route.zip'
+    with zipfile.ZipFile(self.old) as z,zipfile.ZipFile(source,'w') as out:
+        for name in z.namelist():
+            if name=='routes.txt':
+                out.writestr(name,b'route_id,route_short_name,route_long_name,route_type\nr,1,old metadata,0\n')
+            else:
+                out.writestr(name,z.read(name))
+    merged=self.root/'merged-changed-route.zip';self.assertEqual(merge(self.new,source,merged,'20261006'),1)
+    with zipfile.ZipFile(merged) as z:
+        routes={r['route_id'] for r in read(z,'routes.txt')};trips=list(read(z,'trips.txt'))
+        previous_trip=next(r for r in trips if r['trip_id']!='t')
+        self.assertTrue(previous_trip['route_id'].startswith('previous_'))
+        self.assertIn(previous_trip['route_id'],routes)
 if __name__=='__main__':unittest.main()

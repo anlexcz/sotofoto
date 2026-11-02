@@ -62,4 +62,16 @@ class TestUpdate(unittest.TestCase):
                 out.writestr(name,z.read(name))
     self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),0)
     with zipfile.ZipFile(self.root/'merged.zip') as z:self.assertEqual(len(list(read(z,'trips.txt'))),1)
+ def test_nonstandard_route_id_column_is_not_remapped(self):
+    source=self.root/'route-extension.zip'
+    with zipfile.ZipFile(self.old) as z,zipfile.ZipFile(source,'w') as out:
+        for name in z.namelist():
+            if name=='stop_times.txt':
+                out.writestr(name,b'trip_id,stop_id,arrival_time,departure_time,stop_sequence,trip_operation_type,route_id\nt,a,25:15:00,25:15:00,1,7,L308\n')
+            else:
+                out.writestr(name,z.read(name))
+    self.assertEqual(merge(self.new,source,self.root/'merged.zip','20261006'),1)
+    with zipfile.ZipFile(self.root/'merged.zip') as z:
+        rows=list(read(z,'stop_times.txt'))
+        self.assertEqual(rows[-1]['route_id'],'L308')
 if __name__=='__main__':unittest.main()

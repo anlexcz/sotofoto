@@ -106,10 +106,10 @@ def merge(current,previous,output,previous_day):
                     if name=='routes.txt' and route_map[r['route_id']]==r['route_id']:continue
                     for key in ['trip_id','service_id','shape_id','stop_id','parent_station']:
                         if r.get(key):r[key]=prefix+r[key]
-                    # route_id is a GTFS foreign key on trips.txt. PID also
-                    # exposes similarly named extension columns elsewhere;
-                    # those must not be resolved through the routes mapping.
-                    if name=='trips.txt' and r.get('route_id'):r['route_id']=route_map[r['route_id']]
+                    # route_id is the primary key on routes.txt and a foreign
+                    # key on trips.txt. PID also exposes similarly named
+                    # extension columns elsewhere; those must stay untouched.
+                    if name in {'routes.txt','trips.txt'} and r.get('route_id'):r['route_id']=route_map[r['route_id']]
                     if r.get('sub_agency_id'):r['sub_agency_id']=operator_map.get(r['sub_agency_id'],r['sub_agency_id'])
                     yield r
             write_table(out,name,fields,combined())

@@ -64,18 +64,22 @@ def merge(current,previous,output,previous_day):
     with zipfile.ZipFile(current) as new,zipfile.ZipFile(previous) as old,zipfile.ZipFile(output,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=1) as out:
         new_start=next(read(new,'feed_info.txt'))['feed_start_date']
         services=active(old,previous_day)
+        old_routes={r['route_id']:r for r in read(old,'routes.txt')}
         selected={r['trip_id']:r for r in read(old,'trips.txt') if r['service_id'] in services}
         # Earlier previous-day trips cannot affect the first selectable civil
         # day. Do not duplicate a whole day's schedules on mobile clients.
         carryovers={r['trip_id'] for r in read(old,'stop_times.txt') if r['trip_id'] in selected and any(r.get(k) and int(r[k].split(':')[0])>=24 for k in ['arrival_time','departure_time'])}
-        selected={tid:r for tid,r in selected.items() if tid in carryovers}
+        # Some upstream snapshots can temporarily contain trips whose route_id
+        # has no matching routes.txt row. Such trips cannot be imported safely
+        # because there is no authoritative route metadata to carry forward.
+        selected={tid:r for tid,r in selected.items() if tid in carryovers and r.get('route_id') in old_routes}
         shapes={r.get('shape_id','') for r in selected.values()}
         stops={r['stop_id'] for r in read(old,'stop_times.txt') if r['trip_id'] in selected}
         routes={r['route_id'] for r in selected.values()}
         prefix='previous_'+digest(previous)+'_'
         # Route/operator identities remain shared only when metadata agrees.
         route_new={r['route_id']:r for r in read(new,'routes.txt')};route_map={}
-        for r in read(old,'routes.txt'):
+        for r in old_routes.values():
             if r['route_id'] in routes:
                 route_map[r['route_id']]=r['route_id'] if route_new.get(r['route_id'])==r else prefix+r['route_id']
         operator_new={r['sub_agency_id']:r for r in read(new,'route_sub_agencies.txt')};operator_map={}
